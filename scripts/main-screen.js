@@ -3,7 +3,7 @@ import { Store, escapeHtml, htmlToPlain, debounce, uid, bindPress, Nav, vibrate 
 import { toast, confirmSheet, attachMenu, sheetSections } from './components/ui.js';
 import { openEditor } from './screens/editor.js';
 import { openFolders } from './screens/folders.js';
-import { renderNotesGrid, updateSelection } from './screens/grid.js';
+import { renderNotesGrid } from './screens/grid.js';
 import { openTrashScreen } from './screens/trash.js';
 
 const COLORS = [
@@ -86,8 +86,21 @@ export function mainScreen() {
     active: false,
     set: new Set(),
     onEnter(id) { this.active = true; this.set.add(id); bounceId = id; enterSelection(); refresh(); },
-    onToggle(id) { if (this.set.has(id)) this.set.delete(id); else this.set.add(id); bounceId = id; refresh(); },
+    onToggle(id) { if (this.set.has(id)) this.set.delete(id); else this.set.add(id); paintCard(id); },
   };
+
+  /* Отмечаем одну карточку без перерисовки всей сетки. Перерисовка во время
+     быстрых тапов уничтожала элементы прямо под пальцем, и нажатия «терялись». */
+  function paintCard(id) {
+    const card = gridHolder.querySelector(`.note-card[data-id="${CSS.escape(String(id))}"]`);
+    if (card) {
+      card.classList.toggle('sur-select', sel.set.has(id));
+      card.classList.remove('bounce');
+      void card.offsetWidth;       /* перезапуск анимации «отскока» */
+      card.classList.add('bounce');
+    }
+    renderSelBar();
+  }
 
   function enterSelection() {
     el.classList.add('selecting');
@@ -196,9 +209,24 @@ export function mainScreen() {
     }
   }
 
-  searchInput.addEventListener('focus', () => searchCancel.classList.remove('hidden'));
-  searchInput.addEventListener('blur', () => setTimeout(() => { if (!searchInput.value.trim()) searchCancel.classList.add('hidden'); }, 160));
-  searchCancel.addEventListener('click', () => { searchInput.value = ''; searchInput.blur(); refresh(); searchCancel.classList.add('hidden'); });
+  /* ---------- поиск: при фокусе строка поднимается наверх экрана ---------- */
+  function syncSearchLift() {
+    const on = document.activeElement === searchInput || !!searchInput.value.trim();
+    /* Высота шапки, которую строка поиска «переезжает» */
+    if (on) el.style.setProperty('--hd-up', (appbar.offsetHeight + h1row.offsetHeight) + 'px');
+    el.classList.toggle('searching', on);
+  }
+
+  searchInput.addEventListener('focus', () => { searchCancel.classList.remove('hidden'); syncSearchLift(); });
+  searchInput.addEventListener('blur', () => setTimeout(() => {
+    if (!searchInput.value.trim()) searchCancel.classList.add('hidden');
+    syncSearchLift();
+  }, 160));
+  searchCancel.addEventListener('click', () => {
+    searchInput.value = ''; searchInput.blur(); refresh();
+    searchCancel.classList.add('hidden'); syncSearchLift();
+  });
+  searchInput.addEventListener('input', syncSearchLift);
   searchInput.addEventListener('input', debounce(refresh, 100));
   searchClear.addEventListener('click', () => { searchInput.value = ''; refresh(); });
 

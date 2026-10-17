@@ -77,7 +77,17 @@ function buildCard(n, q, opts, m) {
 
   const plain = htmlToPlain(n.content);
   const titleHtml = q ? highlight(n.title || '', q) : escapeHtml(n.title || '');
-  const bodyHtml = q ? highlight(plain.slice(0, 320), q) : escapeHtml(plain.slice(0, 320));
+  /* Превью показывает начало текста. Если совпадение с запросом находится
+     дальше — сдвигаем фрагмент к совпадению, иначе подсветки не видно. */
+  let bodyText = plain.slice(0, 320);
+  if (q) {
+    const idx = plain.toLowerCase().indexOf(q);
+    if (idx > 0) {
+      const start = Math.max(0, idx - 24);
+      bodyText = (start > 0 ? '… ' : '') + plain.slice(start, start + 320);
+    }
+  }
+  const bodyHtml = q ? highlight(bodyText, q) : escapeHtml(bodyText);
 
   card.innerHTML = `
     <div class="nc-pin ${n.pinned ? 'show' : ''}"><span class="material-symbols-rounded">push_pin</span></div>
