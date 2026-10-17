@@ -576,10 +576,10 @@ export function openEditor(id, opts = {}) {
       const AC = window.AudioContext || window.webkitAudioContext;
       const ac = new AC();
       const buf = await ac.decodeAudioData(await blob.arrayBuffer());
-      const peaks = computePeaks(buf, bars);
+      const res = { peaks: computePeaks(buf, bars), duration: buf.duration };
       try { ac.close(); } catch (e) {}
-      waveCache.set(id, peaks);
-      return peaks;
+      waveCache.set(id, res);
+      return res;
     } catch (e) { return null; }
   }
 
@@ -613,10 +613,11 @@ export function openEditor(id, opts = {}) {
 
     const canvas = card.querySelector('.pc-wave');
     const curEl = card.querySelector('.pc-cur');
+    const durEl = card.querySelector('.pc-dur');
     const playBtn = card.querySelector('.pc-play');
     const icon = playBtn.querySelector('.material-symbols-rounded');
 
-    let peaks = null, playing = false, raf = null;
+    let peaks = null, playing = false, raf = null, realDur = 0;
     let audioEl = null, actx = null, analyser = null, dataArr = null;
 
     const accent = () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#f2a824';
@@ -651,7 +652,7 @@ export function openEditor(id, opts = {}) {
 
     function loop() {
       if (!audioEl) return;
-      const dur = (audioEl.duration && isFinite(audioEl.duration)) ? audioEl.duration : (note.audio.duration || 1);
+      const dur = realDur || ((audioEl.duration && isFinite(audioEl.duration)) ? audioEl.duration : (note.audio.duration || 1));
       const prog = Math.min(1, (audioEl.currentTime || 0) / dur);
       let live = 0;
       if (analyser) {
@@ -714,8 +715,14 @@ export function openEditor(id, opts = {}) {
     requestAnimationFrame(() => {
       draw(0, 0);
       const id = note.audio.id;
-      Store.blob(id).then(blob => blob && loadPeaks(id, blob, BARS)).then(pk => {
-        if (pk) { peaks = pk; if (playing) loop(); else draw(0, 0); }
+      Store.blob(id).then(blob => blob && loadPeaks(id, blob, BARS)).then(res => {
+        if (!res) return;
+        peaks = res.peaks;
+        if (res.duration && isFinite(res.duration) && res.duration > 0) {
+          realDur = res.duration;
+          durEl.textContent = fmtDur2(realDur);
+        }
+        if (playing) loop(); else draw(0, 0);
       });
     });
   }

@@ -14,7 +14,7 @@ export function openRecorder(note, onSaved) {
   document.body.appendChild(ov);
   requestAnimationFrame(()=>ov.classList.add('open'));
 
-  let stream=null, rec=null, chunks=[], timer=null, secs=0, audioCtx=null, analyser=null, rafId=null;
+  let stream=null, rec=null, chunks=[], timer=null, secs=0, t0=0, audioCtx=null, analyser=null, rafId=null;
 
   async function start() {
     try {
@@ -26,7 +26,8 @@ export function openRecorder(note, onSaved) {
     mr.ondataavailable = e => chunks2.push(e.data);
     mr.onstop = () => finish(chunks2);
     mr.start();
-    timer = setInterval(()=>{ secs++; ov.querySelector('.rec-timer').textContent = fmt(secs); }, 250);
+    t0 = Date.now();
+    timer = setInterval(()=>{ secs = Math.floor((Date.now() - t0) / 1000); ov.querySelector('.rec-timer').textContent = fmt(secs); }, 200);
     /* визуализация волны */
     try {
       audioCtx = new AudioContext();
@@ -51,7 +52,7 @@ export function openRecorder(note, onSaved) {
     stream && stream.getTracks().forEach(t=>t.stop());
     audioCtx && audioCtx.close();
     const blob = new Blob(chs, { type: rec && rec.mimeType || 'audio/webm' });
-    const dur = secs;
+    const dur = Math.round((Date.now() - t0) / 1000);
     ov.classList.remove('open');
     setTimeout(()=>ov.remove(), 200);
     (async () => {
