@@ -31,7 +31,13 @@ export function openTrashScreen() {
       r.innerHTML = `<span class="f-name">${escapeHtml(n.title || 'Без названия')}</span>
         <button class="icon-btn" data-a="restore" data-press><span class="material-symbols-rounded">restore</span></button>`;
       r.querySelector('[data-a=restore]').addEventListener('click', async () => {
-        n.deleted = false; await Store.saveNoteRaw(n); toast('Восстановлено'); fill();
+        n.deleted = false;
+        await Store.saveNoteRaw(n);
+        /* Главный экран обновляется только по этому событию. Без него заметка
+           возвращается в базу, но в списке не появляется — выглядит как потерянная. */
+        document.dispatchEvent(new CustomEvent('notes-changed'));
+        toast('Восстановлено');
+        fill();
       });
       sc.appendChild(r);
     });
