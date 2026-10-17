@@ -44,10 +44,26 @@
 .editor-screen .player-chip .time { color: var(--ed-muted); }
 
 /* ---- Editor body ---- */
-/* при открытой клавиатуре поднимаем весь экран: тулбар встаёт ровно над клавиатурой
-   (работает и на Android с ресайзом окна, и на iOS/iPhone с visualViewport) */
-body.kb-open .editor-screen { top: 0; bottom: var(--kb-h, 0px); }
-.editor-screen { transition: bottom .22s ease; }
+/* Экран редактора = видимая область над клавиатурой (iOS: --vv-top при скролле viewport) */
+body.kb-open .editor-screen {
+  top: var(--vv-top, 0px);
+  bottom: var(--kb-h, 0px);
+  left: 0;
+  right: 0;
+  height: auto;
+}
+body.kb-open .screen.under { visibility: hidden; }
+.editor-screen { transition: top .12s ease, bottom .22s ease; }
+
+.editor-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+body.kb-open .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px); }
 .editor-body::-webkit-scrollbar { display: none; }
 
 .note-title-input {
@@ -105,25 +121,25 @@ body.kb-open .editor-screen { top: 0; bottom: var(--kb-h, 0px); }
 }
 .mindmap-hint .material-symbols-rounded { font-size: 17px; color: #d09a26; }
 
-/* ---- Тулбар форматирования (виден всегда при клавиатуре, стоит ровно над ней) ---- */
+/* ---- Тулбар форматирования (фиксирован над клавиатурой через portal в body) ---- */
 .format-toolbar {
   flex: none;
-  display: flex;
+  display: none;
   align-items: stretch;
   background: var(--surface);
   border-top: 1px solid var(--divider);
   padding: 0 6px;
   height: var(--toolbar-h, 54px);
-  z-index: 40;
-  transform: translateY(100%);
-  opacity: 0;
-  pointer-events: none;
-  transition: transform .26s var(--ease-spring), opacity .2s ease;
+  z-index: 200;
 }
-body.kb-open .format-toolbar {
-  transform: translateY(0);
-  opacity: 1;
-  pointer-events: auto;
+body.kb-open > .format-toolbar {
+  display: flex;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--kb-h, 0px);
+  transition: bottom .22s ease;
+  box-shadow: 0 -1px 0 var(--divider);
 }
 .format-toolbar .tool {
   flex: 1;

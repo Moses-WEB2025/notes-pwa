@@ -159,34 +159,43 @@ export function bindPress(root=document){
 export function initKeyboard(){
   const vv=window.visualViewport;
   let refH=window.innerHeight;
-  let lastOpen=-1;
-  const upd=(ev)=>{
-    let open=false,kbH=0;
+  let lastOpen=false;
+
+  const measure=()=>{
+    const shrink=Math.max(0,refH-window.innerHeight);
+    let vvTop=0,vvKb=0;
     if(vv){
-      kbH=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
-      open=kbH>80;
-    } else {
-      /* фолбэк: высота клавиатуры = «сжатие» окна после фокуса на вводе */
-      if(ev&&ev.type==='focusin') setTimeout(upd,350);
-      kbH=Math.max(0,refH-window.innerHeight);
-      open=kbH>80;
+      vvTop=vv.offsetTop;
+      vvKb=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
     }
-    refH=Math.max(refH,window.innerHeight);
-    if(open!==lastOpen){
-      lastOpen=open;
-      document.documentElement.style.setProperty('--kb-h',open?kbH+'px':'0px');
-      document.body.classList.toggle('kb-open',open);
-      /* дернем ещё раз через кадр — клавиатура доезжает не мгновенно */
-      requestAnimationFrame(()=>{
-        let h=0,o=false;
-        if(vv){ h=Math.max(0,window.innerHeight-vv.height-vv.offsetTop); o=h>80; }
-        else { h=Math.max(0,refH-window.innerHeight); o=h>80; }
-        document.documentElement.style.setProperty('--kb-h',o?h+'px':'0px');
-        document.body.classList.toggle('kb-open',o);
-      });
-    }
-    document.dispatchEvent(new CustomEvent('kb-change',{detail:{open,height:kbH}}));
+    /* iOS: inset через visualViewport; Android resize: окно уже сжато — kbH=0 */
+    const open=vvKb>80||shrink>80;
+    const kbH=vvKb>80?vvKb:0;
+    return { open, kbH, vvTop:vvKb>80?vvTop:0 };
   };
+
+  const apply=({open,kbH,vvTop})=>{
+    document.documentElement.style.setProperty('--kb-h',open?kbH+'px':'0px');
+    document.documentElement.style.setProperty('--vv-top',open?vvTop+'px':'0px');
+    document.body.classList.toggle('kb-open',open);
+    if(open) window.scrollTo(0,0);
+  };
+
+  const upd=(ev)=>{
+    if(ev&&ev.type==='focusin'&&!vv) setTimeout(upd,350);
+    const m=measure();
+    const opening=m.open&&!lastOpen;
+    lastOpen=m.open;
+    apply(m);
+    if(!m.open) refH=window.innerHeight;
+    else refH=Math.max(refH,window.innerHeight);
+    if(opening){
+      requestAnimationFrame(()=>apply(measure()));
+      setTimeout(()=>apply(measure()),150);
+    }
+    document.dispatchEvent(new CustomEvent('kb-change',{detail:{open:m.open,height:m.kbH,offsetTop:m.vvTop}}));
+  };
+
   if(vv){ vv.addEventListener('resize',upd); vv.addEventListener('scroll',upd); }
   window.addEventListener('resize',upd);
   window.addEventListener('focusin',upd);

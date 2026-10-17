@@ -170,11 +170,22 @@ export function openEditor(id, opts = {}) {
     if (cb) { setTimeout(scheduleSave, 0); }
   });
 
-  /* переключение панелей по клавиатуре */
+  /* переключение панелей по клавиатуре; тулбар — в body, чтобы fixed был над клавиатурой */
+  function dockToolbar(open) {
+    if (open && toolbar.parentElement !== document.body) document.body.appendChild(toolbar);
+    else if (!open && toolbar.parentElement === document.body) el.appendChild(toolbar);
+  }
+  function teardownKb() {
+    document.removeEventListener('kb-change', onKb);
+    dockToolbar(false);
+  }
   document.addEventListener('kb-change', onKb);
   function onKb(e) {
-    topbar.classList.toggle('hidden', e.detail.open);
-    topbarKb.classList.toggle('hidden', !e.detail.open);
+    if (!el.isConnected) { teardownKb(); return; }
+    const open = e.detail.open;
+    topbar.classList.toggle('hidden', open);
+    topbarKb.classList.toggle('hidden', !open);
+    dockToolbar(open);
   }
 
   /* ---------- Сохранение ---------- */
@@ -194,7 +205,7 @@ export function openEditor(id, opts = {}) {
     document.dispatchEvent(new CustomEvent('notes-changed'));
   }
 
-  async function done() { content.blur(); titleInput.blur(); await finalSave(); Nav.pop(); }
+  async function done() { content.blur(); titleInput.blur(); teardownKb(); await finalSave(); Nav.pop(); }
 
   topbar.querySelector('[data-a=back]').addEventListener('click', done);
   topbarKb.querySelector('[data-a=back2]').addEventListener('click', done);
@@ -252,6 +263,7 @@ export function openEditor(id, opts = {}) {
       await Store.delNote(note.id);
       toast('Заметка удалена');
       document.dispatchEvent(new CustomEvent('notes-changed'));
+      teardownKb();
       Nav.pop();
     }
   }
