@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <!-- Нативный вид: запрет зума и масштабирования -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f6f6" />
+  <meta name="description" content="Заметки — офлайн PWA" />
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Заметки" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="msapplication-tap-highlight" content="no" />
+
+  <title>Заметки</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+
+  <link rel="stylesheet" href="styles/theme.css" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="styles/components.css" />
+  <link rel="stylesheet" href="styles/screens.css" />
+</head>
+<body>
+  <div id="screens-root"></div>
+
+  <!-- Тосты -->
+  <div class="toast-holder" id="toast-holder"></div>
+
+  <!-- Офлайн индикатор -->
+  <div id="offline-indicator" class="hidden" style="position:absolute;top:0;left:0;right:0;z-index:500;background:#d93025;color:#fff;text-align:center;font:500 12px/1.4 system-ui;padding:4px 0;pointer-events:none">Нет соединения</div>
+
+  <script type="module" src="scripts/app.js"></script>
+  <script>
+    // Service Worker — полный офлайн
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
+      });
+    }
+
+    // Блокируем мультитач-зум
+    document.addEventListener('touchmove', (e) => {
+      if (e.touches && e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+
+    // Запрет двойного тапа-зума
+    let lastTouchend = 0;
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchend <= 300) e.preventDefault();
+      lastTouchend = now;
+    }, { passive: false });
+
+    // Запрет контекстного меню (долгое нажатие на текст/картинку)
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // Блокировка обновления страницы (F5 / Ctrl+R) — ведём себя как нативное приложение
+    window.addEventListener('keydown', (e) => {
+      const isReload = e.key === 'F5' || ((e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 'r' || e.key === 'R'));
+      if (isReload) e.preventDefault();
+    }, { passive: false });
+
+    // Перехват «назад» на Android — корректный выход со стеком экранов
+    history.replaceState({ app: 1 }, '');
+    window.addEventListener('popstate', () => {
+      document.dispatchEvent(new CustomEvent('app-back'));
+      history.pushState({ app: 1 }, '');
+    });
+  </script>
+</body>
+</html>
