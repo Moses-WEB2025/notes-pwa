@@ -746,8 +746,11 @@ export function openEditor(id, opts = {}) {
     img.classList.add('img-selected');
     buildFrame();
     buildBar();
-    if (document.activeElement === content || titleInput === document.activeElement) { content.blur(); titleInput.blur(); setTimeout(positionImageTools, 360); }
+    /* убираем каретку и клавиатуру — фото редактируется отдельно от текста */
+    content.blur(); titleInput.blur();
     positionImageTools();
+    setTimeout(positionImageTools, 120);
+    setTimeout(positionImageTools, 320);
     vibrate(10);
   }
 
@@ -812,7 +815,6 @@ export function openEditor(id, opts = {}) {
     const move = ev => {
       const w = Math.max(44, Math.min(maxW, startW + (ev.clientX - sx) * dir));
       img.style.width = w + 'px';
-      img.style.height = 'auto';
       positionImageTools();
     };
     const up = () => {
@@ -982,27 +984,53 @@ export function openEditor(id, opts = {}) {
   }
 
   /* Жест: долгий тап по фото выделяет его; на выделенном — перетаскивание */
-  let pressTimer = null, pressImg = null, pressFrom = null;
+  let pressTimer = null, pressImg = null, pressFrom = null, imgTouchAt = 0;
   const cancelPress = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } pressImg = null; };
+  const isImgTarget = t => !!(t && t.closest && t.closest('img.rich-img'));
 
+  /* тап по фото не должен ставить каретку и открывать клавиатуру холста */
   content.addEventListener('pointerdown', e => {
     const t = e.target;
-    const img = t && t.closest ? t.closest('img.rich-img') : null;
-    if (!img) {
-      if (selImg && !(t.closest && t.closest('.img-bar, .img-frame'))) clearImageSelection();
+    if (!isImgTarget(t)) {
+      if (selImg) clearImageSelection();
       return;
     }
+    e.preventDefault();
+    imgTouchAt = performance.now();
+    if (document.activeElement === content || document.activeElement === titleInput) { content.blur(); titleInput.blur(); }
+    const img = t.closest('img.rich-img');
     if (img === selImg) { startMove(e, img); return; }
     pressImg = img; pressFrom = { x: e.clientX, y: e.clientY };
     clearTimeout(pressTimer);
-    pressTimer = setTimeout(() => { pressTimer = null; if (pressImg === img) selectImage(img); }, 420);
+    pressTimer = setTimeout(() => { pressTimer = null; if (pressImg === img) selectImage(img); }, 380);
   });
+  content.addEventListener('contextmenu', e => { if (isImgTarget(e.target)) e.preventDefault(); });
+  /* страховка: если браузер всё же сфокусировал холст по тапу на фото — сразу снимаем фокус */
+  content.addEventListener('focus', () => { if (performance.now() - imgTouchAt < 450) content.blur(); }, true);
+
   window.addEventListener('pointerup', cancelPress);
   window.addEventListener('pointermove', e => {
     if (!pressImg || !pressFrom) return;
-    if (Math.hypot(e.clientX - pressFrom.x, e.clientY - pressFrom.y) > 12) cancelPress();
+    if (Math.hypot(e.clientX - pressFrom.x, e.clientY - pressFrom.y) > 18) cancelPress();
   });
   window.addEventListener('pointercancel', cancelPress);
+
+  /* свайп по холсту — «спокойный» режим: убираем каретку, клавиатуру и выделение */
+  let swipeFrom = null;
+  bodyWrap.addEventListener('touchstart', e => {
+    swipeFrom = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+  }, { passive: true });
+  bodyWrap.addEventListener('touchmove', e => {
+    if (!swipeFrom) return;
+    const t = e.touches[0]; if (!t) return;
+    if (Math.hypot(t.clientX - swipeFrom.x, t.clientY - swipeFrom.y) > 18) {
+      swipeFrom = null;
+      cancelPress();
+      if (document.activeElement === content || document.activeElement === titleInput) { content.blur(); titleInput.blur(); }
+      clearImageSelection();
+    }
+  }, { passive: true });
+
   bodyWrap.addEventListener('scroll', positionImageTools, { passive: true });
   window.addEventListener('resize', positionImageTools);
   document.addEventListener('kb-change', () => { if (selImg) setTimeout(positionImageTools, 60); });

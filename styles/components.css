@@ -280,11 +280,13 @@
   position: fixed; z-index: 130; pointer-events: none;
   border: 2px solid var(--accent);
   border-radius: 16px;
+  touch-action: none;
 }
 .img-frame .img-handle {
   position: absolute; width: 34px; height: 34px;
   pointer-events: auto;
   display: flex; align-items: center; justify-content: center;
+  touch-action: none;
 }
 .img-frame .img-handle::after {
   content: ''; width: 15px; height: 15px; border-radius: 50%;
