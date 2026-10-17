@@ -237,10 +237,11 @@
 .note-card.c-paper .nc-body { color: #7a6b32; }
 .note-card.c-paper .nc-meta { color: #a0905c; }
 
-/* Подсветка поиска красным */
+/* Подсветка поиска — всегда один и тот же красный, независимо от цвета
+   заметки: и в заголовке, и во фрагменте из глубины текста, который
+   показывается при совпадении. Раньше на цветных карточках цвет менялся
+   (светло-розовый/жёлтый) — убрали, чтобы найденное слово читалось одинаково. */
 mark.hm { background: transparent; color: #e0473a; font-weight: 700; }
-.note-card.c-yellow mark.hm, .note-card.c-pink mark.hm, .note-card.c-red mark.hm, .note-card.c-paper mark.hm { color: #ffe1db; }
-.note-card.c-blue mark.hm { color: #ffe08a; }
 
 /* Появление карточек */
 .note-card.entering { animation: cardIn .32s var(--ease-standard) both; }
