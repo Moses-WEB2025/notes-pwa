@@ -2,11 +2,14 @@
 .sheet-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0);
+  background: rgba(0,0,0,.18);
   z-index: 80;
-  transition: background-color .28s ease;
+  /* Фейдим opacity, а не background-color — так слой уходит на GPU
+     и не перерисовывается поэлементно каждый кадр */
+  opacity: 0;
+  transition: opacity var(--dur-2) ease;
 }
-.sheet-backdrop.open { background: rgba(0,0,0,.18); }
+.sheet-backdrop.open { opacity: 1; }
 
 .sheet {
   position: absolute;
@@ -18,7 +21,7 @@
   box-shadow: 0 10px 40px rgba(0,0,0,.16);
   transform: translateY(calc(100% + 40px));
   opacity: 0;
-  transition: transform .32s var(--ease-spring), opacity .24s ease;
+  transition: transform var(--dur-3) var(--ease-spring), opacity var(--dur-2) ease;
   max-height: 84%;
   overflow: hidden auto;
   overscroll-behavior: contain;
@@ -72,7 +75,7 @@
   opacity: 0;
   transform: scale(.9);
   transform-origin: top right;
-  transition: opacity .15s ease, transform .15s var(--ease-standard);
+  transition: opacity var(--dur-1) ease, transform var(--dur-1) var(--ease-standard);
   pointer-events: none;
 }
 .menu-surface.open { opacity: 1; transform: scale(1); pointer-events: auto; }
@@ -141,10 +144,10 @@
   font: 400 14px/1.4 var(--font);
   box-shadow: var(--shadow-raised);
   opacity: 0;
-  transform: translateY(10px);
-  transition: opacity .2s ease, transform .2s var(--ease-spring);
+  transform: translateY(12px) scale(.96);
+  transition: opacity var(--dur-2) ease, transform var(--dur-2) var(--ease-spring);
 }
-.toast.show { opacity: 1; transform: translateY(0); }
+.toast.show { opacity: 1; transform: translateY(0) scale(1); }
 
 /* ===== Аудио ===== */
 .audio-chip { display: inline-flex; align-items: center; gap: 2px; }
@@ -168,10 +171,13 @@
   flex-direction: column;
   align-items: center;
   opacity: 0;
+  /* translateY (а не scale) — размеры canvas читаются через
+     getBoundingClientRect() и не должны быть искажены */
+  transform: translateY(10px);
   pointer-events: none;
-  transition: opacity .22s ease;
+  transition: opacity var(--dur-2) ease, transform var(--dur-3) var(--ease-standard);
 }
-.rec-overlay.open { opacity: 1; pointer-events: auto; }
+.rec-overlay.open { opacity: 1; transform: none; pointer-events: auto; }
 .rec-overlay .rec-timer { font: 600 46px/1.2 var(--font); color: var(--text); margin: 96px 0 4px; font-variant-numeric: tabular-nums; letter-spacing: 1px; }
 .rec-overlay .rec-wave { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; gap: 3px; padding: 0 30px; }
 .rec-overlay .rec-wave i { flex: 1; max-width: 6px; background: var(--accent); border-radius: 3px; min-height: 5px; display: block; }
@@ -199,10 +205,11 @@
   display: flex;
   flex-direction: column;
   opacity: 0;
+  transform: translateY(10px);
   pointer-events: none;
-  transition: opacity .22s ease;
+  transition: opacity var(--dur-2) ease, transform var(--dur-3) var(--ease-standard);
 }
-.draw-overlay.open { opacity: 1; pointer-events: auto; }
+.draw-overlay.open { opacity: 1; transform: none; pointer-events: auto; }
 .draw-canvas-holder { flex: 1; position: relative; margin: 6px 16px; border-radius: 24px; box-shadow: var(--shadow-raised); overflow: hidden; background: #fff; }
 .draw-canvas-holder canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
 .draw-tools { display: flex; align-items: center; gap: 8px; padding: 12px 18px calc(14px + var(--safe-bottom)); }
@@ -331,9 +338,10 @@
 .img-edit-overlay {
   position: absolute; inset: 0; background: #111; z-index: 160;
   display: flex; flex-direction: column;
-  opacity: 0; pointer-events: none; transition: opacity .22s ease;
+  opacity: 0; transform: translateY(10px); pointer-events: none;
+  transition: opacity var(--dur-2) ease, transform var(--dur-3) var(--ease-standard);
 }
-.img-edit-overlay.open { opacity: 1; pointer-events: auto; }
+.img-edit-overlay.open { opacity: 1; transform: none; pointer-events: auto; }
 .img-edit-overlay .appbar-title { color: #fff; }
 .img-edit-overlay .icon-btn { color: #fff; }
 .img-edit-overlay .icon-btn:active { background: rgba(255,255,255,.14); }

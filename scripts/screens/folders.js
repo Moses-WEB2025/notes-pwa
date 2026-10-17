@@ -111,7 +111,7 @@ export function openFolders() {
   }
 
   appbar.querySelector('[data-a=back]').addEventListener('click', () => Nav.pop());
-  appbar.querySelector('[data-a=trash]').addEventListener('click', () => openTrashScreen());
+  appbar.querySelector('[data-a=trash]').addEventListener('click', () => Nav.pushEl(openTrashScreen()));
 
   load();
   return el;

@@ -54,7 +54,7 @@ export function openRecorder(note, onSaved) {
     const blob = new Blob(chs, { type: rec && rec.mimeType || 'audio/webm' });
     const dur = Math.round((Date.now() - t0) / 1000);
     ov.classList.remove('open');
-    setTimeout(()=>ov.remove(), 200);
+    setTimeout(()=>ov.remove(), 300);
     (async () => {
       const id = 'aud_'+uid();
       await Store.putBlob(id, blob);
@@ -71,7 +71,7 @@ export function openRecorder(note, onSaved) {
     rec && rec.state!=='inactive' && rec.stop();
     rec = null; chunks.length = 0;
     ov.classList.remove('open');
-    setTimeout(()=>ov.remove(), 200);
+    setTimeout(()=>ov.remove(), 300);
   });
 
   vibrate(10);

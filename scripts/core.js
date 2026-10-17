@@ -74,10 +74,13 @@ export const Nav={
     el.classList.add('screen', 'enter-right');
     document.getElementById('screens-root').appendChild(el);
     if (prev) prev.classList.add('anim', 'under');
-    requestAnimationFrame(() => {
-      el.classList.add('anim'); el.classList.remove('enter-right');
-      setTimeout(() => { el.classList.remove('anim'); prev && prev.classList.remove('anim'); }, 320);
-    });
+    /* Двойной rAF: даём браузеру отрисовать стартовое положение (за экраном),
+       иначе переход иногда «схлопывается» и экран появляется мгновенно. */
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      el.classList.add('anim');
+      el.classList.remove('enter-right');
+      setTimeout(() => { el.classList.remove('anim'); prev && prev.classList.remove('anim'); }, 340);
+    }));
     vibrate(5);
   },
   /* фабрика optional для совместимости */
@@ -92,16 +95,21 @@ export const Nav={
     document.body.classList.remove('kb-open');
     const top = screens[screens.length - 1];
     const prev = screens[screens.length - 2];
+    /* Снимаем inline-transition ('none' после свайпа) — дальше работает
+       класс .anim, и анимация продолжится с текущей позиции пальца. */
     top.style.transition = '';
     top.classList.add('anim');
     top.style.transform = 'translateX(100%)';
-    prev && prev.classList.remove('under');
     if (prev) {
+      /* Предыдущий экран тоже плавно возвращается из-под сдвига,
+         а не «прыгает» на место за один кадр */
       prev.style.transition = '';
+      prev.classList.add('anim');
+      prev.classList.remove('under');
       prev.style.transform = '';
+      setTimeout(() => prev.classList.remove('anim'), 340);
     }
-    const t = top;
-    setTimeout(() => t.remove(), 320);
+    setTimeout(() => top.remove(), 340);
     vibrate(4);
     return true;
   },
@@ -122,15 +130,23 @@ function backGestureBlocked() {
   );
 }
 
-function resetBackGestureStyles(g) {
+/* Плавный возврат экрана на место, если свайп «назад» не довели до конца.
+   Раньше здесь позиция сбрасывалась мгновенно (без transition) — экран
+   резко «прыгал» назад. Теперь возврат идёт той же кривой, что и слайд. */
+function settleBackGesture(g) {
   if (!g) return;
   g.top.style.transition = '';
+  g.top.classList.add('anim');
   g.top.style.transform = '';
-  g.top.classList.remove('swipe-back');
   if (g.prev) {
     g.prev.style.transition = '';
+    g.prev.classList.add('anim');
     g.prev.style.transform = '';
   }
+  setTimeout(() => {
+    g.top.classList.remove('anim');
+    if (g.prev) g.prev.classList.remove('anim');
+  }, 340);
 }
 
 function applyBackGestureDrag(g, dx) {
@@ -193,16 +209,23 @@ document.addEventListener('touchend', () => {
 
   const w = window.innerWidth;
   const commit = g.dx > BACK_COMMIT_PX || g.dx > w * BACK_COMMIT_RATIO || (g.vx > 0.45 && g.dx > 48);
-  resetBackGestureStyles(g);
+  g.top.classList.remove('swipe-back');
 
-  if (commit) document.dispatchEvent(new CustomEvent('app-back'));
+  if (commit) {
+    /* Не сбрасываем позицию вручную: эстафету принимает app-back → Nav.pop(),
+       и экран доезжает до края с той точки, где его отпустил палец. */
+    document.dispatchEvent(new CustomEvent('app-back'));
+    return;
+  }
+  /* Отмена жеста — мягкий возврат, а не мгновенный скачок */
+  settleBackGesture(g);
 }, { passive: true });
 
 document.addEventListener('touchcancel', () => {
   if (!gesture) return;
   const g = gesture;
   gesture = null;
-  if (g.started) resetBackGestureStyles(g);
+  if (g.started) { g.top.classList.remove('swipe-back'); settleBackGesture(g); }
 }, { passive: true });
 
 /* ---------- Пресс-состояния ---------- */

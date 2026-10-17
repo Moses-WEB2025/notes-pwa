@@ -38,7 +38,8 @@ export function openTrashScreen() {
     bindPress(sc);
   };
   tEl.querySelector('[data-a=back]').addEventListener('click', () => Nav.pop());
-  document.getElementById('screens-root').appendChild(tEl);
+  /* Экран добавляется вызывающим кодом через Nav.pushEl — иначе он появлялся
+     бы мгновенно, без слайда, как у нативного приложения. */
   bindPress(tEl);
   fill();
   return tEl;

@@ -133,7 +133,7 @@ export function openImageEditor(src, onDone) {
 
   function close(result) {
     ov.classList.remove('open');
-    setTimeout(() => ov.remove(), 200);
+    setTimeout(() => ov.remove(), 300);
     if (result && onDone) onDone(result);
   }
 
