@@ -3,6 +3,7 @@ import { Store, Nav, fmtEditorDate, escapeHtml, uid, debounce, vibrate } from '.
 import { toast, attachMenu, sheetSections, openSheet, confirmSheet } from '../components/ui.js';
 import { openRecorder } from '../components/recorder.js';
 import { openDrawing } from '../components/drawing.js';
+import { openImageEditor } from '../components/image-editor.js';
 
 /* Цветовые темы холста */
 const COLORS = [
@@ -91,9 +92,10 @@ export function openEditor(id, opts = {}) {
   /* ---------- Состояние ---------- */
   let note = null;
   let foldersList = [];
-  let undoStack = [], redoStack = [], suppress = false;
+  /* история изменений: список снимков {title, html}; histIndex — текущая позиция */
+  let history = [], histIndex = -1, suppress = false;
   let players = [];
-  let currentAudio = null;
+  let stopAudio = () => {};
 
   (async () => {
     foldersList = await Store.folders();
@@ -109,10 +111,10 @@ export function openEditor(id, opts = {}) {
     titleInput.value = note.title || '';
     const c = note.content || '';
     content.innerHTML = /[<>]/.test(c) ? c : c.split('\n').join('<br>');
-    content.querySelectorAll('.check-item input[type="checkbox"]').forEach(cb => {
-      cb.closest('.check-item')?.classList.toggle('checked', cb.checked);
-    });
+    await hydrateImages();
+    syncCheckboxes();
     updFolderChip(); updMeta(); renderPlayers(); applyTheme();
+    history = [snapshot()]; histIndex = 0; updUndoBtns();
   })();
 
   /* ---------- Тема холста (цвет + автоконтраст текста) ---------- */
@@ -136,36 +138,63 @@ export function openEditor(id, opts = {}) {
     meta.innerHTML = `<span>${escapeHtml(fmtEditorDate(note.updatedAt))}</span><span class="dot"></span><span>${chars} символов</span>`;
   }
 
-  /* ---------- Undo/Redo ---------- */
-  function pushUndo() {
+  /* ---------- Служебные ---------- */
+  function snapshot() { return { title: titleInput.value, html: content.innerHTML }; }
+  function syncCheckboxes() {
+    content.querySelectorAll('.check-item input[type="checkbox"]').forEach(cb => {
+      cb.closest('.check-item')?.classList.toggle('checked', cb.checked);
+    });
+  }
+  /* Восстанавливаем «фото» из IndexedDB: в сохранённом HTML лежат data-blob ссылки,
+     а src (blob:-URL) после перезапуска недействителен. */
+  async function hydrateImages() {
+    const imgs = content.querySelectorAll('img[data-blob]');
+    for (const img of imgs) {
+      const bid = img.getAttribute('data-blob');
+      if (!bid) continue;
+      const blob = await Store.blob(bid);
+      if (blob) img.src = URL.createObjectURL(blob);
+    }
+  }
+
+  /* ---------- Undo/Redo (история снимков) ---------- */
+  const undoBtn = topbarKb.querySelector('[data-a=undo]');
+  const redoBtn = topbarKb.querySelector('[data-a=redo]');
+  /* Зафиксировать текущее состояние как новую вершину истории. Вызывать ПОСЛЕ изменения. */
+  function commit() {
     if (suppress) return;
-    undoStack.push({ title: titleInput.value, html: content.innerHTML });
-    if (undoStack.length > 100) undoStack.shift();
-    redoStack.length = 0; updUndoBtns();
+    const s = snapshot();
+    const cur = history[histIndex];
+    if (cur && cur.html === s.html && cur.title === s.title) return; /* нет изменений */
+    history = history.slice(0, histIndex + 1);
+    history.push(s);
+    if (history.length > 100) history.shift();
+    histIndex = history.length - 1;
+    updUndoBtns();
   }
   function updUndoBtns() {
-    topbarKb.querySelector('[data-a=undo]').disabled = !undoStack.length;
-    topbarKb.querySelector('[data-a=redo]').disabled = !redoStack.length;
+    undoBtn.disabled = histIndex <= 0;
+    redoBtn.disabled = histIndex >= history.length - 1;
   }
   function applyState(s) {
     suppress = true; titleInput.value = s.title; content.innerHTML = s.html; suppress = false;
+    syncCheckboxes();
+    if (selImg && !content.contains(selImg)) clearImageSelection();
     updMeta(); scheduleSave();
   }
   function doUndo() {
-    if (!undoStack.length) return;
-    redoStack.push({ title: titleInput.value, html: content.innerHTML });
-    applyState(undoStack.pop()); updUndoBtns();
+    if (histIndex <= 0) return;
+    histIndex--; applyState(history[histIndex]); updUndoBtns();
   }
   function doRedo() {
-    if (!redoStack.length) return;
-    undoStack.push({ title: titleInput.value, html: content.innerHTML });
-    applyState(redoStack.pop()); updUndoBtns();
+    if (histIndex >= history.length - 1) return;
+    histIndex++; applyState(history[histIndex]); updUndoBtns();
   }
-  topbarKb.querySelector('[data-a=undo]').addEventListener('click', doUndo);
-  topbarKb.querySelector('[data-a=redo]').addEventListener('click', doRedo);
+  undoBtn.addEventListener('click', doUndo);
+  redoBtn.addEventListener('click', doRedo);
 
   /* ввод */
-  const typed = debounce(() => { pushUndo(); updMeta(); scheduleSave(); }, 350);
+  const typed = debounce(() => { commit(); updMeta(); scheduleSave(); }, 350);
   titleInput.addEventListener('input', typed);
   content.addEventListener('input', typed);
   content.addEventListener('pointerdown', e => {
@@ -174,7 +203,7 @@ export function openEditor(id, opts = {}) {
     e.preventDefault();
     cb.checked = !cb.checked;
     cb.closest('.check-item')?.classList.toggle('checked', cb.checked);
-    scheduleSave();
+    commit(); scheduleSave();
   });
   content.addEventListener('keydown', e => {
     if (e.key !== 'Enter' || e.isComposing) return;
@@ -189,7 +218,6 @@ export function openEditor(id, opts = {}) {
     tail.setStart(sel.anchorNode, sel.anchorOffset);
     if (tail.toString().length) return;
     e.preventDefault();
-    pushUndo();
     const next = document.createElement('div');
     next.className = 'check-item';
     next.dataset.check = '1';
@@ -198,6 +226,7 @@ export function openEditor(id, opts = {}) {
     const nl = next.querySelector('.lbl');
     placeCaretIn(nl);
     saveSelection();
+    commit();
     scheduleSave();
   });
 
@@ -236,7 +265,7 @@ export function openEditor(id, opts = {}) {
     document.dispatchEvent(new CustomEvent('notes-changed'));
   }
 
-  async function done() { content.blur(); titleInput.blur(); teardownKb(); await finalSave(); Nav.pop(); }
+  async function done() { stopAudio(); clearImageSelection(); content.blur(); titleInput.blur(); teardownKb(); await finalSave(); Nav.pop(); }
 
   topbar.querySelector('[data-a=back]').addEventListener('click', done);
   topbarKb.querySelector('[data-a=back2]').addEventListener('click', done);
@@ -416,11 +445,11 @@ export function openEditor(id, opts = {}) {
   }
 
   function runFormat(mutate) {
-    pushUndo();
     ensureBlock();
     focusEditor();
     mutate();
     saveSelection();
+    commit();
     scheduleSave();
     updMeta();
   }
@@ -445,6 +474,7 @@ export function openEditor(id, opts = {}) {
       saveSelection();
       content.blur();
       openRecorder(note, async (rec) => {
+        if (note.audio?.id && note.audio.id !== rec.id) { try { await Store.delBlob(note.audio.id); } catch (e) {} }
         note.audio = rec;
         await Store.saveNote(note);
         renderPlayers();
@@ -520,26 +550,455 @@ export function openEditor(id, opts = {}) {
     inp.click();
   }
 
-  /* ---------- Плеер аудио ---------- */
-  function fmtDur2(s) { const m = Math.floor(s / 60); return `${m}:${s % 60 < 10 ? '0' : ''}${Math.floor(s % 60)}`; }
+  /* =========================================================
+     Аудио: плеер со звуковой волной (по громкости) + удаление
+     ========================================================= */
+  function fmtDur2(s) { s = Math.max(0, Math.floor(s || 0)); const m = Math.floor(s / 60); return `${m}:${s % 60 < 10 ? '0' : ''}${s % 60}`; }
+  const waveCache = new Map();
+
+  function computePeaks(buf, bars) {
+    const ch = buf.getChannelData(0);
+    const peaks = new Float32Array(bars);
+    const block = Math.max(1, Math.floor(ch.length / bars));
+    for (let i = 0; i < bars; i++) {
+      let max = 0;
+      const start = i * block, end = Math.min(start + block, ch.length);
+      const step = Math.max(1, Math.floor(block / 32));
+      for (let j = start; j < end; j += step) { const v = Math.abs(ch[j]); if (v > max) max = v; }
+      peaks[i] = max;
+    }
+    return peaks;
+  }
+
+  async function loadPeaks(id, blob, bars) {
+    if (waveCache.has(id)) return waveCache.get(id);
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      const ac = new AC();
+      const buf = await ac.decodeAudioData(await blob.arrayBuffer());
+      const peaks = computePeaks(buf, bars);
+      try { ac.close(); } catch (e) {}
+      waveCache.set(id, peaks);
+      return peaks;
+    } catch (e) { return null; }
+  }
+
   function renderPlayers() {
+    stopAudio();
+    stopAudio = () => {};
     players.forEach(p => p.remove()); players = [];
+
+    const host = document.createElement('div');
+    host.className = 'player-host';
+    players.push(host);
+    meta.after(host);
+
     if (!note.audio) return;
-    const p = document.createElement('div');
-    p.className = 'player-chip';
-    p.innerHTML = `<span class="material-symbols-rounded play" role="button">play_arrow</span><span class="time">${fmtDur2(note.audio.duration || 0)}</span>`;
-    p.querySelector('.play').addEventListener('click', async () => {
-      const ic = p.querySelector('.play');
-      if (currentAudio) { currentAudio.pause(); currentAudio = null; ic.textContent = 'play_arrow'; return; }
+
+    const BARS = 46;
+    const card = document.createElement('div');
+    card.className = 'player-card';
+    card.innerHTML = `
+      <button class="pc-play" type="button" aria-label="Воспроизвести">
+        <span class="material-symbols-rounded">play_arrow</span>
+      </button>
+      <div class="pc-mid">
+        <canvas class="pc-wave"></canvas>
+        <div class="pc-sub"><span class="pc-cur">${fmtDur2(0)}</span><span class="pc-sep">/</span><span class="pc-dur">${fmtDur2(note.audio.duration)}</span></div>
+      </div>
+      <button class="pc-del" type="button" aria-label="Удалить аудио">
+        <span class="material-symbols-rounded">delete</span>
+      </button>`;
+    host.appendChild(card);
+
+    const canvas = card.querySelector('.pc-wave');
+    const curEl = card.querySelector('.pc-cur');
+    const playBtn = card.querySelector('.pc-play');
+    const icon = playBtn.querySelector('.material-symbols-rounded');
+
+    let peaks = null, playing = false, raf = null;
+    let audioEl = null, actx = null, analyser = null, dataArr = null;
+
+    const accent = () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#f2a824';
+
+    function draw(progress = 0, live = 0) {
+      const r = canvas.getBoundingClientRect();
+      if (!r.width) return;
+      const dpr = Math.min(3, window.devicePixelRatio || 1);
+      const W = Math.round(r.width * dpr), H = Math.round(r.height * dpr);
+      if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+      const cx = canvas.getContext('2d');
+      cx.clearRect(0, 0, W, H);
+      const acc = accent();
+      const gap = Math.max(1, 2 * dpr);
+      const bw = (W - gap * (BARS - 1)) / BARS;
+      const mid = H / 2;
+      const head = progress * BARS;
+      for (let i = 0; i < BARS; i++) {
+        let p = peaks ? Math.max(0.06, peaks[i]) : 0.32;
+        let bh = p * (H - 6 * dpr);
+        if (playing && analyser && i === Math.floor(head) && live > 0) bh = Math.max(bh, live * (H - 4 * dpr));
+        bh = Math.max(3 * dpr, bh);
+        const x = i * (bw + gap);
+        const played = (i + 0.5) <= head;
+        cx.fillStyle = played ? acc : 'rgba(128,128,128,.35)';
+        cx.beginPath();
+        if (cx.roundRect) cx.roundRect(x, mid - bh / 2, bw, bh, Math.min(bw / 2, 2 * dpr));
+        else cx.rect(x, mid - bh / 2, bw, bh);
+        cx.fill();
+      }
+    }
+
+    function loop() {
+      if (!audioEl) return;
+      const dur = (audioEl.duration && isFinite(audioEl.duration)) ? audioEl.duration : (note.audio.duration || 1);
+      const prog = Math.min(1, (audioEl.currentTime || 0) / dur);
+      let live = 0;
+      if (analyser) {
+        analyser.getByteFrequencyData(dataArr);
+        let s = 0; for (let i = 0; i < 16; i++) s += dataArr[i];
+        live = (s / 16) / 255;
+      }
+      draw(prog, live);
+      curEl.textContent = fmtDur2(audioEl.currentTime || 0);
+      if (playing) raf = requestAnimationFrame(loop);
+    }
+
+    async function play() {
       const blob = await Store.blob(note.audio.id);
       if (!blob) { toast('Аудио недоступно'); return; }
-      currentAudio = new Audio(URL.createObjectURL(blob));
-      currentAudio.onended = () => { ic.textContent = 'play_arrow'; currentAudio = null; };
-      ic.textContent = 'pause';
-      currentAudio.play();
+      audioEl = new Audio(URL.createObjectURL(blob));
+      audioEl.onended = () => { stopMedia(); draw(0, 0); curEl.textContent = fmtDur2(0); };
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        actx = new AC();
+        try { await actx.resume(); } catch (e) {}
+        const srcNode = actx.createMediaElementSource(audioEl);
+        analyser = actx.createAnalyser(); analyser.fftSize = 256;
+        dataArr = new Uint8Array(analyser.frequencyBinCount);
+        srcNode.connect(analyser); analyser.connect(actx.destination);
+      } catch (e) { analyser = null; actx = null; }
+      playing = true; icon.textContent = 'pause';
+      try { await audioEl.play(); } catch (e) {}
+      loop();
+    }
+
+    function stopMedia() {
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+      if (audioEl) { try { audioEl.pause(); } catch (e) {} audioEl = null; }
+      if (actx) { try { actx.close(); } catch (e) {} actx = null; }
+      analyser = null; dataArr = null; playing = false;
+      icon.textContent = 'play_arrow';
+    }
+
+    playBtn.addEventListener('click', () => {
+      if (playing) { stopMedia(); draw(0, 0); curEl.textContent = fmtDur2(0); }
+      else play();
     });
-    meta.after(p); players.push(p);
+
+    card.querySelector('.pc-del').addEventListener('click', async () => {
+      const ok = await confirmSheet({ title: 'Удалить аудио?', text: 'Аудиофайл будет удалён из этой заметки.', okLabel: 'Удалить' });
+      if (!ok) return;
+      const aid = note.audio && note.audio.id;
+      stopMedia();
+      if (aid) { try { await Store.delBlob(aid); } catch (e) {} }
+      note.audio = null;
+      await Store.saveNote(note);
+      renderPlayers();
+      updMeta();
+      toast('Аудио удалено');
+    });
+
+    stopAudio = stopMedia;
+
+    requestAnimationFrame(() => {
+      draw(0, 0);
+      const id = note.audio.id;
+      Store.blob(id).then(blob => blob && loadPeaks(id, blob, BARS)).then(pk => {
+        if (pk) { peaks = pk; if (playing) loop(); else draw(0, 0); }
+      });
+    });
   }
+
+  /* =========================================================
+     Фото: выделение долгим тапом, изменение размера,
+     перемещение, поворот, обрезка, замена, копирование, удаление
+     ========================================================= */
+  let selImg = null, imgFrame = null, imgBar = null;
+
+  function movableBlock(img) {
+    const p = img.parentElement;
+    if (p && p !== content && p.hasAttribute('data-drawing')) return p;
+    return img;
+  }
+
+  function selectImage(img) {
+    if (selImg === img) { positionImageTools(); return; }
+    clearImageSelection();
+    selImg = img;
+    img.classList.add('img-selected');
+    buildFrame();
+    buildBar();
+    if (document.activeElement === content || titleInput === document.activeElement) { content.blur(); titleInput.blur(); setTimeout(positionImageTools, 360); }
+    positionImageTools();
+    vibrate(10);
+  }
+
+  function clearImageSelection() {
+    if (selImg) selImg.classList.remove('img-selected', 'img-dragging');
+    selImg = null;
+    if (imgFrame) { imgFrame.remove(); imgFrame = null; }
+    if (imgBar) { imgBar.remove(); imgBar = null; }
+  }
+
+  function buildFrame() {
+    imgFrame = document.createElement('div');
+    imgFrame.className = 'img-frame';
+    imgFrame.innerHTML = ['tl', 'tr', 'bl', 'br'].map(h => `<span class="img-handle ${h}" data-h="${h}"></span>`).join('');
+    document.body.appendChild(imgFrame);
+    imgFrame.querySelectorAll('.img-handle').forEach(h => h.addEventListener('pointerdown', e => startResize(e, h.dataset.h)));
+  }
+
+  function buildBar() {
+    imgBar = document.createElement('div');
+    imgBar.className = 'img-bar';
+    imgBar.innerHTML = `
+      <button class="img-act" data-a="crop"><span class="material-symbols-rounded">crop</span><span>Обрезка</span></button>
+      <button class="img-act" data-a="rotate"><span class="material-symbols-rounded">rotate_right</span><span>Повернуть</span></button>
+      <button class="img-act" data-a="replace"><span class="material-symbols-rounded">swap_horiz</span><span>Заменить</span></button>
+      <button class="img-act" data-a="copy"><span class="material-symbols-rounded">content_copy</span><span>Копировать</span></button>
+      <button class="img-act danger" data-a="delete"><span class="material-symbols-rounded">delete</span><span>Удалить</span></button>`;
+    document.body.appendChild(imgBar);
+    imgBar.addEventListener('click', e => {
+      const b = e.target.closest('[data-a]'); if (!b) return;
+      vibrate(8);
+      const a = b.dataset.a;
+      if (a === 'crop') editCrop();
+      else if (a === 'rotate') rotateImage();
+      else if (a === 'replace') replaceImage();
+      else if (a === 'copy') copyImage();
+      else if (a === 'delete') deleteImage();
+    });
+  }
+
+  function positionImageTools() {
+    if (!selImg) return;
+    const r = selImg.getBoundingClientRect();
+    if (imgFrame) {
+      imgFrame.style.left = r.left + 'px';
+      imgFrame.style.top = r.top + 'px';
+      imgFrame.style.width = r.width + 'px';
+      imgFrame.style.height = r.height + 'px';
+    }
+  }
+
+  function startResize(e, corner) {
+    if (!selImg) return;
+    e.preventDefault(); e.stopPropagation();
+    const img = selImg;
+    const startW = img.getBoundingClientRect().width;
+    const maxW = Math.max(44, content.clientWidth - 40);
+    const sx = e.clientX;
+    const dir = corner.includes('r') ? 1 : -1;
+    const target = e.currentTarget;
+    try { target.setPointerCapture(e.pointerId); } catch (err) {}
+    const move = ev => {
+      const w = Math.max(44, Math.min(maxW, startW + (ev.clientX - sx) * dir));
+      img.style.width = w + 'px';
+      img.style.height = 'auto';
+      positionImageTools();
+    };
+    const up = () => {
+      target.removeEventListener('pointermove', move);
+      target.removeEventListener('pointerup', up);
+      target.removeEventListener('pointercancel', up);
+      commit(); scheduleSave(); updMeta();
+    };
+    target.addEventListener('pointermove', move);
+    target.addEventListener('pointerup', up);
+    target.addEventListener('pointercancel', up);
+  }
+
+  function startMove(e, img) {
+    e.preventDefault();
+    const unit = movableBlock(img);
+    const sx = e.clientX, sy = e.clientY;
+    let active = false, ref = null;
+    const line = document.createElement('div');
+    line.className = 'img-drop-line';
+    const move = ev => {
+      if (!active && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 8) return;
+      if (!active) { active = true; img.classList.add('img-dragging'); document.body.appendChild(line); }
+      const kids = [...content.children].filter(k => k !== unit);
+      const cr = content.getBoundingClientRect();
+      let y = cr.bottom; ref = null;
+      for (const k of kids) {
+        const kr = k.getBoundingClientRect();
+        if (ev.clientY < kr.top + kr.height / 2) { y = kr.top; ref = k; break; }
+      }
+      line.style.left = (cr.left + 12) + 'px';
+      line.style.width = Math.max(0, cr.width - 24) + 'px';
+      line.style.top = y + 'px';
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+      if (!active) return;
+      img.classList.remove('img-dragging');
+      line.remove();
+      if (ref && ref !== unit) content.insertBefore(unit, ref);
+      else if (!ref) content.appendChild(unit);
+      commit(); scheduleSave(); updMeta();
+      positionImageTools();
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+  }
+
+  function deleteImage() {
+    if (!selImg) return;
+    const unit = movableBlock(selImg);
+    clearImageSelection();
+    const next = unit.nextElementSibling;
+    unit.remove();
+    if (next && next.tagName === 'DIV' && !next.classList.contains('check-item') && !next.hasAttribute('data-drawing') && !(next.textContent || '').trim() && next.children.length <= 1) next.remove();
+    if (!content.children.length) content.innerHTML = '<div><br></div>';
+    commit(); scheduleSave(); updMeta();
+    toast('Фото удалено');
+  }
+
+  function imageToDataURL(img) {
+    try {
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth || img.width;
+      c.height = img.naturalHeight || img.height;
+      c.getContext('2d').drawImage(img, 0, 0);
+      return c.toDataURL('image/png');
+    } catch (e) { return null; }
+  }
+
+  function rotateDataURL(url, deg) {
+    return new Promise(resolve => {
+      const im = new Image();
+      im.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = im.height; c.height = im.width;
+        const cx = c.getContext('2d');
+        cx.translate(c.width / 2, c.height / 2);
+        cx.rotate(deg * Math.PI / 180);
+        cx.drawImage(im, -im.width / 2, -im.height / 2);
+        resolve(c.toDataURL('image/png'));
+      };
+      im.onerror = () => resolve(null);
+      im.src = url;
+    });
+  }
+
+  async function applyImageDataURL(img, dataUrl) {
+    const bid = img.getAttribute('data-blob');
+    try {
+      const blob = await (await fetch(dataUrl)).blob();
+      if (bid) { await Store.putBlob(bid, blob); img.src = URL.createObjectURL(blob); return; }
+    } catch (e) {}
+    img.src = dataUrl;
+  }
+
+  async function rotateImage() {
+    if (!selImg) return;
+    const img = selImg;
+    const keepW = img.getBoundingClientRect().width + 'px';
+    const dataUrl = imageToDataURL(img);
+    if (!dataUrl) { toast('Не удалось изменить фото'); return; }
+    const out = await rotateDataURL(dataUrl, 90);
+    if (!out) return;
+    await applyImageDataURL(img, out);
+    img.style.width = keepW; img.style.height = 'auto';
+    commit(); scheduleSave(); vibrate(10);
+    positionImageTools();
+  }
+
+  function replaceImage() {
+    if (!selImg) return;
+    const img = selImg;
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = async () => {
+      const f = inp.files[0]; if (!f) return;
+      let bid = img.getAttribute('data-blob');
+      if (!bid) { bid = 'img_' + uid(); img.setAttribute('data-blob', bid); }
+      try {
+        await Store.putBlob(bid, f);
+        img.src = URL.createObjectURL(f);
+        img.style.width = ''; img.style.height = '';
+        commit(); scheduleSave(); positionImageTools();
+        toast('Фото заменено');
+      } catch (e) { toast('Не удалось заменить фото'); }
+    };
+    inp.click();
+  }
+
+  async function copyImage() {
+    if (!selImg) return;
+    const unit = movableBlock(selImg);
+    const clone = unit.cloneNode(true);
+    const cloneImg = clone.tagName === 'IMG' ? clone : clone.querySelector('img');
+    const bid = selImg.getAttribute('data-blob');
+    if (bid && cloneImg) {
+      const blob = await Store.blob(bid);
+      if (blob) {
+        const nid = 'img_' + uid();
+        await Store.putBlob(nid, blob);
+        cloneImg.setAttribute('data-blob', nid);
+        cloneImg.src = URL.createObjectURL(blob);
+      }
+    }
+    unit.after(clone);
+    commit(); scheduleSave();
+    toast('Фото скопировано');
+  }
+
+  function editCrop() {
+    if (!selImg) return;
+    const img = selImg;
+    const src = img.currentSrc || img.src;
+    const keepW = (img.style.width || (img.getBoundingClientRect().width + 'px'));
+    clearImageSelection();
+    openImageEditor(src, async (out) => {
+      if (!out) return;
+      await applyImageDataURL(img, out);
+      img.style.width = keepW; img.style.height = 'auto';
+      commit(); scheduleSave(); updMeta();
+      toast('Фото изменено');
+    });
+  }
+
+  /* Жест: долгий тап по фото выделяет его; на выделенном — перетаскивание */
+  let pressTimer = null, pressImg = null, pressFrom = null;
+  const cancelPress = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } pressImg = null; };
+
+  content.addEventListener('pointerdown', e => {
+    const t = e.target;
+    const img = t && t.closest ? t.closest('img.rich-img') : null;
+    if (!img) {
+      if (selImg && !(t.closest && t.closest('.img-bar, .img-frame'))) clearImageSelection();
+      return;
+    }
+    if (img === selImg) { startMove(e, img); return; }
+    pressImg = img; pressFrom = { x: e.clientX, y: e.clientY };
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(() => { pressTimer = null; if (pressImg === img) selectImage(img); }, 420);
+  });
+  window.addEventListener('pointerup', cancelPress);
+  window.addEventListener('pointermove', e => {
+    if (!pressImg || !pressFrom) return;
+    if (Math.hypot(e.clientX - pressFrom.x, e.clientY - pressFrom.y) > 12) cancelPress();
+  });
+  window.addEventListener('pointercancel', cancelPress);
+  bodyWrap.addEventListener('scroll', positionImageTools, { passive: true });
+  window.addEventListener('resize', positionImageTools);
+  document.addEventListener('kb-change', () => { if (selImg) setTimeout(positionImageTools, 60); });
 
   Nav.pushEl(el);
   vibrate(5);

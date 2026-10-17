@@ -37,11 +37,9 @@
 .editor-screen .note-content-input:empty::before { color: var(--ed-muted, #c9c9cd) !important; }
 
 /* Действия в цветном холсте тоже в тему */
-.editor-screen .player-chip {
-  background: rgba(128,128,128,.14);
-}
-.editor-screen .player-chip .material-symbols-rounded { color: var(--ed-ink, var(--accent)); }
-.editor-screen .player-chip .time { color: var(--ed-muted); }
+.editor-screen .player-card { background: var(--ed-chip, var(--accent-soft)); }
+.editor-screen .player-card .pc-sub { color: var(--ed-muted, #8a6b1f); }
+.editor-screen .player-card .pc-del { color: #d93025; }
 
 /* ---- Editor body ---- */
 /* Экран редактора = видимая область над клавиатурой (iOS: --vv-top при скролле viewport) */
@@ -99,6 +97,9 @@ body.kb-open .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px
 .note-content-input li { margin: 3px 0; }
 .note-content-input blockquote { border-left: 3px solid var(--accent); padding-left: 12px; margin: 8px 0; color: #6b5510; }
 .note-content-input img.rich-img, .note-content-input [data-drawing] img { max-width: 100%; border-radius: 14px; display: block; margin: 8px 0; }
+.note-content-input img.rich-img { -webkit-user-drag: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.note-content-input img.img-selected { outline: 2px solid var(--accent); outline-offset: 3px; touch-action: none; }
+.note-content-input img.img-dragging { opacity: .5; }
 .note-content-input mark { background: var(--accent-soft); }
 
 .check-item { display: flex; gap: 10px; align-items: flex-start; margin: 6px 0; }
