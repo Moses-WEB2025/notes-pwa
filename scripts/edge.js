@@ -13,13 +13,14 @@
      под неё (viewport-fit=cover), а контент — отступать через
      env(safe-area-inset-*).
 
-   • iOS 26+ (Safari и Home Screen web app) — apple-mobile-web-app-status-bar-style
-     = black-translucent устарел, и Home Screen web app в принципе не рисует
-     контент под статус-баром. Safari сам подкрашивает статус-бар цветом
-     background-color у <body>, а с iOS 26 перестал обновлять theme-color
-     на лету. Поэтому задаём оба значения сразу.
+   • iOS 26+ (Safari и Home Screen web app) — theme-color больше не читается.
+     Safari сам подбирает цвет по background-color ближайшего position:fixed
+     элемента у верхнего/нижнего края вьюпорта (у нас это body), поэтому
+     красим и html, и body. Контент под системной полосой Safari не рисует —
+     это его собственная хрома, стилями не убирается; поэтому лифтуемые
+     элементы не заводим под safe-area (см. --search-top в main.css).
 
-   Итог: одна точка обновления — applyEdgeColor() — и хуки на каждый переход
+   Итог: одна точка обновления — setEdgeColor() — и хуки на каждый переход
    экрана / смену его фона. */
 
 /* Верхний экран — тот же критерий, что и у Nav.screens (без импорта core.js,
@@ -42,25 +43,42 @@ function isOpaque(color) {
   return !!color && color !== 'transparent' && color !== 'rgba(0, 0, 0, 0)';
 }
 
-/* Цвет фона верхнего экрана. Прозрачные экраны берут цвет body. */
-function currentScreenColor() {
-  const fallback = getComputedStyle(document.body).backgroundColor;
-  const el = topScreen();
-  if (!el) return fallback;
-  const bg = getComputedStyle(el).backgroundColor;
-  return isOpaque(bg) ? bg : fallback;
+/* Базовый фон приложения (--bg). Именно его берём, когда у экрана нет своего
+   фона: body мы сами перекрашиваем, поэтому брать цвет из body нельзя. */
+function appBgColor() {
+  const v = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  return v || '#f7f7f7';
+}
+
+/* Цвет конкретного экрана; прозрачный — базовый фон приложения. */
+function colorOf(el) {
+  if (el) {
+    const bg = getComputedStyle(el).backgroundColor;
+    if (isOpaque(bg)) return bg;
+  }
+  return appBgColor();
 }
 
 /* Покрасить системные зоны в конкретный цвет (CSS-значение). */
 export function setEdgeColor(color) {
   if (!isOpaque(color)) return;
+  /* 1) Android (Chrome — и браузер, и установленная PWA): верхнюю системную
+        полосу красит <meta name="theme-color">. */
   themeMeta().setAttribute('content', color);
-  /* body — источник подкраски статус-бара в Safari (iOS 26+), а также фон,
-     который виден в зазоре при слайде между экранами. */
+  /* 2) iOS 26+ / Safari: theme-color там больше не читается. Safari сам
+        подбирает цвет по background-color ближайшего position:fixed элемента
+        у верхнего и нижнего края экрана. body у нас position:fixed, поэтому
+        красим html + body — это же фон, видимый в зазоре при слайде экранов. */
+  document.documentElement.style.backgroundColor = color;
   document.body.style.backgroundColor = color;
+}
+
+/* Перекрасить системные зоны по конкретному экрану. */
+export function refreshEdgeColorFor(el) {
+  setEdgeColor(colorOf(el));
 }
 
 /* Пересчитать цвет по текущему верхнему экрану. */
 export function refreshEdgeColor() {
-  setEdgeColor(currentScreenColor());
+  refreshEdgeColorFor(topScreen());
 }

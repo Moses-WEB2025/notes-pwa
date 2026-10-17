@@ -80,6 +80,10 @@ html {
   -webkit-text-size-adjust: none;
   text-size-adjust: none;
   height: 100%;
+  /* Явный фон (не прозрачный): Safari на iOS 26 берёт из html/body цвет
+     подкраски системных полос, а прозрачность он трактует как белый —
+     отсюда «белая полоса» сверху. Дальше цвет ведёт edge.js. */
+  background: var(--bg);
   overscroll-behavior: none;
   touch-action: manipulation;
 }

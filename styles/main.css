@@ -91,7 +91,13 @@
    Шапка и заголовок уезжают вверх, строка занимает их место, а список
    сдвигается следом. Двигаем только transform; отрицательный margin у списка
    компенсирует сдвиг, чтобы снизу не осталось пустоты. --hd-up задаёт JS. */
-.main-screen { --hd-up: 120px; }
+.main-screen {
+  --hd-up: 120px;
+  /* Верх лифтуемой строки поиска. Не ровно safe-area: системная полоса
+     (статус-бар iOS/Android) рисуется ПОВЕРХ страницы, и её верхняя граница
+     перекрывала бы рамку строки. Небольшой зазор оставляет кольцо видимым. */
+  --search-top: calc(var(--safe-top) + 8px);
+}
 .main-screen .appbar,
 .main-screen .h1-row,
 .main-screen .searchbar,
@@ -105,11 +111,11 @@
   pointer-events: none;
 }
 .main-screen.searching .searchbar {
-  transform: translateY(calc(var(--safe-top) - var(--hd-up, 120px))) translateX(var(--search-dx, 0px));
+  transform: translateY(calc(var(--search-top) - var(--hd-up, 120px))) translateX(var(--search-dx, 0px));
 }
 .main-screen.searching .grid-holder {
-  transform: translateY(calc(var(--safe-top) - var(--hd-up, 120px)));
-  margin-bottom: calc(var(--safe-top) - var(--hd-up, 120px));
+  transform: translateY(calc(var(--search-top) - var(--hd-up, 120px)));
+  margin-bottom: calc(var(--search-top) - var(--hd-up, 120px));
 }
 /* Во время свайпа строка следует за пальцем без задержки */
 .main-screen.search-drag .searchbar { transition: none; }

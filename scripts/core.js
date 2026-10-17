@@ -1,5 +1,5 @@
 /* ============ Ядро: утилиты + IndexedDB + навигация + пресс + клавиатура + жесты ============ */
-import { refreshEdgeColor } from './edge.js';
+import { refreshEdgeColor, refreshEdgeColorFor } from './edge.js';
 
 /* ---------- Даты ---------- */
 export function pad2(n){return n<10?'0'+n:''+n;}
@@ -99,6 +99,10 @@ export const Nav={
     document.body.classList.remove('kb-open');
     const top = screens[screens.length - 1];
     const prev = screens[screens.length - 2];
+    /* Верхним снова становится предыдущий экран — красим системные зоны
+       СРАЗУ, ещё до старта слайда. Иначе цвет закрываемого экрана «залипает»
+       на всё время анимации (и ещё на кадр после удаления). */
+    refreshEdgeColorFor(prev);
     /* Снимаем inline-transition ('none' после свайпа) — дальше работает
        класс .anim, и анимация продолжится с текущей позиции пальца. */
     top.style.transition = '';
@@ -113,11 +117,7 @@ export const Nav={
       prev.style.transform = '';
       setTimeout(() => prev.classList.remove('anim'), 340);
     }
-    setTimeout(() => {
-      top.remove();
-      /* Верхним снова стал предыдущий экран — обновляем системные зоны. */
-      refreshEdgeColor();
-    }, 340);
+    setTimeout(() => { top.remove(); }, 340);
     vibrate(4);
     return true;
   },
