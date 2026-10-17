@@ -21,7 +21,15 @@ initKeyboard();
 
 /* Перехват «назад» на Android — корректная работа как в нативном приложении:
    сначала закрываем меню/sheet/оверлеи/режим выбора, потом экран, в самом конце ничего */
+let backHandledAt = 0;
 document.addEventListener('app-back', () => {
+  /* Защита от двойного срабатывания на один свайп: системный жест (popstate)
+     и собственный edge-жест могут прийти почти одновременно — не «проскакиваем»
+     два экрана за раз. */
+  const now = Date.now();
+  if (now - backHandledAt < 400) return;
+  backHandledAt = now;
+
   /* 1. bottom sheet */
   const sheet = document.querySelector('.sheet-backdrop.open');
   if (sheet) { const cancel = sheet.querySelector('[data-a=cancel]'); if (cancel) { cancel.click(); return; } sheet.remove(); return; }

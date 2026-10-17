@@ -63,8 +63,12 @@
       if (isReload) e.preventDefault();
     }, { passive: false });
 
-    // Перехват «назад» на Android — корректный выход со стеком экранов
+    // Перехват «назад» (системный жест / кнопка) — как в нативных приложениях.
+    // Держим над базовой записью постоянную «страж»-запись: тогда любой свайп
+    // «назад» остаётся внутри документа и вызывает popstate, а не закрывает
+    // приложение уходом на предыдущую страницу.
     history.replaceState({ app: 1 }, '');
+    history.pushState({ app: 1 }, '');
     window.addEventListener('popstate', () => {
       document.dispatchEvent(new CustomEvent('app-back'));
       history.pushState({ app: 1 }, '');
