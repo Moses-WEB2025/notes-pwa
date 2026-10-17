@@ -73,18 +73,20 @@ export function mainScreen() {
   selBar.innerHTML = `
     <button data-sel="hide"><span class="material-symbols-rounded">lock</span><span>Скрыть</span></button>
     <button data-sel="pin"><span class="material-symbols-rounded">push_pin</span><span>Закрепить</span></button>
-    <button data-sel="move"><span class="material-symbols-rounded">vault</span><span>Переместить</span></button>
+    <button data-sel="move"><span class="material-symbols-rounded">drive_file_move</span><span>Переместить</span></button>
     <button data-sel="delete"><span class="material-symbols-rounded">delete</span><span>Удалить</span></button>`;
 
   el.append(appbar, h1row, searchWrap, chipsRow, gridHolder, fab, tabbar, selBar);
 
   /* ---------- режим выбора (долгий тап) ---------- */
   let selFilter = 'all';
+  /* id карточки, которую нужно «отскоком» подсветить после текущего тапа */
+  let bounceId = null;
   const sel = {
     active: false,
     set: new Set(),
-    onEnter(id) { this.active = true; this.set.add(id); enterSelection(); refresh(); },
-    onToggle(id) { if (this.set.has(id)) this.set.delete(id); else this.set.add(id); refresh(); },
+    onEnter(id) { this.active = true; this.set.add(id); bounceId = id; enterSelection(); refresh(); },
+    onToggle(id) { if (this.set.has(id)) this.set.delete(id); else this.set.add(id); bounceId = id; refresh(); },
   };
 
   function enterSelection() {
@@ -121,7 +123,8 @@ export function mainScreen() {
       if (filterFolder) list = list.filter(n => n.folderId === filterFolder);
     }
     if (q) list = list.filter(n => (n.title || '').toLowerCase().includes(q) || htmlToPlain(n.content).toLowerCase().includes(q));
-    renderNotesGrid(gridHolder, list, q, { sel: { active: sel.active, selected: sel.set, onEnter: sel.onEnter.bind(sel), onToggle: sel.onToggle.bind(sel) } });
+    renderNotesGrid(gridHolder, list, q, { sel: { active: sel.active, selected: sel.set, onEnter: sel.onEnter.bind(sel), onToggle: sel.onToggle.bind(sel) }, bounceId });
+    bounceId = null;
     searchField.classList.toggle('has-text', !!searchInput.value.trim());
     renderChip();
     renderSelBar();

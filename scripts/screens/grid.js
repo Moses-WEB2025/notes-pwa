@@ -14,10 +14,16 @@ export function renderNotesGrid(container, notes, q = '', opts = {}) {
      более короткую. Раньше карточки раскладывались по «весу» с порогом, и все
      текстовые заметки уезжали в правый столбец — левый оставался пустым. */
   let h1 = 0, h2 = 0;
+  /* В режиме выбора сетка перерисовывается на каждый тап: общая анимация
+     появления превращала бы это в «дёрганье» всего экрана. Поэтому в режиме
+     выбора карточки появляются без анимации, а «отскок» получает только та,
+     которую сейчас выбрали или сняли (opts.bounceId). */
+  const inSel = !!(opts && opts.sel && opts.sel.active);
   notes.forEach((n, i) => {
     const m = cardMetrics(n);
     const card = buildCard(n, q, opts, m);
-    if (i < 8) { card.classList.add('entering'); card.style.animationDelay = Math.min(i * 28, 200) + 'ms'; }
+    if (!inSel && i < 8) { card.classList.add('entering'); card.style.animationDelay = Math.min(i * 28, 200) + 'ms'; }
+    if (opts && opts.bounceId != null && card.dataset.id === opts.bounceId) card.classList.add('bounce');
     if (h1 <= h2) { col1.appendChild(card); h1 += m.height; }
     else { col2.appendChild(card); h2 += m.height; }
   });
