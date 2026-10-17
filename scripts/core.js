@@ -287,24 +287,39 @@ export function initKeyboard(){
     return { open, kbH, vvTop:open?vvTop:0 };
   };
 
+  /* Двигаем геометрию только когда меняется сам факт «клавиатура открыта»
+     либо размеры ушли заметно (≥2px). Мелкое дрожание visualViewport во
+     время прокрутки layout не трогает: сдвиг контейнера прямо под пальцем
+     движок трактует как отмену жеста — и снимает фокус с холста, из-за чего
+     закрываются клавиатура и тулбар. */
+  let applied={open:null,kbH:0,vvTop:0};
   const apply=({open,kbH,vvTop},resetScroll)=>{
-    document.documentElement.style.setProperty('--kb-h',open?kbH+'px':'0px');
-    document.documentElement.style.setProperty('--vv-top',open?vvTop+'px':'0px');
-    document.body.classList.toggle('kb-open',open);
-    /* Скролл страницы сбрасываем ТОЛЬКО в момент открытия клавиатуры.
-       Раньше это делалось на каждом обновлении visualViewport — в том числе
-       на vv.scroll во время листания текста. Программная запись скролла
-       посреди жеста срывает сам жест: WebKit/Blink считают прокрутку
-       «машинной», гасят её — и клавиатура с тулбаром закрываются ровно тогда,
-       когда пользователь всего лишь листает заметку. */
-    if(open&&resetScroll) window.scrollTo(0,0);
+    const next={open,kbH:open?kbH:0,vvTop:open?vvTop:0};
+    const moved=applied.open!==next.open||Math.abs(applied.kbH-next.kbH)>=2||Math.abs(applied.vvTop-next.vvTop)>=2;
+    if(!moved&&!resetScroll) return;
+    applied=next;
+    document.documentElement.style.setProperty('--kb-h',next.kbH+'px');
+    document.documentElement.style.setProperty('--vv-top',next.vvTop+'px');
+    document.body.classList.toggle('kb-open',next.open);
+    /* Скролл страницы сбрасываем только в МОМЕНТ открытия клавиатуры:
+       программная запись скролла посреди жеста тоже срывает сам жест. */
+    if(next.open&&resetScroll) window.scrollTo(0,0);
   };
+
+  /* Пока палец на экране и клавиатура открыта — геометрию не трогаем вовсе.
+     Правило простое: двигать можно только то, что не трогают. */
+  let gesture=false;
+  const gestureEnd=()=>{ if(!gesture) return; gesture=false; requestAnimationFrame(()=>upd()); };
+  document.addEventListener('touchstart',()=>{gesture=true;},{passive:true,capture:true});
+  document.addEventListener('touchend',gestureEnd,{passive:true,capture:true});
+  document.addEventListener('touchcancel',gestureEnd,{passive:true,capture:true});
 
   const upd=(ev)=>{
     if(ev&&ev.type==='focusin'&&!vv) setTimeout(upd,350);
     const m=measure();
     const opening=m.open&&!lastOpen;
     lastOpen=m.open;
+    if(gesture&&m.open) return;
     apply(m,opening);
     if(!m.open) refH=window.innerHeight;
     else refH=Math.max(refH,window.innerHeight);
