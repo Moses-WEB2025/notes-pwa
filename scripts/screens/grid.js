@@ -10,13 +10,42 @@ export function renderNotesGrid(container, notes, q = '', opts = {}) {
   const col2 = document.createElement('div'); col2.className = 'grid-col';
   container.append(col1, col2);
 
+  /* Балансируем колонки по оценке высоты карточки: каждая следующая идёт в
+     более короткую. Раньше карточки раскладывались по «весу» с порогом, и все
+     текстовые заметки уезжали в правый столбец — левый оставался пустым. */
+  let h1 = 0, h2 = 0;
   notes.forEach((n, i) => {
-    const card = buildCard(n, q, opts);
+    const m = cardMetrics(n);
+    const card = buildCard(n, q, opts, m);
     if (i < 8) { card.classList.add('entering'); card.style.animationDelay = Math.min(i * 28, 200) + 'ms'; }
-    const weight = (n.color === 'blue' ? 2.4 : 0) + htmlToPlain(n.content).length / 90 + (n.title || '').length / 44;
-    (weight > 1.2 ? col2 : col1).appendChild(card);
+    if (h1 <= h2) { col1.appendChild(card); h1 += m.height; }
+    else { col2.appendChild(card); h2 += m.height; }
   });
   bindPress(container);
+}
+
+/* ---- Правила размеров карточки в общем списке ----
+   Высота карточек должна различаться (не все одного размера), но не разъезжаться
+   в крайности (не все разных размеров). Поэтому число строк текста разбито на
+   несколько фиксированных ступеней по объёму текста, а высота карточки считается
+   по фактическим размерам строк (шрифт/межстрочный интервал из CSS). */
+const TITLE_LINE = 22.4;   /* 17px × 1.32 */
+const BODY_LINE  = 20.3;   /* 14px × 1.45 */
+function bodyLinesFor(chars) {
+  if (chars <= 0)   return 1;   /* «Нет текста» — одна строка */
+  if (chars <= 70)  return 2;   /* короткая */
+  if (chars <= 170) return 4;   /* средняя */
+  if (chars <= 320) return 6;   /* длинная */
+  return 8;                     /* очень длинная — максимум */
+}
+function cardMetrics(n) {
+  const chars = htmlToPlain(n.content).length;
+  const titleChars = (n.title || '').trim().length;
+  const titleLines = titleChars ? Math.min(2, Math.ceil(titleChars / 19)) : 1;
+  const bodyLines = bodyLinesFor(chars);
+  /* padding 15+13, два flex-gap по 8, строка meta ≈ 17 */
+  const height = 28 + titleLines * TITLE_LINE + 16 + bodyLines * BODY_LINE + 17;
+  return { chars, titleLines, bodyLines, height };
 }
 
 /* Обновление выделения без перерисовки сетки — сохраняет позицию скролла */
@@ -26,7 +55,8 @@ export function updateSelection(container, selected) {
   });
 }
 
-function buildCard(n, q, opts) {
+function buildCard(n, q, opts, m) {
+  m = m || cardMetrics(n);
   const card = document.createElement('div');
   card.className = 'note-card';
   card.dataset.id = n.id;
@@ -39,12 +69,12 @@ function buildCard(n, q, opts) {
 
   const plain = htmlToPlain(n.content);
   const titleHtml = q ? highlight(n.title || '', q) : escapeHtml(n.title || '');
-  const bodyHtml = q ? highlight(plain.slice(0, 160), q) : escapeHtml(plain.slice(0, 160));
+  const bodyHtml = q ? highlight(plain.slice(0, 320), q) : escapeHtml(plain.slice(0, 320));
 
   card.innerHTML = `
     <div class="nc-pin ${n.pinned ? 'show' : ''}"><span class="material-symbols-rounded">push_pin</span></div>
     <div class="nc-title">${titleHtml || '<span class="dim">Без названия</span>'}</div>
-    ${plain ? `<div class="nc-body">${bodyHtml}</div>` : `<div class="nc-body dim">Нет текста</div>`}
+    ${plain ? `<div class="nc-body" style="--nc-lines:${m.bodyLines}">${bodyHtml}</div>` : `<div class="nc-body dim" style="--nc-lines:1">Нет текста</div>`}
     <div class="nc-meta">
       <span>${escapeHtml(fmtCardTime(n.updatedAt))}</span>
       ${n.audio ? `<span class="audio-chip"><span class="eq"><i></i><i></i><i></i><i></i><i></i></span></span>` : ''}
