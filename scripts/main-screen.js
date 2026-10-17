@@ -1,6 +1,6 @@
 /* ============ Главный экран «Заметки» ============ */
 import { Store, escapeHtml, htmlToPlain, debounce, uid, bindPress } from './core.js';
-import { toast, confirmDialog, attachMenu, sheetSections } from './components/ui.js';
+import { toast, confirmSheet, attachMenu, sheetSections } from './components/ui.js';
 import { openEditor } from './screens/editor.js';
 import { openFolders } from './screens/folders.js';
 import { renderNotesGrid } from './screens/grid.js';
@@ -109,15 +109,15 @@ export function mainScreen() {
   appbar.querySelector('[data-a=trash]').addEventListener('click', () => openTrashScreen());
   fab.addEventListener('click', () => openEditor(null, { folderId: filterFolder }));
 
-  function longPressMenu(n) {
-    attachMenu(n.title || 'Заметка', [
+  function longPressMenu(n, card) {
+    attachMenu(card, [
       { icon: 'palette', label: 'Цвет', onClick: () => colorSheetFor(n) },
       { icon: 'folder',  label: 'В папку', onClick: () => folderSheetFor(n) },
-      { icon: 'push_pin', label: 'Закрепить', checked: !!n.pinned, onClick: async () => { n.pinned = !n.pinned; await Store.saveNote(n); load(); } },
+      { icon: 'push_pin', label: n.pinned ? 'Открепить' : 'Закрепить', checked: !!n.pinned, onClick: async () => { n.pinned = !n.pinned; await Store.saveNote(n); toast(n.pinned ? 'Закреплено' : 'Откреплено'); load(); } },
       { icon: 'content_copy', label: 'Копировать', onClick: async () => { const c = { ...n, id: uid(), createdAt: Date.now(), updatedAt: Date.now() }; await Store.saveNote(c); toast('Скопировано'); load(); } },
       { divider: true },
       { icon: 'delete', label: 'Удалить', onClick: async () => {
-        if (await confirmDialog({ title: 'Удалить заметку?' })) { await Store.delNote(n.id); toast('Заметка удалена'); load(); }
+        if (await confirmSheet({ title: 'Удалите заметки', text: 'Удалить эту заметку?' })) { await Store.delNote(n.id); toast('Заметка удалена'); load(); }
       } },
     ]);
   }
@@ -160,7 +160,6 @@ export function mainScreen() {
   function openTrashScreen() {
     const tEl = document.createElement('div');
     tEl.className = 'screen trash-screen';
-    tEl.style.zIndex = '7';
     tEl.innerHTML = `
       <div class="appbar back-header">
         <button class="icon-btn" data-a="back" data-press><span class="material-symbols-rounded">arrow_back</span></button>
@@ -169,9 +168,16 @@ export function mainScreen() {
       <div class="scroll" style="padding-top:8px"></div>`;
     const sc = tEl.querySelector('.scroll');
     const fill = async () => {
-      const del = (await Store.notes()).filter(n => n.deleted);
-      sc.innerHTML = del.length ? '' : `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary)">Корзина пуста</div>`;
-      del.forEach(n => {
+      const all = await Store.notes();
+      const del = all.filter(n => n.deleted);
+      sc.innerHTML = `
+        <div class="trash-banner">Заметки, находящиеся в корзине более 30 дней, были безвозвратно удалены</div>
+        ${del.length ? '' : `
+          <div class="trash-empty">
+            <span class="material-symbols-rounded">article</span>
+            <div class="t">Нет заметок</div>
+          </div>`}`;
+      del.sort((a,b) => b.updatedAt - a.updatedAt).forEach(n => {
         const r = document.createElement('div');
         r.className = 'folder-row';
         r.innerHTML = `<span class="f-name">${escapeHtml(n.title || 'Без названия')}</span>

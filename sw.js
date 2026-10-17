@@ -1,5 +1,5 @@
 /* Заметки — Service Worker: полный офлайн (прекэш всех ресурсов, fallback навигации) */
-const VERSION = 'notes-v1.3.0';
+const VERSION = 'notes-v2.0.0';
 const PRECACHE = `precache-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 
@@ -22,6 +22,7 @@ const PRECACHE_URLS = [
   './scripts/screens/editor.js',
   './scripts/screens/folders.js',
   './scripts/screens/grid.js',
+  './scripts/screens/trash.js',
   './assets/fonts/material-symbols-rounded.woff2',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png'

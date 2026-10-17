@@ -68,36 +68,42 @@ export const Store={
 /* ---------- Навигация (стек) ---------- */
 export const Nav={
   stack:[],
-  push(factory){
-    const prev=this.stack[this.stack.length-1];
-    const el=factory();
-    el.classList.add('screen','enter-right');
+  push(factory) {
+    const prev = this.stack[this.stack.length - 1];
+    const el = factory();
+    el.classList.add('screen', 'enter-right');
     document.getElementById('screens-root').appendChild(el);
     this.stack.push(el);
-    if(prev){prev.classList.add('anim','under');}
-    requestAnimationFrame(()=>{el.classList.add('anim');el.classList.remove('enter-right');
-      setTimeout(()=>{el.classList.remove('anim');prev&&prev.classList.remove('anim');},320);});
+    if (prev) { prev.classList.add('anim', 'under'); }
+    requestAnimationFrame(() => {
+      el.classList.add('anim'); el.classList.remove('enter-right');
+      setTimeout(() => { el.classList.remove('anim'); prev && prev.classList.remove('anim'); }, 320);
+    });
     vibrate(5);
   },
-  pop(){
-    if(this.stack.length<=1)return;
+  pop() {
+    if (this.stack.length <= 1) return;
     document.body.classList.remove('kb-open');
-    const top=this.stack.pop(),prev=this.stack[this.stack.length-1];
-    top.classList.add('anim');top.style.transform='translateX(100%)';
-    prev&&prev.classList.remove('under');
-    setTimeout(()=>{top.remove();prev&&prev.classList.remove('anim');},320);
+    const top = this.stack.pop(), prev = this.stack[this.stack.length - 1];
+    top.classList.add('anim'); top.style.transform = 'translateX(100%)';
+    prev && prev.classList.remove('under');
+    setTimeout(() => { top.remove(); prev && prev.classList.remove('anim'); }, 320);
     vibrate(4);
   },
   top(){return this.stack[this.stack.length-1];}
 };
 
 /* ---------- Свайп «назад» от левого края (нативный iOS-стиль) ---------- */
-let gesture=null;
-document.addEventListener('touchstart',e=>{
-  if(Nav.stack.length<=1)return;
-  const t=e.touches[0];
-  if(t.clientX<26){ gesture={sx:t.clientX,sy:t.clientY,top:Nav.stack[Nav.stack.length-1],started:false}; }
-},{passive:true});
+let gesture = null;
+document.addEventListener('touchstart', e => {
+  /* жест работает на каждом экране свыше первого, независимо от стека */
+  const screens = document.querySelectorAll('#screens-root > .screen');
+  if (screens.length <= 1) return;
+  const t = e.touches[0];
+  if (t.clientX < 26) {
+    gesture = { sx: t.clientX, sy: t.clientY, top: screens[screens.length - 1], started: false, dx: 0 };
+  }
+}, { passive: true });
 document.addEventListener('touchmove',e=>{
   if(!gesture)return;
   const t=e.touches[0];
@@ -110,14 +116,19 @@ document.addEventListener('touchmove',e=>{
     gesture.top.style.transform=`translateX(${Math.max(0,dx)}px)`;
   }
 },{passive:true});
-document.addEventListener('touchend',e=>{
-  if(!gesture)return;
-  const g=gesture;gesture=null;
-  if(!g.started)return;
-  g.top.style.transition='';g.top.classList.remove('swipe-back');
-  if(g.dx>110){ Nav.pop(); }
-  else { g.top.classList.add('anim'); g.top.style.transform=''; setTimeout(()=>g.top.classList.remove('anim'),320); }
-},{passive:true});
+document.addEventListener('touchend', e => {
+  if (!gesture) return;
+  const g = gesture; gesture = null;
+  if (!g.started) return;
+  g.top.style.transition = ''; g.top.classList.remove('swipe-back');
+  g.top.style.transform = '';
+  if (g.dx > 110) {
+    /* уводим экран вправо как в pop */
+    g.top.classList.add('anim'); g.top.style.transform = 'translateX(100%)';
+    setTimeout(() => g.top.remove(), 320);
+    vibrate(4);
+  }
+}, { passive: true });
 document.addEventListener('touchcancel',()=>{ if(gesture&&gesture.started){gesture.top.style.transform='';gesture=null;} },{passive:true});
 
 /* ---------- Пресс-состояния ---------- */

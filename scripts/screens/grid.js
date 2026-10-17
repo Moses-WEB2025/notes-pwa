@@ -1,4 +1,4 @@
-/* ============ Общий рендер сетки заметок (используется с главного и из папок) ============ */
+/* ============ Общий рендер сетки заметок ============ */
 import { fmtCardTime, escapeHtml, highlight, htmlToPlain, bindPress, vibrate } from '../core.js';
 import { openEditor } from './editor.js';
 
@@ -22,14 +22,15 @@ function buildCard(n, q, onChanged) {
   card.className = 'note-card';
   card.setAttribute('data-press', '');
 
-  const palette = { none: null, yellow: '#f3b13c', blue: 'var(--folder-blue)', paper: '#fbf3de', pink: '#ec6d94', red: '#e05555' };
-  if (n.color && palette[n.color]) card.classList.add('c-' + n.color);
+  if (n.color) card.classList.add('c-' + n.color);
+  if (n.pinned) card.classList.add('pinned');
 
   const plain = htmlToPlain(n.content);
   const titleHtml = q ? highlight(n.title || '', q) : escapeHtml(n.title || '');
   const bodyHtml = q ? highlight(plain.slice(0, 160), q) : escapeHtml(plain.slice(0, 160));
 
   card.innerHTML = `
+    <div class="nc-pin ${n.pinned ? 'show' : ''}"><span class="material-symbols-rounded">push_pin</span></div>
     <div class="nc-title">${titleHtml || '<span class="dim">Без названия</span>'}</div>
     ${plain ? `<div class="nc-body">${bodyHtml}</div>` : `<div class="nc-body dim">Нет текста</div>`}
     <div class="nc-meta">
@@ -40,21 +41,20 @@ function buildCard(n, q, onChanged) {
   let lpTimer = null, lpFired = false;
   card.addEventListener('touchstart', () => {
     lpFired = false;
-    lpTimer = setTimeout(() => { lpFired = true; vibrate(20); card.classList.remove('pressed'); longPress(n); }, 480);
+    lpTimer = setTimeout(() => { lpFired = true; vibrate(15); card.classList.remove('pressed'); longPress(n); }, 480);
   }, { passive: true });
   ['touchmove', 'touchend', 'touchcancel'].forEach(ev => card.addEventListener(ev, () => clearTimeout(lpTimer), { passive: true }));
   card.addEventListener('click', () => { if (lpFired) { lpFired = false; return; } openEditor(n.id); });
 
   function longPress(n2) {
-    // меню по контексту: в папке — только удалить
-    import('../components/ui.js').then(async ({ attachMenu, confirmDialog }) => {
+    import('../components/ui.js').then(async ({ attachMenu, confirmSheet }) => {
       attachMenu(card, [
         { icon: 'delete', label: 'Удалить', onClick: async () => {
-          if (await confirmDialog({ title: 'Удалить заметку?' })) {
-            await import('../core.js').then(async ({ Store }) => {
-              await Store.delNote(n.id);
-              onChanged && onChanged();
-            });
+          if (await confirmSheet({ title: 'Удалите заметки', text: 'Удалить эту заметку?' })) {
+            const { Store } = await import('../core.js');
+            await Store.delNote(n.id);
+            onChanged && onChanged();
+            toast && 0;
           }
         } },
       ]);

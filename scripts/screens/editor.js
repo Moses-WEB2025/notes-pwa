@@ -1,15 +1,36 @@
 /* ============ Редактор заметки ============ */
 import { Store, Nav, fmtEditorDate, escapeHtml, uid, debounce, vibrate } from '../core.js';
-import { toast, attachMenu, sheetSections, openSheet, confirmDialog } from '../components/ui.js';
+import { toast, attachMenu, sheetSections, openSheet, confirmSheet } from '../components/ui.js';
 import { openRecorder } from '../components/recorder.js';
 import { openDrawing } from '../components/drawing.js';
+
+/* Цветовые темы холста */
+const COLORS = [
+  { key: 'none', css: null },
+  { key: 'yellow', css: '#f3b13c' },
+  { key: 'blue', css: '#1a4a76' },
+  { key: 'paper', css: '#fbf3de' },
+  { key: 'pink', css: '#ec6d94' },
+  { key: 'red', css: '#e05555' },
+];
+
+/* яркость 0..255, выбор чёрного/белого текста по WCAG */
+function lum(hex) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+function textColorFor(bg) { return bg && lum(bg) < 160 ? '#ffffff' : 'var(--ink, #1c1d21)'; }
+function mutedFor(bg)     { return bg && lum(bg) < 160 ? 'rgba(255,255,255,.62)' : 'var(--text-tertiary)'; }
+function caretFor(bg)     { return bg && lum(bg) < 160 ? 'rgba(255,255,255,.9)' : 'var(--accent)'; }
+function folderChipFor(bg){ return bg && lum(bg) < 160 ? 'rgba(255,255,255,.16)' : 'var(--surface2)'; }
 
 export function openEditor(id, opts = {}) {
   const isNew = !id;
   const el = document.createElement('div');
   el.className = 'screen editor-screen';
 
-  /* ===== Верхняя панель: режим БЕЗ клавиатуры (скрин 6): back | share, palette, more ===== */
+  /* ===== Верхняя панель: back | share, palette, more ===== */
   const topbar = document.createElement('div');
   topbar.className = 'editor-topbar';
   topbar.innerHTML = `
@@ -19,7 +40,7 @@ export function openEditor(id, opts = {}) {
     <button class="icon-btn" data-a="palette"><span class="material-symbols-rounded">palette</span></button>
     <button class="icon-btn" data-a="more"><span class="material-symbols-rounded">more_vert</span></button>`;
 
-  /* ===== Верхняя панель при открытой клавиатуре (скрины 3-4): back | undo, redo, check ===== */
+  /* ===== Верхняя панель при открытой клавиатуре: back | undo, redo, check ===== */
   const topbarKb = document.createElement('div');
   topbarKb.className = 'editor-topbar kb-mode hidden';
   topbarKb.innerHTML = `
@@ -28,7 +49,6 @@ export function openEditor(id, opts = {}) {
     <button class="icon-btn" data-a="undo" disabled><span class="material-symbols-rounded">undo</span></button>
     <button class="icon-btn" data-a="redo" disabled><span class="material-symbols-rounded">redo</span></button>
     <button class="icon-btn" data-a="done"><span class="material-symbols-rounded">check</span></button>`;
-  topbarKb.classList.add('hidden');
 
   /* ===== тело ===== */
   const bodyWrap = document.createElement('div');
@@ -53,7 +73,7 @@ export function openEditor(id, opts = {}) {
 
   bodyWrap.append(folderChip, titleInput, meta, content);
 
-  /* ===== нижний тулбар (виден только при открытой клавиатуре; скрины 3-4) ===== */
+  /* ===== нижний тулбар ===== */
   const toolbar = document.createElement('div');
   toolbar.className = 'format-toolbar';
   toolbar.innerHTML = `
@@ -70,6 +90,7 @@ export function openEditor(id, opts = {}) {
   let foldersList = [];
   let undoStack = [], redoStack = [], suppress = false;
   let players = [];
+  let currentAudio = null;
 
   (async () => {
     foldersList = await Store.folders();
@@ -83,11 +104,22 @@ export function openEditor(id, opts = {}) {
       };
     }
     titleInput.value = note.title || '';
-    /* простой текст с \n → переносы строк в contentEditable */
     const c = note.content || '';
     content.innerHTML = /[<>]/.test(c) ? c : c.split('\n').join('<br>');
-    updFolderChip(); updMeta(); renderPlayers();
+    updFolderChip(); updMeta(); renderPlayers(); applyTheme();
   })();
+
+  /* ---------- Тема холста (цвет + автоконтраст текста) ---------- */
+  /* окрашиваем весь экран: фон .screen + элементы в CSS от переменных */
+  function applyTheme() {
+    const c = COLORS.find(c => c.key === (note.color || 'none'));
+    const bg = c && c.css;
+    el.style.background = bg || 'var(--bg)';
+    el.style.setProperty('--ed-ink', textColorFor(bg));
+    el.style.setProperty('--ed-muted', mutedFor(bg));
+    el.style.setProperty('--ed-caret', caretFor(bg));
+    el.style.setProperty('--ed-chip', folderChipFor(bg));
+  }
 
   function updFolderChip() {
     const f = foldersList.find(f => f.id === note.folderId);
@@ -138,22 +170,22 @@ export function openEditor(id, opts = {}) {
   /* переключение панелей по клавиатуре */
   document.addEventListener('kb-change', onKb);
   function onKb(e) {
-    const open = e.detail.open;
-    topbar.classList.toggle('hidden', open);
-    topbarKb.classList.toggle('hidden', !open);
+    topbar.classList.toggle('hidden', e.detail.open);
+    topbarKb.classList.toggle('hidden', !e.detail.open);
   }
 
   /* ---------- Сохранение ---------- */
-  const scheduleSave = debounce(async () => {
+  const saveContent = () => {
     note.title = titleInput.value.trim();
     note.content = content.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+  };
+  const scheduleSave = debounce(async () => {
+    saveContent();
     await Store.saveNoteRaw(note);
   }, 450);
   async function finalSave() {
-    note.title = titleInput.value.trim();
-    /* сохраняем <br> как \n для превью в карточках */
-    note.content = content.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/<div><br><\/div>/gi, '\n');
-    const empty = !note.title && !(content.textContent || '').trim() && !note.audio && !(note.content || '').includes('<img');
+    saveContent();
+    const empty = !note.title && !(content.textContent || '').trim() && !note.audio && !(note.content || '').includes('<img') && !(note.content || '').includes('data-drawing');
     if (empty && isNew) { await Store.delNote(note.id); }
     else { await Store.saveNote(note); }
     document.dispatchEvent(new CustomEvent('notes-changed'));
@@ -193,18 +225,32 @@ export function openEditor(id, opts = {}) {
     });
   });
   topbar.querySelector('[data-a=palette]').addEventListener('click', colorSheet);
-  topbar.querySelector('[data-a=more]').addEventListener('click', moreMenu);
+  topbar.querySelector('[data-a=more]').addEventListener('click', () => moreMenu(topbar.querySelector('[data-a=more]')));
 
-  function moreMenu() {
-    attachMenu(topbar.querySelector('[data-a=more]'), [
+  function moreMenu(anchor) {
+    attachMenu(anchor, [
       { icon: 'folder', label: 'В папку', onClick: folderSheet },
-      { icon: 'push_pin', label: 'Закрепить', checked: !!note.pinned, onClick: async () => { note.pinned = !note.pinned; await Store.saveNote(note); toast(note.pinned ? 'Закреплено' : 'Откреплено'); } },
+      { icon: 'push_pin', label: note.pinned ? 'Открепить' : 'Закрепить', checked: !!note.pinned, onClick: togglePin },
       { icon: 'content_copy', label: 'Копировать', onClick: async () => { const c = { ...note, id: uid(), createdAt: Date.now(), updatedAt: Date.now() }; await Store.saveNote(c); toast('Копия создана'); } },
       { divider: true },
-      { icon: 'delete', label: 'Удалить', onClick: async () => {
-        if (await confirmDialog({ title: 'Удалить заметку?' })) { await Store.delNote(note.id); toast('Заметка удалена'); document.dispatchEvent(new CustomEvent('notes-changed')); Nav.pop(); }
-      } },
+      { icon: 'delete', label: 'Удалить', onClick: deleteNote },
     ]);
+  }
+
+  async function togglePin() {
+    note.pinned = !note.pinned;
+    await Store.saveNote(note);
+    toast(note.pinned ? 'Закреплено' : 'Откреплено');
+    document.dispatchEvent(new CustomEvent('notes-changed'));
+  }
+
+  async function deleteNote() {
+    if (await confirmSheet({ title: 'Удалите заметки', text: 'Удалить эту заметку?' })) {
+      await Store.delNote(note.id);
+      toast('Заметка удалена');
+      document.dispatchEvent(new CustomEvent('notes-changed'));
+      Nav.pop();
+    }
   }
 
   function folderSheet() {
@@ -224,22 +270,20 @@ export function openEditor(id, opts = {}) {
     }]});
   }
 
-  const COLORS = [
-    { key: 'none', css: 'recolor#ffffff'.replace('recolor', '') }, { key: 'yellow', css: '#f3b13c' },
-    { key: 'blue', css: '#1a4a76' }, { key: 'paper', css: '#fbf3de' },
-    { key: 'pink', css: '#ec6d94' }, { key: 'red', css: '#e05555' },
-  ];
   function colorSheet() {
     sheetSections({ title: 'Цвет', sections: [api => {
       const row = document.createElement('div');
       row.className = 'color-row';
       row.innerHTML = `<div class="row-options">${COLORS.map(c => {
+        const bg = c.css || '#ffffff';
         const sel = (note.color || 'none') === c.key;
-        return `<button class="swatch ${sel ? 'selected' : ''}" data-k="${c.key}" style="background:${c.css}">${sel ? '<span class="material-symbols-rounded">check</span>' : ''}</button>`;
+        return `<button class="swatch ${sel ? 'selected' : ''}" data-k="${c.key}" style="background:${bg}">${sel ? '<span class="material-symbols-rounded">check</span>' : ''}</button>`;
       }).join('')}</div>`;
       row.querySelectorAll('.swatch').forEach(sw => sw.addEventListener('click', async () => {
         note.color = sw.dataset.k === 'none' ? null : sw.dataset.k;
-        await Store.saveNote(note); api.close();
+        await Store.saveNote(note);
+        applyTheme(); /* живой перелиив холста */
+        api.close();
         document.dispatchEvent(new CustomEvent('notes-changed'));
       }));
       return row;
@@ -248,7 +292,7 @@ export function openEditor(id, opts = {}) {
 
   folderChip.addEventListener('click', folderSheet);
 
-  /* ---------- Тулбар: аудио / фото / рисунок / чек-лист / заголовок ---------- */
+  /* ---------- Тулбар ---------- */
   toolbar.querySelectorAll('.tool').forEach(btn => btn.addEventListener('click', async () => {
     const k = btn.dataset.tool;
     if (k === 'audio') {
@@ -259,14 +303,12 @@ export function openEditor(id, opts = {}) {
     } else if (k === 'draw') {
       content.blur();
       openDrawing(async (dataUrl) => {
-        pushUndo();
-        content.focus();
+        pushUndo(); content.focus();
         document.execCommand('insertHTML', false, `<div data-drawing="1"><img src="${dataUrl}"></div><div><br></div>`);
         scheduleSave();
       });
     } else if (k === 'check') {
-      pushUndo();
-      content.focus();
+      pushUndo(); content.focus();
       document.execCommand('insertHTML', false, `<div class="check-item" data-check="1"><input type="checkbox"><span class="lbl">Пункт</span></div><div><br></div>`);
       scheduleSave();
     } else if (k === 'align') {
@@ -275,8 +317,6 @@ export function openEditor(id, opts = {}) {
       scheduleSave();
     }
   }));
-
-  function focusEditor() { content.focus(); }
 
   function pickImage() {
     const inp = document.createElement('input');
@@ -297,7 +337,6 @@ export function openEditor(id, opts = {}) {
 
   /* ---------- Плеер аудио ---------- */
   function fmtDur2(s) { const m = Math.floor(s / 60); return `${m}:${s % 60 < 10 ? '0' : ''}${Math.floor(s % 60)}`; }
-  let currentAudio = null;
   function renderPlayers() {
     players.forEach(p => p.remove()); players = [];
     if (!note.audio) return;
@@ -305,18 +344,18 @@ export function openEditor(id, opts = {}) {
     p.className = 'player-chip';
     p.innerHTML = `<span class="material-symbols-rounded play" role="button">play_arrow</span><span class="time">${fmtDur2(note.audio.duration || 0)}</span>`;
     p.querySelector('.play').addEventListener('click', async () => {
-      if (currentAudio) { currentAudio.pause(); currentAudio = null; p.querySelector('.play').textContent = 'play_arrow'; return; }
+      const ic = p.querySelector('.play');
+      if (currentAudio) { currentAudio.pause(); currentAudio = null; ic.textContent = 'play_arrow'; return; }
       const blob = await Store.blob(note.audio.id);
       if (!blob) { toast('Аудио недоступно'); return; }
       currentAudio = new Audio(URL.createObjectURL(blob));
-      currentAudio.onended = () => { p.querySelector('.play').textContent = 'play_arrow'; currentAudio = null; };
-      p.querySelector('.play').textContent = 'pause';
+      currentAudio.onended = () => { ic.textContent = 'play_arrow'; currentAudio = null; };
+      ic.textContent = 'pause';
       currentAudio.play();
     });
     meta.after(p); players.push(p);
   }
 
-  el.addEventListener('screen:remove', finalSave);
   document.getElementById('screens-root').appendChild(el);
   vibrate(5);
   return el;

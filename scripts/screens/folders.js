@@ -1,18 +1,20 @@
-/* ============ Экран «Папки» (скрин 2) ============ */
+/* ============ Экран «Папки» ============ */
 import { Store, escapeHtml, Nav, uid, vibrate, bindPress } from '../core.js';
-import { toast, confirmDialog, promptDialog, attachMenu } from '../components/ui.js';
+import { toast, confirmSheet, promptSheet, attachMenu } from '../components/ui.js';
+import { openTrashScreen } from './trash.js';
 
 export function openFolders() {
   const el = document.createElement('div');
   el.className = 'screen folders-screen';
-  el.style.zIndex = '5';
 
+  /* шапка: слева — назад, затем мусорка, справа пусто */
   const appbar = document.createElement('div');
   appbar.className = 'appbar back-header';
   appbar.innerHTML = `
     <button class="icon-btn" data-a="back" data-press><span class="material-symbols-rounded">arrow_back</span></button>
+    <button class="icon-btn" data-a="trash" data-press aria-label="Корзина"><span class="material-symbols-rounded">delete</span></button>
     <div class="appbar-title">Папки</div>
-    <button class="icon-btn" data-a="trash" data-press aria-label="Корзина"><span class="material-symbols-rounded">delete</span></button>`;
+    <span style="width:44px"></span>`;
 
   const scroll = document.createElement('div');
   scroll.className = 'scroll';
@@ -47,12 +49,12 @@ export function openFolders() {
       scroll.appendChild(row);
     });
 
-    /* «Новая папка» */
+    /* «Новая папка» — на всю ширину, как на скриншоте */
     const add = document.createElement('button');
     add.className = 'folder-new';
     add.innerHTML = `<span class="material-symbols-rounded">add_circle</span><span class="t">Новая папка</span>`;
     add.addEventListener('click', async () => {
-      const name = await promptDialog({ title: 'Новая папка', placeholder: 'Название папки' });
+      const name = await promptSheet({ title: 'Новая папка', placeholder: 'Название папки' });
       if (!name) return;
       await Store.saveFolder({ id: uid(), name, createdAt: Date.now() });
       toast('Папка создана');
@@ -65,7 +67,6 @@ export function openFolders() {
   async function openFolderView(f) {
     const vEl = document.createElement('div');
     vEl.className = 'screen folder-view';
-    vEl.style.zIndex = '6';
     vEl.innerHTML = `
       <div class="appbar back-header">
         <button class="icon-btn" data-a="back" data-press><span class="material-symbols-rounded">arrow_back</span></button>
@@ -90,13 +91,13 @@ export function openFolders() {
   }
 
   function folderMenu(f) {
-    attachMenu(f.name, [
+    attachMenu(f, [
       { icon: 'edit', label: 'Переименовать', onClick: async () => {
-        const name = await promptDialog({ title: 'Переименовать папку', value: f.name });
+        const name = await promptSheet({ title: 'Переименовать папку', value: f.name });
         if (name) { f.name = name; await Store.saveFolder(f); load(); }
       } },
       { icon: 'delete', label: 'Удалить папку', onClick: async () => {
-        if (await confirmDialog({ title: `Удалить папку «${f.name}»?`, text: 'Заметки останутся, но потеряют папку.' })) {
+        if (await confirmSheet({ title: 'Удалите папку', text: `Удалить папку «${f.name}»? Заметки останутся, но потеряют папку.` })) {
           const notes = await Store.notes();
           for (const n of notes.filter(n => n.folderId === f.id)) { n.folderId = null; await Store.saveNoteRaw(n); }
           await Store.delFolder(f.id);
@@ -108,9 +109,7 @@ export function openFolders() {
   }
 
   appbar.querySelector('[data-a=back]').addEventListener('click', () => Nav.pop());
-  appbar.querySelector('[data-a=trash]').addEventListener('click', () => {
-    toast('Корзина пуста');
-  });
+  appbar.querySelector('[data-a=trash]').addEventListener('click', () => openTrashScreen());
 
   load();
   return el;
