@@ -92,9 +92,14 @@ export const Nav={
     document.body.classList.remove('kb-open');
     const top = screens[screens.length - 1];
     const prev = screens[screens.length - 2];
+    top.style.transition = '';
     top.classList.add('anim');
     top.style.transform = 'translateX(100%)';
     prev && prev.classList.remove('under');
+    if (prev) {
+      prev.style.transition = '';
+      prev.style.transform = '';
+    }
     const t = top;
     setTimeout(() => t.remove(), 320);
     vibrate(4);
@@ -103,47 +108,102 @@ export const Nav={
   top(){ const s=this.screens; return s[s.length-1]; }
 };
 
-/* ---------- Свайп «назад» от левого края (нативный iOS-стиль) ---------- */
-let gesture = null, gestureDone = false;
+/* ---------- Свайп «назад» от левого края (iOS / Android edge-back) ---------- */
+const EDGE_BACK_PX = 28;
+const BACK_COMMIT_PX = 110;
+const BACK_COMMIT_RATIO = 0.33;
+
+function backGestureBlocked() {
+  return !!(
+    document.querySelector('.sheet-backdrop.open') ||
+    document.querySelector('.menu-surface') ||
+    document.querySelector('.rec-overlay.open') ||
+    document.querySelector('.draw-overlay.open')
+  );
+}
+
+function resetBackGestureStyles(g) {
+  if (!g) return;
+  g.top.style.transition = '';
+  g.top.style.transform = '';
+  g.top.classList.remove('swipe-back');
+  if (g.prev) {
+    g.prev.style.transition = '';
+    g.prev.style.transform = '';
+  }
+}
+
+function applyBackGestureDrag(g, dx) {
+  const w = window.innerWidth;
+  const x = Math.max(0, dx);
+  const ratio = Math.min(1, x / w);
+  g.top.style.transition = 'none';
+  g.top.style.transform = `translateX(${x}px)`;
+  if (g.prev) {
+    g.prev.style.transition = 'none';
+    g.prev.style.transform = `translateX(${-0.26 * w * (1 - ratio)}px)`;
+  }
+}
+
+let gesture = null;
+
 document.addEventListener('touchstart', e => {
-  /* жест работает на каждом экране свыше первого, независимо от стека */
+  if (e.touches.length !== 1 || backGestureBlocked()) return;
   const screens = document.querySelectorAll('#screens-root > .screen');
-  gestureDone = false;
   if (screens.length <= 1) return;
   const t = e.touches[0];
-  if (t.clientX < 28) {
-    gesture = { sx: t.clientX, sy: t.clientY, top: screens[screens.length - 1], started: false, dx: 0 };
-  }
+  if (t.clientX > EDGE_BACK_PX) return;
+  const top = screens[screens.length - 1];
+  const prev = screens[screens.length - 2];
+  gesture = {
+    sx: t.clientX, sy: t.clientY,
+    top, prev,
+    started: false, dx: 0,
+    lastX: t.clientX, lastT: performance.now(), vx: 0,
+  };
 }, { passive: true });
-document.addEventListener('touchmove',e=>{
-  if(!gesture)return;
-  const t=e.touches[0];
-  const dx=t.clientX-gesture.sx, dy=Math.abs(t.clientY-gesture.sy);
-  if(!gesture.started&&dx>18&&dy<26){gesture.started=true;gesture.top.classList.add('swipe-back');}
-  if(gesture.started){
-    gesture.dx=dx;
-    const w=window.innerWidth;
-    gesture.top.style.transition='none';
-    gesture.top.style.transform=`translateX(${Math.max(0,dx)}px)`;
+
+document.addEventListener('touchmove', e => {
+  if (!gesture || e.touches.length !== 1) return;
+  const t = e.touches[0];
+  const dx = t.clientX - gesture.sx;
+  const dy = Math.abs(t.clientY - gesture.sy);
+  const now = performance.now();
+  const dt = Math.max(1, now - gesture.lastT);
+  gesture.vx = (t.clientX - gesture.lastX) / dt;
+  gesture.lastX = t.clientX;
+  gesture.lastT = now;
+
+  if (!gesture.started && dx > 14 && dy < 32 && dx > dy * 0.6) {
+    gesture.started = true;
+    gesture.top.classList.add('swipe-back');
   }
-},{passive:true});
-document.addEventListener('touchend', e => {
+  if (!gesture.started) return;
+
+  gesture.dx = dx;
+  applyBackGestureDrag(gesture, dx);
+  e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('touchend', () => {
   if (!gesture) return;
-  const g = gesture; gesture = null;
+  const g = gesture;
+  gesture = null;
   if (!g.started) return;
-  g.top.style.transition = ''; g.top.classList.remove('swipe-back');
-  if (g.dx > 110) {
-    /* завершаем через общий pop — так стек и Android back остаются синхронными */
-    gestureDone = true;
-    g.top.classList.add('anim');
-    g.top.style.transform = 'translateX(100%)';
-    setTimeout(() => g.top.remove(), 320);
-    vibrate(4);
-  } else {
-    g.top.style.transform = '';
-  }
+
+  const w = window.innerWidth;
+  const commit = g.dx > BACK_COMMIT_PX || g.dx > w * BACK_COMMIT_RATIO || (g.vx > 0.45 && g.dx > 48);
+  resetBackGestureStyles(g);
+
+  if (commit) document.dispatchEvent(new CustomEvent('app-back'));
 }, { passive: true });
-document.addEventListener('touchcancel',()=>{ if(gesture&&gesture.started){gesture.top.style.transform='';gesture=null;} },{passive:true});
+
+document.addEventListener('touchcancel', () => {
+  if (!gesture) return;
+  const g = gesture;
+  gesture = null;
+  if (g.started) resetBackGestureStyles(g);
+}, { passive: true });
 
 /* ---------- Пресс-состояния ---------- */
 export function bindPress(root=document){

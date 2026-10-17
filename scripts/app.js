@@ -37,6 +37,12 @@ document.addEventListener('app-back', () => {
   /* 5. режим выбора на главном экране */
   const selecting = document.querySelector('.main-screen.selecting');
   if (selecting) { selecting.dispatchEvent(new CustomEvent('app-exit-selection')); return; }
-  /* 6. обычный экран */
+  /* 6. редактор — сохранить и закрыть как по кнопке «назад» */
+  const top = Nav.top();
+  if (top?.classList.contains('editor-screen')) {
+    const back = top.querySelector('[data-a=back]');
+    if (back) { back.click(); return; }
+  }
+  /* 7. обычный экран */
   if (!Nav.pop()) { /* уже первый экран — ничего не делаем, приложение остаётся открытым */ }
 });
