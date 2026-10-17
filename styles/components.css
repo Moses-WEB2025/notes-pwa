@@ -282,7 +282,7 @@
 .player-card .pc-del:active { background: rgba(217,48,37,.12); transform: scale(.9); }
 .player-card .pc-del .material-symbols-rounded { font-size: 22px; }
 
-/* ===== Инструменты для фото (выделение долгим тапом) ===== */
+/* ===== Инструменты для фото (выделение тапом) ===== */
 .img-frame {
   position: fixed; z-index: 130; pointer-events: none;
   border: 2px solid var(--accent);

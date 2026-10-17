@@ -748,7 +748,7 @@ export function openEditor(id, opts = {}) {
   }
 
   /* =========================================================
-     Фото: выделение долгим тапом, изменение размера,
+     Фото: выделение тапом, изменение размера,
      перемещение, поворот, обрезка, замена, копирование, удаление
      ========================================================= */
   let selImg = null, imgFrame = null, imgBar = null;
@@ -1013,9 +1013,9 @@ export function openEditor(id, opts = {}) {
     });
   }
 
-  /* Жест: долгий тап по фото выделяет его; на выделенном — перетаскивание */
-  let pressTimer = null, pressImg = null, pressFrom = null, imgTouchAt = 0;
-  const cancelPress = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } pressImg = null; };
+  /* Жест: обычный тап по фото открывает редактирование; на выделенном — перетаскивание */
+  let pressImg = null, pressFrom = null, pressAt = 0, imgTouchAt = 0;
+  const cancelPress = () => { pressImg = null; pressFrom = null; };
   const isImgTarget = t => !!(t && t.closest && t.closest('img.rich-img'));
 
   /* тап по фото не должен ставить каретку и открывать клавиатуру холста */
@@ -1030,15 +1030,21 @@ export function openEditor(id, opts = {}) {
     if (document.activeElement === content || document.activeElement === titleInput) { content.blur(); titleInput.blur(); }
     const img = t.closest('img.rich-img');
     if (img === selImg) { startMove(e, img); return; }
-    pressImg = img; pressFrom = { x: e.clientX, y: e.clientY };
-    clearTimeout(pressTimer);
-    pressTimer = setTimeout(() => { pressTimer = null; if (pressImg === img) selectImage(img); }, 380);
+    /* запоминаем нажатие: выделяем только если это тап, а не скролл/свайп */
+    pressImg = img; pressFrom = { x: e.clientX, y: e.clientY }; pressAt = performance.now();
   });
   content.addEventListener('contextmenu', e => { if (isImgTarget(e.target)) e.preventDefault(); });
   /* страховка: если браузер всё же сфокусировал холст по тапу на фото — сразу снимаем фокус */
   content.addEventListener('focus', () => { if (performance.now() - imgTouchAt < 450) content.blur(); }, true);
 
-  window.addEventListener('pointerup', cancelPress);
+  window.addEventListener('pointerup', e => {
+    if (!pressImg || !pressFrom) return;
+    const moved = Math.hypot(e.clientX - pressFrom.x, e.clientY - pressFrom.y) > 18;
+    const quick = performance.now() - pressAt < 600;
+    const img = pressImg;
+    cancelPress();
+    if (!moved && quick) selectImage(img);
+  });
   window.addEventListener('pointermove', e => {
     if (!pressImg || !pressFrom) return;
     if (Math.hypot(e.clientX - pressFrom.x, e.clientY - pressFrom.y) > 18) cancelPress();
