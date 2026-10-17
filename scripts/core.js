@@ -166,14 +166,18 @@ let gesture = null;
 document.addEventListener('touchstart', e => {
   if (e.touches.length !== 1 || backGestureBlocked()) return;
   const screens = document.querySelectorAll('#screens-root > .screen');
-  if (screens.length <= 1) return;
+  /* Тот же свайп «назад» закрывает и поиск на главном экране, когда других
+     экранов нет: строка поиска уезжает вниз, возвращаясь на главную. */
+  const searching = document.querySelector('.main-screen.searching');
+  const searchMode = !!searching && screens.length <= 1;
+  if (screens.length <= 1 && !searching) return;
   const t = e.touches[0];
   if (t.clientX > EDGE_BACK_PX) return;
   const top = screens[screens.length - 1];
-  const prev = screens[screens.length - 2];
+  const prev = screens[screens.length - 2] || null;
   gesture = {
     sx: t.clientX, sy: t.clientY,
-    top, prev,
+    top, prev, search: searchMode,
     started: false, dx: 0,
     lastX: t.clientX, lastT: performance.now(), vx: 0,
   };
@@ -192,12 +196,17 @@ document.addEventListener('touchmove', e => {
 
   if (!gesture.started && dx > 14 && dy < 32 && dx > dy * 0.6) {
     gesture.started = true;
-    gesture.top.classList.add('swipe-back');
+    gesture.top.classList.add(gesture.search ? 'search-drag' : 'swipe-back');
   }
   if (!gesture.started) return;
 
   gesture.dx = dx;
-  applyBackGestureDrag(gesture, dx);
+  if (gesture.search) {
+    /* Поиск не сдвигает экран — строка просто тянется за пальцем. */
+    gesture.top.style.setProperty('--search-dx', Math.max(0, dx) + 'px');
+  } else {
+    applyBackGestureDrag(gesture, dx);
+  }
   e.preventDefault();
 }, { passive: false });
 
@@ -209,24 +218,28 @@ document.addEventListener('touchend', () => {
 
   const w = window.innerWidth;
   const commit = g.dx > BACK_COMMIT_PX || g.dx > w * BACK_COMMIT_RATIO || (g.vx > 0.45 && g.dx > 48);
-  g.top.classList.remove('swipe-back');
+  g.top.classList.remove('swipe-back', 'search-drag');
+  if (g.search) g.top.style.setProperty('--search-dx', '0px');
 
   if (commit) {
-    /* Не сбрасываем позицию вручную: эстафету принимает app-back → Nav.pop(),
-       и экран доезжает до края с той точки, где его отпустил палец. */
+    /* Не сбрасываем позицию вручную: эстафету принимает app-back → Nav.pop()
+       (или закрытие поиска), и всё доезжает до места с той точки, где отпустили. */
     document.dispatchEvent(new CustomEvent('app-back'));
     return;
   }
   /* Отмена жеста — мягкий возврат, а не мгновенный скачок */
-  settleBackGesture(g);
+  if (!g.search) settleBackGesture(g);
 }, { passive: true });
 
 document.addEventListener('touchcancel', () => {
   if (!gesture) return;
   const g = gesture;
   gesture = null;
-  if (g.started) { g.top.classList.remove('swipe-back'); settleBackGesture(g); }
-}, { passive: true });
+  if (!g.started) return;
+  g.top.classList.remove('swipe-back', 'search-drag');
+  if (g.search) { g.top.style.setProperty('--search-dx', '0px'); return; }
+  settleBackGesture(g);
+});
 
 /* ---------- Пресс-состояния ---------- */
 export function bindPress(root=document){

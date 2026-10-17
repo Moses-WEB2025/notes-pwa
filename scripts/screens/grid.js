@@ -99,9 +99,17 @@ function buildCard(n, q, opts, m) {
     </div>
     <div class="nc-radio"><span class="material-symbols-rounded">check</span></div>`;
 
-  let lpTimer = null, lpFired = false;
-  card.addEventListener('touchstart', () => {
-    lpFired = false;
+  /* Взаимодействие: зажим открывает режим выбора, обычный тап открывает
+     заметку либо (в режиме выбора) отмечает/снимает её.
+     ВАЖНО: отметку делаем прямо на touchend. Раньше она ждала click, а браузер
+     не всегда его генерирует после лёгкого смещения пальца — из-за этого часть
+     тапов «терялась» и по заметке приходилось кликать повторно. */
+  let lpTimer = null, lpFired = false, startX = 0, startY = 0, moved = false, tapHandled = false;
+
+  card.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    startX = t.clientX; startY = t.clientY;
+    moved = false; lpFired = false;
     lpTimer = setTimeout(() => {
       lpFired = true;
       vibrate(18);
@@ -110,9 +118,30 @@ function buildCard(n, q, opts, m) {
       else if (opts && opts.sel) opts.sel.onToggle(n.id);
     }, 430);
   }, { passive: true });
-  ['touchmove', 'touchend', 'touchcancel'].forEach(ev => card.addEventListener(ev, () => clearTimeout(lpTimer), { passive: true }));
+
+  card.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    /* Заметное смещение — это прокрутка списка, а не тап: зажим отменяем. */
+    if (Math.abs(t.clientX - startX) > 8 || Math.abs(t.clientY - startY) > 8) {
+      moved = true;
+      clearTimeout(lpTimer);
+    }
+  }, { passive: true });
+
+  card.addEventListener('touchend', e => {
+    clearTimeout(lpTimer);
+    if (lpFired || moved) return;
+    if (opts && opts.sel && opts.sel.active) {
+      /* Отмечаем сразу и гасим синтетический click, который иначе снял бы выбор */
+      e.preventDefault();
+      tapHandled = true;
+      opts.sel.onToggle(n.id);
+    }
+  });
+  card.addEventListener('touchcancel', () => clearTimeout(lpTimer), { passive: true });
 
   card.addEventListener('click', () => {
+    if (tapHandled) { tapHandled = false; return; }
     if (lpFired) { lpFired = false; return; }
     if (opts && opts.sel && opts.sel.active) opts.sel.onToggle(n.id);
     else openEditor(n.id);

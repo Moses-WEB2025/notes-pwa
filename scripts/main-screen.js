@@ -49,6 +49,10 @@ export function mainScreen() {
   const gridHolder = document.createElement('div');
   gridHolder.className = 'scroll grid-holder';
 
+  /* светлый холст, перекрывающий интерфейс во время поиска */
+  const searchCanvas = document.createElement('div');
+  searchCanvas.className = 'search-canvas';
+
   /* чипы фильтров режима выбора */
   const chipsRow = document.createElement('div');
   chipsRow.className = 'chips-row hidden';
@@ -76,7 +80,7 @@ export function mainScreen() {
     <button data-sel="move"><span class="material-symbols-rounded">drive_file_move</span><span class="lbl">Переместить</span></button>
     <button data-sel="delete"><span class="material-symbols-rounded">delete</span><span class="lbl">Удалить</span></button>`;
 
-  el.append(appbar, h1row, searchWrap, chipsRow, gridHolder, fab, tabbar, selBar);
+  el.append(appbar, h1row, searchWrap, searchCanvas, chipsRow, gridHolder, fab, tabbar, selBar);
 
   /* ---------- режим выбора (долгий тап) ---------- */
   let selFilter = 'all';
@@ -217,15 +221,23 @@ export function mainScreen() {
     el.classList.toggle('searching', on);
   }
 
+  /* Закрытие поиска тем же свайпом «назад» — возврат на главную страницу */
+  function closeSearch() {
+    searchInput.value = '';
+    searchInput.blur();
+    searchCancel.classList.add('hidden');
+    el.style.setProperty('--search-dx', '0px');
+    el.classList.remove('search-drag');
+    syncSearchLift();
+    refresh();
+  }
+
   searchInput.addEventListener('focus', () => { searchCancel.classList.remove('hidden'); syncSearchLift(); });
   searchInput.addEventListener('blur', () => setTimeout(() => {
     if (!searchInput.value.trim()) searchCancel.classList.add('hidden');
     syncSearchLift();
   }, 160));
-  searchCancel.addEventListener('click', () => {
-    searchInput.value = ''; searchInput.blur(); refresh();
-    searchCancel.classList.add('hidden'); syncSearchLift();
-  });
+  searchCancel.addEventListener('click', closeSearch);
   searchInput.addEventListener('input', syncSearchLift);
   searchInput.addEventListener('input', debounce(refresh, 100));
   searchClear.addEventListener('click', () => { searchInput.value = ''; refresh(); });
@@ -332,6 +344,8 @@ export function mainScreen() {
 
   /* выход из режима выбора по системной «назад» */
   el.addEventListener('app-exit-selection', exitSelection);
+  /* закрытие поиска тем же свайпом «назад» */
+  el.addEventListener('app-exit-search', closeSearch);
 
   document.addEventListener('notes-changed', () => { if (document.body.contains(el)) load(); });
   load();
