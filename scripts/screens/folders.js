@@ -45,7 +45,9 @@ export function openFolders() {
       let lp = null, fired = false;
       row.addEventListener('touchstart', () => { fired = false; lp = setTimeout(() => { fired = true; vibrate(20); folderMenu(f); }, 480); }, { passive: true });
       ['touchmove', 'touchend', 'touchcancel'].forEach(ev => row.addEventListener(ev, () => clearTimeout(lp), { passive: true }));
-      row.addEventListener('click', () => { if (fired) { fired = false; return; } openFolderView(f); });
+      row.addEventListener('click', () => { if (fired) { fired = false; return; }
+        import('./grid.js').then(({ renderNotesGrid }) => openFolderView(f));
+      });
       scroll.appendChild(row);
     });
 
@@ -83,10 +85,10 @@ export function openFolders() {
         return;
       }
       const { renderNotesGrid } = await import('./grid.js');
-      renderNotesGrid(grid, notes, '', () => fill());
+      renderNotesGrid(grid, notes, '');
     };
-    vEl.querySelector('[data-a=back]').addEventListener('click', () => vEl.remove());
-    el.appendChild(vEl);
+    vEl.querySelector('[data-a=back]').addEventListener('click', () => Nav.pop());
+    Nav.pushEl(vEl);
     fill();
   }
 

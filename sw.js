@@ -1,5 +1,5 @@
 /* Заметки — Service Worker: полный офлайн (прекэш всех ресурсов, fallback навигации) */
-const VERSION = 'notes-v2.0.0';
+const VERSION = 'notes-v2.2.0';
 const PRECACHE = `precache-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 
@@ -84,21 +84,29 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Статика: cache-first с догрузкой в кэш
+  // Статика: cache-first + фоновое обновление (stale-while-revalidate).
+  // Мгновенный запуск из кэша, свежая версия подтянется для следующей загрузки.
   event.respondWith(
     (async () => {
+      const cache = await caches.open(PRECACHE);
       const cached = await caches.match(request);
-      if (cached) return cached;
-      try {
-        const fresh = await fetch(request);
+      const fetchAndUpdate = fetch(request).then(async (fresh) => {
         if (fresh && fresh.ok) {
-          const cache = await caches.open(RUNTIME);
-          cache.put(request, fresh.clone());
+          await cache.put(request, fresh.clone());
+          const all = await self.clients.matchAll();
+          all.forEach(c => c.postMessage({ type: 'UPDATED' }));
         }
         return fresh;
-      } catch (e) {
-        return new Response('', { status: 504, statusText: 'Offline' });
-      }
+      }).catch(() => null);
+      if (cached) { fetchAndUpdate.catch(() => {}); return cached; }
+      const fresh = await fetchAndUpdate;
+      if (fresh) return fresh;
+      return new Response('', { status: 504, statusText: 'Offline' });
     })()
   );
+});
+
+/* Когда кэш обновился в фоне — мягко просим страницу перезагрузить один раз */
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'APPLY_UPDATE') self.skipWaiting();
 });

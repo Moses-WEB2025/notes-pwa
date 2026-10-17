@@ -65,42 +65,53 @@ export const Store={
     t.oncomplete=res;t.onerror=()=>rej(t.error);});}
 };
 
-/* ---------- Навигация (стек) ---------- */
+/* ---------- Навигация (стек по DOM — никогда не рассинхронизируется) ---------- */
 export const Nav={
-  stack:[],
-  push(factory) {
-    const prev = this.stack[this.stack.length - 1];
-    const el = factory();
+  get screens(){ return document.querySelectorAll('#screens-root > .screen'); },
+  pushEl(el) {
+    const screens = this.screens;
+    const prev = screens[screens.length - 1];
     el.classList.add('screen', 'enter-right');
     document.getElementById('screens-root').appendChild(el);
-    this.stack.push(el);
-    if (prev) { prev.classList.add('anim', 'under'); }
+    if (prev) prev.classList.add('anim', 'under');
     requestAnimationFrame(() => {
       el.classList.add('anim'); el.classList.remove('enter-right');
       setTimeout(() => { el.classList.remove('anim'); prev && prev.classList.remove('anim'); }, 320);
     });
     vibrate(5);
   },
-  pop() {
-    if (this.stack.length <= 1) return;
-    document.body.classList.remove('kb-open');
-    const top = this.stack.pop(), prev = this.stack[this.stack.length - 1];
-    top.classList.add('anim'); top.style.transform = 'translateX(100%)';
-    prev && prev.classList.remove('under');
-    setTimeout(() => { top.remove(); prev && prev.classList.remove('anim'); }, 320);
-    vibrate(4);
+  /* фабрика optional для совместимости */
+  push(factory) {
+    const el = typeof factory === 'function' ? factory() : factory;
+    this.pushEl(el);
   },
-  top(){return this.stack[this.stack.length-1];}
+  /* pop по фактическому DOM: закрывает текущий верхний экран */
+  pop() {
+    const screens = this.screens;
+    if (screens.length <= 1) return false;
+    document.body.classList.remove('kb-open');
+    const top = screens[screens.length - 1];
+    const prev = screens[screens.length - 2];
+    top.classList.add('anim');
+    top.style.transform = 'translateX(100%)';
+    prev && prev.classList.remove('under');
+    const t = top;
+    setTimeout(() => t.remove(), 320);
+    vibrate(4);
+    return true;
+  },
+  top(){ const s=this.screens; return s[s.length-1]; }
 };
 
 /* ---------- Свайп «назад» от левого края (нативный iOS-стиль) ---------- */
-let gesture = null;
+let gesture = null, gestureDone = false;
 document.addEventListener('touchstart', e => {
   /* жест работает на каждом экране свыше первого, независимо от стека */
   const screens = document.querySelectorAll('#screens-root > .screen');
+  gestureDone = false;
   if (screens.length <= 1) return;
   const t = e.touches[0];
-  if (t.clientX < 26) {
+  if (t.clientX < 28) {
     gesture = { sx: t.clientX, sy: t.clientY, top: screens[screens.length - 1], started: false, dx: 0 };
   }
 }, { passive: true });
@@ -121,12 +132,15 @@ document.addEventListener('touchend', e => {
   const g = gesture; gesture = null;
   if (!g.started) return;
   g.top.style.transition = ''; g.top.classList.remove('swipe-back');
-  g.top.style.transform = '';
   if (g.dx > 110) {
-    /* уводим экран вправо как в pop */
-    g.top.classList.add('anim'); g.top.style.transform = 'translateX(100%)';
+    /* завершаем через общий pop — так стек и Android back остаются синхронными */
+    gestureDone = true;
+    g.top.classList.add('anim');
+    g.top.style.transform = 'translateX(100%)';
     setTimeout(() => g.top.remove(), 320);
     vibrate(4);
+  } else {
+    g.top.style.transform = '';
   }
 }, { passive: true });
 document.addEventListener('touchcancel',()=>{ if(gesture&&gesture.started){gesture.top.style.transform='';gesture=null;} },{passive:true});
@@ -141,16 +155,41 @@ export function bindPress(root=document){
   });
 }
 
-/* ---------- Клавиатура ---------- */
+/* ---------- Клавиатура (visualViewport + фолбэк) ---------- */
 export function initKeyboard(){
   const vv=window.visualViewport;
-  const upd=()=>{
+  let refH=window.innerHeight;
+  let lastOpen=-1;
+  const upd=(ev)=>{
     let open=false,kbH=0;
-    if(vv){ kbH=Math.max(0,window.innerHeight-vv.height-vv.offsetTop); open=kbH>80; }
-    document.documentElement.style.setProperty('--kb-h',open?kbH+'px':'0px');
-    document.body.classList.toggle('kb-open',open);
+    if(vv){
+      kbH=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
+      open=kbH>80;
+    } else {
+      /* фолбэк: высота клавиатуры = «сжатие» окна после фокуса на вводе */
+      if(ev&&ev.type==='focusin') setTimeout(upd,350);
+      kbH=Math.max(0,refH-window.innerHeight);
+      open=kbH>80;
+    }
+    refH=Math.max(refH,window.innerHeight);
+    if(open!==lastOpen){
+      lastOpen=open;
+      document.documentElement.style.setProperty('--kb-h',open?kbH+'px':'0px');
+      document.body.classList.toggle('kb-open',open);
+      /* дернем ещё раз через кадр — клавиатура доезжает не мгновенно */
+      requestAnimationFrame(()=>{
+        let h=0,o=false;
+        if(vv){ h=Math.max(0,window.innerHeight-vv.height-vv.offsetTop); o=h>80; }
+        else { h=Math.max(0,refH-window.innerHeight); o=h>80; }
+        document.documentElement.style.setProperty('--kb-h',o?h+'px':'0px');
+        document.body.classList.toggle('kb-open',o);
+      });
+    }
     document.dispatchEvent(new CustomEvent('kb-change',{detail:{open,height:kbH}}));
   };
   if(vv){ vv.addEventListener('resize',upd); vv.addEventListener('scroll',upd); }
+  window.addEventListener('resize',upd);
+  window.addEventListener('focusin',upd);
+  window.addEventListener('focusout',()=>setTimeout(upd,120));
   upd();
 }

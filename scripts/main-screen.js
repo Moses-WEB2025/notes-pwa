@@ -1,9 +1,10 @@
 /* ============ Главный экран «Заметки» ============ */
-import { Store, escapeHtml, htmlToPlain, debounce, uid, bindPress } from './core.js';
+import { Store, escapeHtml, htmlToPlain, debounce, uid, bindPress, Nav, vibrate } from './core.js';
 import { toast, confirmSheet, attachMenu, sheetSections } from './components/ui.js';
 import { openEditor } from './screens/editor.js';
 import { openFolders } from './screens/folders.js';
-import { renderNotesGrid } from './screens/grid.js';
+import { renderNotesGrid, updateSelection } from './screens/grid.js';
+import { openTrashScreen } from './screens/trash.js';
 
 const COLORS = [
   { key: 'none', label: 'Без цвета', css: '#ffffff' },
@@ -22,9 +23,11 @@ export function mainScreen() {
   const appbar = document.createElement('div');
   appbar.className = 'appbar';
   appbar.innerHTML = `
+    <button class="icon-btn sel-only" data-a="sel-close" data-press aria-label="Готово"><span class="material-symbols-rounded">close</span></button>
     <button class="icon-btn" data-a="folders" data-press aria-label="Папки"><span class="material-symbols-rounded">folder_open</span></button>
     <span class="spacer"></span>
-    <button class="icon-btn" data-a="trash" data-press aria-label="Корзина"><span class="material-symbols-rounded">delete</span></button>`;
+    <button class="icon-btn" data-a="trash" data-press aria-label="Корзина"><span class="material-symbols-rounded">delete</span></button>
+    <button class="icon-btn sel-only" data-a="sel-all" data-press aria-label="Выбрать все"><span class="material-symbols-rounded">checklist</span></button>`;
 
   const h1row = document.createElement('div');
   h1row.className = 'h1-row';
@@ -46,6 +49,15 @@ export function mainScreen() {
   const gridHolder = document.createElement('div');
   gridHolder.className = 'scroll grid-holder';
 
+  /* чипы фильтров режима выбора */
+  const chipsRow = document.createElement('div');
+  chipsRow.className = 'chips-row hidden';
+  chipsRow.innerHTML = `
+    <button class="chip active" data-c="all">Все</button>
+    <button class="chip" data-c="notes">Заметки</button>
+    <button class="chip" data-c="nocat">Без категории</button>
+    <button class="chip" data-c="hidden">Скрытые</button>`;
+
   const fab = document.createElement('button');
   fab.className = 'fab';
   fab.innerHTML = `<span class="material-symbols-rounded">add</span>`;
@@ -55,7 +67,73 @@ export function mainScreen() {
   tabbar.innerHTML = `
     <button class="tab active"><span class="material-symbols-rounded">edit_note</span><span class="lbl">Заметки</span></button>`;
 
-  el.append(appbar, h1row, searchWrap, gridHolder, fab, tabbar);
+  /* нижняя панель режима выбора: Скрыть | Закрепить | Переместить | Удалить */
+  const selBar = document.createElement('div');
+  selBar.className = 'select-bar hidden';
+  selBar.innerHTML = `
+    <button data-sel="hide"><span class="material-symbols-rounded">lock</span><span>Скрыть</span></button>
+    <button data-sel="pin"><span class="material-symbols-rounded">push_pin</span><span>Закрепить</span></button>
+    <button data-sel="move"><span class="material-symbols-rounded">vault</span><span>Переместить</span></button>
+    <button data-sel="delete"><span class="material-symbols-rounded">delete</span><span>Удалить</span></button>`;
+
+  el.append(appbar, h1row, searchWrap, chipsRow, gridHolder, fab, tabbar, selBar);
+
+  /* ---------- режим выбора (долгий тап) ---------- */
+  let selFilter = 'all';
+  const sel = {
+    active: false,
+    set: new Set(),
+    onEnter(id) { this.active = true; this.set.add(id); enterSelection(); refresh(); },
+    onToggle(id) { if (this.set.has(id)) this.set.delete(id); else this.set.add(id); refresh(); },
+  };
+
+  function enterSelection() {
+    el.classList.add('selecting');
+    chipsRow.classList.remove('hidden');
+    vibrate(12);
+  }
+  function exitSelection() {
+    sel.active = false; sel.set.clear(); selFilter = 'all';
+    chipsRow.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.c === 'all'));
+    el.classList.remove('selecting');
+    chipsRow.classList.add('hidden');
+    refresh();
+  }
+
+  chipsRow.addEventListener('click', e => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    selFilter = c.dataset.c;
+    chipsRow.querySelectorAll('.chip').forEach(x => x.classList.toggle('active', x === c));
+    sel.set.clear();
+    refresh();
+  });
+
+  function refresh() {
+    const q = searchInput.value.trim().toLowerCase();
+    let list = notes;
+    if (sel.active) {
+      list = selFilter === 'hidden' ? notes.filter(n => n.hidden) : notes.filter(n => !n.hidden);
+      if (selFilter === 'notes') list = list.filter(n => (n.title || '').trim() || htmlToPlain(n.content));
+      if (selFilter === 'nocat') list = list.filter(n => !n.folderId);
+    } else {
+      list = list.filter(n => !n.hidden);
+      if (filterColor) list = list.filter(n => n.color === filterColor);
+      if (filterFolder) list = list.filter(n => n.folderId === filterFolder);
+    }
+    if (q) list = list.filter(n => (n.title || '').toLowerCase().includes(q) || htmlToPlain(n.content).toLowerCase().includes(q));
+    renderNotesGrid(gridHolder, list, q, { sel: { active: sel.active, selected: sel.set, onEnter: sel.onEnter.bind(sel), onToggle: sel.onToggle.bind(sel) } });
+    searchField.classList.toggle('has-text', !!searchInput.value.trim());
+    renderChip();
+    renderSelBar();
+  }
+
+  function renderSelBar() {
+    selBar.classList.toggle('hidden', !sel.active);
+    const n = sel.set.size;
+    h1row.querySelector('h1').textContent = !sel.active ? 'Заметки' : (n ? `Выбрано ${n} объект${n % 10 === 1 && n % 100 !== 11 ? '' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'а' : 'ов')}` : 'Выбрано');
+    const any = n > 0;
+    selBar.querySelectorAll('button').forEach(b => b.disabled = !any);
+  }
 
   /* ---------- состояние ---------- */
   let notes = [];
@@ -70,18 +148,7 @@ export function mainScreen() {
   async function load() {
     notes = (await Store.notes()).filter(n => !n.deleted)
       .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.updatedAt - a.updatedAt);
-    apply();
-  }
-
-  function apply() {
-    const q = searchInput.value.trim().toLowerCase();
-    let list = notes;
-    if (filterColor) list = list.filter(n => n.color === filterColor);
-    if (filterFolder) list = list.filter(n => n.folderId === filterFolder);
-    if (q) list = list.filter(n => (n.title || '').toLowerCase().includes(q) || htmlToPlain(n.content).toLowerCase().includes(q));
-    renderNotesGrid(gridHolder, list, q, longPressMenu);
-    searchField.classList.toggle('has-text', !!searchInput.value.trim());
-    renderChip();
+    refresh();
   }
 
   function renderChip() {
@@ -91,23 +158,64 @@ export function mainScreen() {
       chipEl = document.createElement('button');
       chipEl.className = 'cat-chip';
       chipEl.innerHTML = `<span class="material-symbols-rounded">${c ? 'palette' : 'folder_open'}</span>${c ? c.label : 'Папка'}<span class="material-symbols-rounded" style="font-size:16px">close</span>`;
-      chipEl.addEventListener('click', () => { filterColor = null; filterFolder = null; apply(); });
+      chipEl.addEventListener('click', () => { filterColor = null; filterFolder = null; refresh(); });
       searchWrap.after(chipEl);
     }
   }
 
   searchInput.addEventListener('focus', () => searchCancel.classList.remove('hidden'));
   searchInput.addEventListener('blur', () => setTimeout(() => { if (!searchInput.value.trim()) searchCancel.classList.add('hidden'); }, 160));
-  searchCancel.addEventListener('click', () => { searchInput.value = ''; searchInput.blur(); apply(); searchCancel.classList.add('hidden'); });
-  searchInput.addEventListener('input', debounce(apply, 100));
-  searchClear.addEventListener('click', () => { searchInput.value = ''; apply(); });
+  searchCancel.addEventListener('click', () => { searchInput.value = ''; searchInput.blur(); refresh(); searchCancel.classList.add('hidden'); });
+  searchInput.addEventListener('input', debounce(refresh, 100));
+  searchClear.addEventListener('click', () => { searchInput.value = ''; refresh(); });
 
   appbar.querySelector('[data-a=folders]').addEventListener('click', () => {
     const foldersEl = openFolders();
-    document.getElementById('screens-root').appendChild(foldersEl);
+    Nav.pushEl(foldersEl);
   });
-  appbar.querySelector('[data-a=trash]').addEventListener('click', () => openTrashScreen());
+  appbar.querySelector('[data-a=trash]').addEventListener('click', () => Nav.pushEl(openTrashScreen()));
+  appbar.querySelector('[data-a=sel-close]').addEventListener('click', exitSelection);
+  appbar.querySelector('[data-a=sel-all]').addEventListener('click', () => {
+    const q = searchInput.value.trim().toLowerCase();
+    let list = selFilter === 'hidden' ? notes.filter(n => n.hidden) : notes.filter(n => !n.hidden);
+    if (selFilter === 'nocat') list = list.filter(n => !n.folderId);
+    if (q) list = list.filter(n => (n.title || '').toLowerCase().includes(q) || htmlToPlain(n.content).toLowerCase().includes(q));
+    list.forEach(n => sel.set.add(n.id));
+    refresh();
+  });
   fab.addEventListener('click', () => openEditor(null, { folderId: filterFolder }));
+
+  /* кнопки режима выбора */
+  selBar.addEventListener('click', async e => {
+    const b = e.target.closest('[data-sel]'); if (!b || !sel.set.size) return;
+    const ids = [...sel.set];
+    const act = b.dataset.sel;
+    if (act === 'pin') {
+      for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.pinned = !nn.pinned; await Store.saveNote(nn); } }
+      toast('Готово'); exitSelection(); load();
+    } else if (act === 'move') {
+      const folders = await Store.folders();
+      sheetSections({ title: 'В папку', sections: [api => {
+        const box = document.createElement('div'); box.className = 'sheet-actions';
+        box.innerHTML = [`<button class="sheet-action" data-f=""><span class="material-symbols-rounded">block</span>Без папки</button>`,
+          ...folders.map(f => `<button class="sheet-action" data-f="${f.id}"><span class="material-symbols-rounded">folder</span>${escapeHtml(f.name)}</button>`)].join('');
+        box.addEventListener('click', async ev => {
+          const btn = ev.target.closest('[data-f]'); if (!btn) return;
+          for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.folderId = btn.dataset.f || null; await Store.saveNote(nn); } }
+          toast('Перемещено'); api.close(); exitSelection(); load();
+        });
+        return box;
+      }]});
+    } else if (act === 'delete') {
+      if (await confirmSheet({ title: 'Удалите заметки', text: ids.length === 1 ? 'Удалить эту заметку?' : `Удалить ${ids.length} заметок?` })) {
+        for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.deleted = true; await Store.saveNoteRaw(nn); } }
+        toast('Заметки удалены'); exitSelection(); load();
+      }
+    } else if (act === 'hide') {
+      for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.hidden = true; await Store.saveNoteRaw(nn); } }
+      toast('Скрыто'); exitSelection(); load();
+    }
+  });
 
   function longPressMenu(n, card) {
     attachMenu(card, [
@@ -156,41 +264,8 @@ export function mainScreen() {
     }]});
   }
 
-  /* корзина */
-  function openTrashScreen() {
-    const tEl = document.createElement('div');
-    tEl.className = 'screen trash-screen';
-    tEl.innerHTML = `
-      <div class="appbar back-header">
-        <button class="icon-btn" data-a="back" data-press><span class="material-symbols-rounded">arrow_back</span></button>
-        <div class="appbar-title">Корзина</div><span style="width:44px"></span>
-      </div>
-      <div class="scroll" style="padding-top:8px"></div>`;
-    const sc = tEl.querySelector('.scroll');
-    const fill = async () => {
-      const all = await Store.notes();
-      const del = all.filter(n => n.deleted);
-      sc.innerHTML = `
-        <div class="trash-banner">Заметки, находящиеся в корзине более 30 дней, были безвозвратно удалены</div>
-        ${del.length ? '' : `
-          <div class="trash-empty">
-            <span class="material-symbols-rounded">article</span>
-            <div class="t">Нет заметок</div>
-          </div>`}`;
-      del.sort((a,b) => b.updatedAt - a.updatedAt).forEach(n => {
-        const r = document.createElement('div');
-        r.className = 'folder-row';
-        r.innerHTML = `<span class="f-name">${escapeHtml(n.title || 'Без названия')}</span>
-          <button class="icon-btn" data-a="restore" data-press><span class="material-symbols-rounded">restore</span></button>`;
-        r.querySelector('[data-a=restore]').addEventListener('click', async () => { n.deleted = false; await Store.saveNoteRaw(n); toast('Восстановлено'); fill(); });
-        sc.appendChild(r);
-      });
-      bindPress(sc);
-    };
-    tEl.querySelector('[data-a=back]').addEventListener('click', () => tEl.remove());
-    document.getElementById('screens-root').appendChild(tEl);
-    fill();
-  }
+  /* выход из режима выбора по системной «назад» */
+  el.addEventListener('app-exit-selection', exitSelection);
 
   document.addEventListener('notes-changed', () => { if (document.body.contains(el)) load(); });
   load();

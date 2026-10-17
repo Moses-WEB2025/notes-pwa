@@ -1,5 +1,5 @@
 /* ============ Корзина ============ */
-import { Store, escapeHtml, bindPress } from '../core.js';
+import { Store, escapeHtml, bindPress, Nav } from '../core.js';
 import { toast, confirmSheet } from '../components/ui.js';
 
 export function openTrashScreen() {
@@ -37,7 +37,7 @@ export function openTrashScreen() {
     });
     bindPress(sc);
   };
-  tEl.querySelector('[data-a=back]').addEventListener('click', () => tEl.remove());
+  tEl.querySelector('[data-a=back]').addEventListener('click', () => Nav.pop());
   document.getElementById('screens-root').appendChild(tEl);
   bindPress(tEl);
   fill();

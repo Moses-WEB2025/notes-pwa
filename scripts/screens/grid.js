@@ -1,15 +1,17 @@
-/* ============ Общий рендер сетки заметок ============ */
+/* ============ Общий рендер сетки заметок (обычный + режим выбора) ============ */
 import { fmtCardTime, escapeHtml, highlight, htmlToPlain, bindPress, vibrate } from '../core.js';
 import { openEditor } from './editor.js';
 
-export function renderNotesGrid(container, notes, q = '', onChanged) {
+export function renderNotesGrid(container, notes, q = '', opts = {}) {
   container.innerHTML = '';
+  container.classList.toggle('selectable', !!(opts && opts.sel && opts.sel.active));
+
   const col1 = document.createElement('div'); col1.className = 'grid-col';
   const col2 = document.createElement('div'); col2.className = 'grid-col';
   container.append(col1, col2);
 
   notes.forEach((n, i) => {
-    const card = buildCard(n, q, onChanged);
+    const card = buildCard(n, q, opts);
     if (i < 8) { card.classList.add('entering'); card.style.animationDelay = Math.min(i * 28, 200) + 'ms'; }
     const weight = (n.color === 'blue' ? 2.4 : 0) + htmlToPlain(n.content).length / 90 + (n.title || '').length / 44;
     (weight > 1.2 ? col2 : col1).appendChild(card);
@@ -17,13 +19,23 @@ export function renderNotesGrid(container, notes, q = '', onChanged) {
   bindPress(container);
 }
 
-function buildCard(n, q, onChanged) {
+/* Обновление выделения без перерисовки сетки — сохраняет позицию скролла */
+export function updateSelection(container, selected) {
+  container.querySelectorAll('.note-card').forEach(card => {
+    card.classList.toggle('sur-select', selected.has(card.dataset.id));
+  });
+}
+
+function buildCard(n, q, opts) {
   const card = document.createElement('div');
   card.className = 'note-card';
+  card.dataset.id = n.id;
   card.setAttribute('data-press', '');
 
   if (n.color) card.classList.add('c-' + n.color);
   if (n.pinned) card.classList.add('pinned');
+  if (n.hidden) card.classList.add('is-hidden');
+  if (opts && opts.sel && opts.sel.active && opts.sel.selected.has(n.id)) card.classList.add('sur-select');
 
   const plain = htmlToPlain(n.content);
   const titleHtml = q ? highlight(n.title || '', q) : escapeHtml(n.title || '');
@@ -36,30 +48,27 @@ function buildCard(n, q, onChanged) {
     <div class="nc-meta">
       <span>${escapeHtml(fmtCardTime(n.updatedAt))}</span>
       ${n.audio ? `<span class="audio-chip"><span class="eq"><i></i><i></i><i></i><i></i><i></i></span></span>` : ''}
-    </div>`;
+    </div>
+    <div class="nc-radio"><span class="material-symbols-rounded">check</span></div>`;
 
   let lpTimer = null, lpFired = false;
   card.addEventListener('touchstart', () => {
     lpFired = false;
-    lpTimer = setTimeout(() => { lpFired = true; vibrate(15); card.classList.remove('pressed'); longPress(n); }, 480);
+    lpTimer = setTimeout(() => {
+      lpFired = true;
+      vibrate(18);
+      card.classList.remove('pressed');
+      if (opts && opts.sel && !opts.sel.active) opts.sel.onEnter(n.id);   /* зажим → режим выбора */
+      else if (opts && opts.sel) opts.sel.onToggle(n.id);
+    }, 430);
   }, { passive: true });
   ['touchmove', 'touchend', 'touchcancel'].forEach(ev => card.addEventListener(ev, () => clearTimeout(lpTimer), { passive: true }));
-  card.addEventListener('click', () => { if (lpFired) { lpFired = false; return; } openEditor(n.id); });
 
-  function longPress(n2) {
-    import('../components/ui.js').then(async ({ attachMenu, confirmSheet }) => {
-      attachMenu(card, [
-        { icon: 'delete', label: 'Удалить', onClick: async () => {
-          if (await confirmSheet({ title: 'Удалите заметки', text: 'Удалить эту заметку?' })) {
-            const { Store } = await import('../core.js');
-            await Store.delNote(n.id);
-            onChanged && onChanged();
-            toast && 0;
-          }
-        } },
-      ]);
-    });
-  }
+  card.addEventListener('click', () => {
+    if (lpFired) { lpFired = false; return; }
+    if (opts && opts.sel && opts.sel.active) opts.sel.onToggle(n.id);
+    else openEditor(n.id);
+  });
 
   return card;
 }

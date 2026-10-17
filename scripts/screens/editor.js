@@ -73,15 +73,18 @@ export function openEditor(id, opts = {}) {
 
   bodyWrap.append(folderChip, titleInput, meta, content);
 
-  /* ===== нижний тулбар ===== */
+  /* ===== нижний тулбар: набор и порядок иконок как на скриншоте 6 ===== */
   const toolbar = document.createElement('div');
   toolbar.className = 'format-toolbar';
   toolbar.innerHTML = `
-    <button class="tool" data-tool="audio"><span class="material-symbols-rounded">graphic_eq</span></button>
-    <button class="tool" data-tool="image"><span class="material-symbols-rounded">image</span></button>
-    <button class="tool" data-tool="draw"><span class="material-symbols-rounded">gesture</span></button>
-    <button class="tool" data-tool="check"><span class="material-symbols-rounded">check_box_outline_blank</span></button>
-    <button class="tool" data-tool="align"><span class="material-symbols-rounded">title</span></button>`;
+    <button class="tool" data-tool="audio" aria-label="Аудио"><span class="material-symbols-rounded">graphic_eq</span></button>
+    <button class="tool" data-tool="image" aria-label="Фото"><span class="material-symbols-rounded">image</span></button>
+    <button class="tool" data-tool="draw" aria-label="Рисунок"><span class="material-symbols-rounded">gesture</span></button>
+    <button class="tool" data-tool="check" aria-label="Чек-лист"><span class="material-symbols-rounded">check_box_outline_blank</span></button>
+    <button class="tool" data-tool="heading" aria-label="Заголовок"><span class="material-symbols-rounded">title</span></button>
+    <button class="tool" data-tool="bold" aria-label="Жирный"><span class="material-symbols-rounded">format_bold</span></button>
+    <button class="tool" data-tool="italic" aria-label="Курсив"><span class="material-symbols-rounded">format_italic</span></button>
+    <button class="tool" data-tool="list" aria-label="Список"><span class="material-symbols-rounded">format_list_bulleted</span></button>`;
 
   el.append(topbar, topbarKb, bodyWrap, toolbar);
 
@@ -292,8 +295,20 @@ export function openEditor(id, opts = {}) {
 
   folderChip.addEventListener('click', folderSheet);
 
-  /* ---------- Тулбар ---------- */
-  toolbar.querySelectorAll('.tool').forEach(btn => btn.addEventListener('click', async () => {
+  /* ---------- Тулбар: рабочие кнопки, набор как на скриншоте (AI, аудио, фото, рисунок, чек-лист, заголовок) ---------- */
+  let lastFocusRange = null;
+  content.addEventListener('blur', () => {
+    const s = window.getSelection();
+    if (s && s.rangeCount && content.contains(s.anchorNode)) { lastFocusRange = s.getRangeAt(0).cloneRange(); }
+  });
+  const refocus = () => {
+    content.focus();
+    const s = window.getSelection();
+    if (lastFocusRange && s) { s.removeAllRanges(); s.addRange(lastFocusRange); }
+    return content;
+  };
+  toolbar.querySelectorAll('.tool').forEach(btn => btn.addEventListener('click', () => {
+    vibrate(8);
     const k = btn.dataset.tool;
     if (k === 'audio') {
       content.blur();
@@ -303,18 +318,34 @@ export function openEditor(id, opts = {}) {
     } else if (k === 'draw') {
       content.blur();
       openDrawing(async (dataUrl) => {
-        pushUndo(); content.focus();
+        pushUndo(); refocus();
         document.execCommand('insertHTML', false, `<div data-drawing="1"><img src="${dataUrl}"></div><div><br></div>`);
         scheduleSave();
       });
     } else if (k === 'check') {
-      pushUndo(); content.focus();
-      document.execCommand('insertHTML', false, `<div class="check-item" data-check="1"><input type="checkbox"><span class="lbl">Пункт</span></div><div><br></div>`);
+      pushUndo(); refocus();
+      document.execCommand('insertHTML', false, `<div class="check-item" data-check="1"><input type="checkbox"><span class="lbl">Пункт</span> </div><div><br></div>`);
       scheduleSave();
-    } else if (k === 'align') {
-      content.focus();
-      document.execCommand('formatBlock', false, 'h1');
+    } else if (k === 'heading') {
+      /* Заголовок — toggle: h1 <-> обычный текст */
+      pushUndo(); refocus();
+      const sel = window.getSelection();
+      let node = sel && sel.anchorNode;
+      if (node && node.nodeType === 3) node = node.parentElement;
+      const inH1 = !!(node && node.closest && node.closest('h1'));
+      document.execCommand('formatBlock', false, inH1 ? 'div' : 'h1');
       scheduleSave();
+    } else if (k === 'bold') {
+      pushUndo(); refocus(); document.execCommand('bold'); scheduleSave();
+    } else if (k === 'italic') {
+      pushUndo(); refocus(); document.execCommand('italic'); scheduleSave();
+    } else if (k === 'highlight') {
+      pushUndo(); refocus();
+      document.execCommand('styleWithCSS', false, true);
+      document.execCommand('hiliteColor', false, '#fae5a2');
+      scheduleSave();
+    } else if (k === 'list') {
+      pushUndo(); refocus(); document.execCommand('insertUnorderedList'); scheduleSave();
     }
   }));
 
@@ -356,7 +387,7 @@ export function openEditor(id, opts = {}) {
     meta.after(p); players.push(p);
   }
 
-  document.getElementById('screens-root').appendChild(el);
+  Nav.pushEl(el);
   vibrate(5);
   return el;
 }

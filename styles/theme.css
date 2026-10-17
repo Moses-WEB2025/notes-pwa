@@ -155,3 +155,85 @@ body {
 .screen.swipe-back { box-shadow: -8px 0 30px rgba(0,0,0,.18); }
 
 .hidden { display: none !important; }
+
+/* ===== Режим выбора (долгий тап на заметке) ===== */
+.main-screen .icon-btn[data-a=sel-close], .main-screen .icon-btn[data-a=sel-all] { display: none; }
+.main-screen.selecting .icon-btn[data-a=sel-close],
+.main-screen.selecting .icon-btn[data-a=sel-all] { display: inline-flex; }
+.main-screen.selecting .icon-btn[data-a=folders],
+.main-screen.selecting .icon-btn[data-a=trash] { display: none; }
+
+.chips-row {
+  flex: none;
+  display: flex;
+  gap: 8px;
+  padding: 0 20px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.chips-row::-webkit-scrollbar { display: none; }
+.chips-row .chip {
+  flex: none;
+  border: 0;
+  background: var(--surface);
+  color: var(--text-secondary);
+  border-radius: 20px;
+  padding: 9px 16px;
+  font: 500 14px/1.2 var(--font);
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: transform .15s var(--ease-standard), background-color .15s ease;
+}
+.chips-row .chip:active { transform: scale(.95); }
+.chips-row .chip.active { background: var(--surface2); color: var(--text); font-weight: 600; }
+
+/* радио-кружок на карточке */
+.note-card .nc-radio {
+  display: none;
+  position: absolute;
+  right: 14px; bottom: 14px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 2px solid #b9bdc3;
+  align-items: center; justify-content: center;
+  background: transparent;
+}
+.note-card .nc-radio .material-symbols-rounded { display: none; font-size: 17px; color: #fff; font-variation-settings: 'FILL' 1; }
+.main-screen.selecting .note-card .nc-radio { display: flex; }
+.note-card.sur-select .nc-radio { border-color: var(--accent); background: var(--accent); }
+.note-card.sur-select .nc-radio .material-symbols-rounded { display: block; }
+.note-card.sur-select { background: var(--surface2); box-shadow: none; }
+.note-card.c-blue.sur-select { background: #154066; }
+.note-card.c-yellow.sur-select, .note-card.c-pink.sur-select, .note-card.c-red.sur-select { filter: saturate(.75) brightness(.94); }
+
+/* нижняя панель действий режима выбора */
+.select-bar {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  z-index: 45;
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--divider);
+  padding: 10px 8px calc(10px + var(--safe-bottom));
+  transform: translateY(100%);
+  opacity: 0;
+  transition: transform .26s var(--ease-spring), opacity .2s ease;
+  pointer-events: none;
+}
+.select-bar:not(.hidden) { transform: translateY(0); opacity: 1; pointer-events: auto; }
+.select-bar button {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  border: 0; background: transparent;
+  color: var(--text);
+  font: 500 12.5px/1.2 var(--font);
+  cursor: pointer;
+  padding: 4px 0;
+}
+.select-bar button:disabled { opacity: .35; }
+.select-bar button:active .material-symbols-rounded { transform: scale(.88); }
+.select-bar button .material-symbols-rounded {
+  font-size: 24px;
+  font-variation-settings: 'FILL' 0, 'wght' 500;
+  transition: transform .15s var(--ease-standard);
+}

@@ -44,7 +44,10 @@
 .editor-screen .player-chip .time { color: var(--ed-muted); }
 
 /* ---- Editor body ---- */
-.editor-body { flex: 1; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; position: relative; }
+/* при открытой клавиатуре поднимаем весь экран: тулбар встаёт ровно над клавиатурой
+   (работает и на Android с ресайзом окна, и на iOS/iPhone с visualViewport) */
+body.kb-open .editor-screen { top: 0; bottom: var(--kb-h, 0px); }
+.editor-screen { transition: bottom .22s ease; }
 .editor-body::-webkit-scrollbar { display: none; }
 
 .note-title-input {
@@ -102,9 +105,41 @@
 }
 .mindmap-hint .material-symbols-rounded { font-size: 17px; color: #d09a26; }
 
-/* ---- Наблюдение за клавиатурой: toolbar siempre виден с ней ---- */
-body.kb-open .format-toolbar { transform: translateY(0); }
-.format-toolbar { transform: translateY(100%); }
+/* ---- Тулбар форматирования (виден всегда при клавиатуре, стоит ровно над ней) ---- */
+.format-toolbar {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  background: var(--surface);
+  border-top: 1px solid var(--divider);
+  padding: 0 6px;
+  height: var(--toolbar-h, 54px);
+  z-index: 40;
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .26s var(--ease-spring), opacity .2s ease;
+}
+body.kb-open .format-toolbar {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.format-toolbar .tool {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text);
+  border-radius: 12px;
+  transition: background-color .15s ease, transform .15s var(--ease-standard);
+}
+.format-toolbar .tool:active { background: var(--surface2); transform: scale(.92); }
+.format-toolbar .tool .material-symbols-rounded {
+  font-size: 24px;
+  font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
 
 /* Инерция и блокировка pull-to-refresh */
 .scroll { overscroll-behavior-y: contain; }
