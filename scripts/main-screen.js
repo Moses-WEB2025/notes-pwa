@@ -219,6 +219,9 @@ export function mainScreen() {
     /* Высота шапки, которую строка поиска «переезжает» */
     if (on) el.style.setProperty('--hd-up', (appbar.offsetHeight + h1row.offsetHeight) + 'px');
     el.classList.toggle('searching', on);
+    /* Пока запрос пуст — заметки скрыты под серым холстом; с вводом текста
+       результаты поднимаются над холстом. */
+    el.classList.toggle('search-filled', !!searchInput.value.trim());
   }
 
   /* Закрытие поиска тем же свайпом «назад» — возврат на главную страницу */

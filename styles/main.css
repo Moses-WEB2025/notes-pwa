@@ -49,11 +49,16 @@
   background: #ececec;
   border-radius: 25px;
   padding: 0 8px 0 18px;
+  /* Тонкое кольцо по контуру: строка всегда сохраняет свои границы и не
+     сливается с фоном — даже когда поднимается наверх, на серый холст
+     того же цвета (#ececec). */
+  box-shadow: 0 0 0 1px rgba(0,0,0,.06);
   transition: background-color .2s ease, box-shadow .2s ease;
 }
 /* При фокусе строка поиска НЕ меняет цвет — остаётся точно такой же,
-   как на главной (#ececec), в том числе когда она поднимается наверх. */
-.searchfield:focus-within { background: #ececec; }
+   как на главной (#ececec), но кольцо становится заметнее, чтобы границы
+   читались на сером холсте. */
+.searchfield:focus-within { background: #ececec; box-shadow: 0 0 0 1.5px rgba(0,0,0,.12); }
 .searchfield > .material-symbols-rounded { font-size: 21px; color: var(--text-tertiary); font-variation-settings: 'FILL' 1, 'wght' 500; }
 .searchfield input {
   flex: 1;
@@ -111,8 +116,10 @@
 
 /* ===== Поиск: светлый «холст» поверх остального интерфейса =====
    Цвет тот же, что и у строки поиска (#ececec). При тапе по поиску холст
-   проявляется и перекрывает всё остальное — над ним остаются только строка
-   поиска и результаты (сетка). Закрывается тем же свайпом «назад». */
+   проявляется и перекрывает всё остальное — над ним остаётся только строка
+   поиска, а список заметок уходит ПОД холст. Результаты (сетка) поднимаются
+   над холстом, когда введён запрос (класс search-filled ставит JS).
+   Закрывается тем же свайпом «назад». */
 .search-canvas {
   position: absolute;
   inset: 0;
@@ -123,10 +130,11 @@
   transition: opacity var(--dur-3) var(--ease-standard);
 }
 .main-screen.searching .search-canvas { opacity: 1; pointer-events: auto; }
-/* Строка поиска и результаты — выше холста (только в режиме поиска,
-   в обычном состоянии сетка остаётся ниже FAB) */
+/* Строка поиска — всегда над холстом. Список заметок по умолчанию уходит
+   ПОД холст (заметки скрыты), а как только введён запрос (search-filled) —
+   результаты показываются над холстом. */
 .main-screen.searching .searchbar { position: relative; z-index: 40; }
-.main-screen.searching .grid-holder { position: relative; z-index: 38; }
+.main-screen.searching.search-filled .grid-holder { position: relative; z-index: 38; }
 
 /* Чип фильтра (цвет/папка) */
 .cat-chip {
