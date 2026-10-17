@@ -71,12 +71,12 @@ export function openDrawing(onDone) {
   ov.querySelector('[data-a=done]').addEventListener('click', ()=>{
     const url = canvas.toDataURL('image/png');
     ov.classList.remove('open');
-    setTimeout(()=>ov.remove(),200);
+    setTimeout(()=>ov.remove(),300);
     onDone && onDone(url);
   });
   ov.querySelector('[data-a=back]').addEventListener('click', ()=>{
     ov.classList.add('closing');
     ov.classList.remove('open');
-    setTimeout(()=>ov.remove(),200);
+    setTimeout(()=>ov.remove(),300);
   });
 }

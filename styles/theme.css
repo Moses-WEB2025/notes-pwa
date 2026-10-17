@@ -45,10 +45,23 @@
   /* Шрифт */
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-  /* Анимация */
-  --ease-standard: cubic-bezier(.2,0,1);
-  --ease-emphasized: cubic-bezier(.3,0,.8,.15);
-  --ease-spring: cubic-bezier(.2,.8,.2,1);
+  /* ==== Анимация ====
+     Единая система «как на iPhone»: короткие длительности и плавное
+     доигрывание. Все переходы работают только по transform/opacity —
+     это держит стабильные 60/120 fps и не даёт приложению тормозить.
+     ВАЖНО: cubic-bezier() требует ровно 4 числа. Раньше здесь были
+     невалидные значения — браузер молча отключал анимации. */
+  --dur-1: 160ms;    /* микровзаимодействия: нажатия, иконки, чипы */
+  --dur-2: 220ms;    /* элементы: карточки, меню, тосты */
+  --dur-3: 300ms;    /* экраны, sheet, оверлеи */
+  --dur-kb: 260ms;   /* появление/скрытие клавиатуры */
+
+  --ease-standard: cubic-bezier(.32,.72,0,1);   /* плавный «выход» — базовый */
+  --ease-emphasized: cubic-bezier(.2,0,0,1);    /* акцентированный (экраны) */
+  --ease-out: cubic-bezier(.22,.61,.36,1);      /* замедление к концу */
+  --ease-in: cubic-bezier(.4,0,1,1);            /* разгон в начале */
+  --ease-spring: cubic-bezier(.34,1.28,.64,1);  /* мягкий «отскок» как у iOS */
+  --ease-ios: cubic-bezier(.25,.1,.25,1);       /* классический iOS ease-in-out */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -103,13 +116,30 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--bg);
-  will-change: transform, opacity;
   z-index: 5;
 }
-.screen[data-depth] { }
-.screen.anim, .screen.anim * { transition: transform .3s var(--ease-standard) !important; }
+/* Затемнение предыдущего экрана дешёвым opacity-слоем.
+   Раньше здесь был filter: brightness() — он перерисовывает весь экран
+   каждый кадр и вызывал просадки при слайде/свайпе. */
+.screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-3) var(--ease-standard);
+}
+/* Сам экран ведёт transform, а также top/bottom (редактор при клавиатуре),
+   чтобы при закрытии высота менялась плавно, а не рывком. */
+.screen.anim { transition: transform var(--dur-3) var(--ease-standard), top var(--dur-kb) var(--ease-out), bottom var(--dur-kb) var(--ease-out) !important; }
+.screen.anim * { transition: transform var(--dur-3) var(--ease-standard) !important; }
+/* Композитный слой только на время анимации — экономит память и видеоядро */
+.screen.anim, .screen.under { will-change: transform; }
 .screen.enter-right { transform: translateX(100%); }
-.screen.under { transform: translateX(-26%); filter: brightness(.93); z-index: 1; }
+.screen.under { transform: translateX(-26%); z-index: 1; }
+.screen.under::after { opacity: .07; }
 
 .scroll {
   flex: 1;
@@ -132,7 +162,7 @@ body {
   align-items: center; justify-content: center;
   color: var(--text);
   cursor: pointer;
-  transition: background-color .18s ease, transform .18s var(--ease-standard), opacity .18s ease;
+  transition: background-color var(--dur-1) ease, transform var(--dur-1) var(--ease-standard), opacity var(--dur-1) ease;
 }
 .icon-btn:active { background: rgba(0,0,0,.07); transform: scale(.94); }
 .icon-btn:disabled { opacity: .32; }
@@ -182,7 +212,7 @@ body {
   font: 500 14px/1.2 var(--font);
   cursor: pointer;
   box-shadow: var(--shadow-card);
-  transition: transform .15s var(--ease-standard), background-color .15s ease;
+  transition: transform var(--dur-1) var(--ease-standard), background-color var(--dur-1) ease;
 }
 .chips-row .chip:active { transform: scale(.95); }
 .chips-row .chip.active { background: var(--surface2); color: var(--text); font-weight: 600; }
@@ -217,7 +247,7 @@ body {
   padding: 10px 8px calc(10px + var(--safe-bottom));
   transform: translateY(100%);
   opacity: 0;
-  transition: transform .26s var(--ease-spring), opacity .2s ease;
+  transition: transform var(--dur-3) var(--ease-spring), opacity var(--dur-2) ease;
   pointer-events: none;
 }
 .select-bar:not(.hidden) { transform: translateY(0); opacity: 1; pointer-events: auto; }
@@ -235,5 +265,17 @@ body {
 .select-bar button .material-symbols-rounded {
   font-size: 24px;
   font-variation-settings: 'FILL' 0, 'wght' 500;
-  transition: transform .15s var(--ease-standard);
+  transition: transform var(--dur-1) var(--ease-standard);
+}
+
+/* ===== Доступность: системное «Уменьшить движение» (как в iOS) =====
+   Если пользователь включил его — гасим движение почти полностью,
+   оставляя лишь мгновенную смену состояний. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

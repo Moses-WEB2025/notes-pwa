@@ -23,8 +23,11 @@
 /* ---- Editor topbar ---- */
 .editor-topbar { display: flex; align-items: center; gap: 2px; padding: calc(var(--safe-top) + 8px) 10px 6px; min-height: calc(54px + var(--safe-top)); }
 .editor-topbar .spacer { flex: 1; }
-.editor-topbar { transition: opacity .2s ease; }
 .editor-topbar.hidden { display: none; }
+/* Плавная смена верхних панелей при появлении/скрытии клавиатуры.
+   display:none переключается мгновенно, поэтому «вход» даём анимацией. */
+.editor-topbar:not(.hidden) { animation: topbarIn var(--dur-2) var(--ease-standard) both; }
+@keyframes topbarIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 
 /* Цветные элементы редактора от темы холста */
 .editor-screen .editor-topbar .icon-btn { color: var(--ed-ink, var(--text)); }
@@ -51,7 +54,9 @@ body.kb-open .editor-screen {
   height: auto;
 }
 body.kb-open .screen.under { visibility: hidden; }
-.editor-screen { transition: top .12s ease, bottom .22s ease; }
+/* Экран редактора «доезжает» вместе с клавиатурой той же кривой и временем,
+   что и системная клавиатура — поэтому нет рывка и всё выглядит нативно. */
+.editor-screen { transition: top var(--dur-1) var(--ease-out), bottom var(--dur-kb) var(--ease-out); }
 
 .editor-body {
   flex: 1;
@@ -60,6 +65,7 @@ body.kb-open .screen.under { visibility: hidden; }
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  transition: padding-bottom var(--dur-kb) var(--ease-out);
 }
 body.kb-open .editor-screen .editor-body,
 body.toolbar-on .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px); }
@@ -141,9 +147,12 @@ body.toolbar-on > .format-toolbar {
   left: 0;
   right: 0;
   bottom: var(--kb-h, 0px);
-  transition: bottom .22s ease;
+  transition: bottom var(--dur-kb) var(--ease-out);
   box-shadow: 0 -1px 0 var(--divider);
+  /* Выезд тулбара снизу вместе с клавиатурой (display не анимируется) */
+  animation: toolbarIn var(--dur-3) var(--ease-standard) both;
 }
+@keyframes toolbarIn { from { opacity: .3; transform: translateY(100%); } to { opacity: 1; transform: none; } }
 .format-toolbar .tool {
   flex: 1;
   border: 0;
