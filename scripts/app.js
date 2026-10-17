@@ -1,5 +1,6 @@
 /* ============ Точка входа ============ */
 import { initKeyboard, bindPress, Store, Nav } from './core.js';
+import { refreshEdgeColor } from './edge.js';
 import { mainScreen } from './main-screen.js';
 import { seedDemo } from './seed.js';
 
@@ -12,6 +13,8 @@ initKeyboard();
   }
   const ms = mainScreen();
   document.getElementById('screens-root').appendChild(ms.el);
+  /* Системные зоны подкрашиваем под стартовый экран сразу при запуске. */
+  refreshEdgeColor();
   bindPress();
   ms.load();
 

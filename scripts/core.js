@@ -1,4 +1,5 @@
 /* ============ Ядро: утилиты + IndexedDB + навигация + пресс + клавиатура + жесты ============ */
+import { refreshEdgeColor } from './edge.js';
 
 /* ---------- Даты ---------- */
 export function pad2(n){return n<10?'0'+n:''+n;}
@@ -73,6 +74,9 @@ export const Nav={
     const prev = screens[screens.length - 1];
     el.classList.add('screen', 'enter-right');
     document.getElementById('screens-root').appendChild(el);
+    /* Новый экран сразу становится текущим — перекрашиваем системные зоны
+       под него (в т.ч. зазор, который виден во время слайда). */
+    refreshEdgeColor();
     if (prev) prev.classList.add('anim', 'under');
     /* Двойной rAF: даём браузеру отрисовать стартовое положение (за экраном),
        иначе переход иногда «схлопывается» и экран появляется мгновенно. */
@@ -109,7 +113,11 @@ export const Nav={
       prev.style.transform = '';
       setTimeout(() => prev.classList.remove('anim'), 340);
     }
-    setTimeout(() => top.remove(), 340);
+    setTimeout(() => {
+      top.remove();
+      /* Верхним снова стал предыдущий экран — обновляем системные зоны. */
+      refreshEdgeColor();
+    }, 340);
     vibrate(4);
     return true;
   },

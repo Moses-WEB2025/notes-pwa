@@ -1,5 +1,6 @@
 /* ============ Главный экран «Заметки» ============ */
 import { Store, escapeHtml, htmlToPlain, debounce, uid, bindPress, Nav, vibrate } from './core.js';
+import { setEdgeColor, refreshEdgeColor } from './edge.js';
 import { toast, confirmSheet, attachMenu, sheetSections } from './components/ui.js';
 import { openEditor } from './screens/editor.js';
 import { openFolders } from './screens/folders.js';
@@ -222,6 +223,10 @@ export function mainScreen() {
     /* Пока запрос пуст — заметки скрыты под серым холстом; с вводом текста
        результаты поднимаются над холстом. */
     el.classList.toggle('search-filled', !!searchInput.value.trim());
+    /* Во время поиска верх экрана занимает серый холст — держим системные
+       зоны в его цвете (цвет берём из CSS, а не дублируем константой). */
+    if (on) setEdgeColor(getComputedStyle(searchCanvas).backgroundColor);
+    else refreshEdgeColor();
   }
 
   /* Закрытие поиска тем же свайпом «назад» — возврат на главную страницу */

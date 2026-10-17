@@ -1,5 +1,6 @@
 /* ============ Редактор заметки ============ */
 import { Store, Nav, fmtEditorDate, escapeHtml, uid, debounce, vibrate } from '../core.js';
+import { refreshEdgeColor } from '../edge.js';
 import { toast, attachMenu, sheetSections, openSheet, confirmSheet } from '../components/ui.js';
 import { openRecorder } from '../components/recorder.js';
 import { openDrawing } from '../components/drawing.js';
@@ -127,6 +128,8 @@ export function openEditor(id, opts = {}) {
     el.style.setProperty('--ed-muted', mutedFor(bg));
     el.style.setProperty('--ed-caret', caretFor(bg));
     el.style.setProperty('--ed-chip', folderChipFor(bg));
+    /* Смена цвета холста — сразу перекрашиваем и системные зоны. */
+    refreshEdgeColor();
   }
 
   function updFolderChip() {

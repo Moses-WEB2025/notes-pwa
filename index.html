@@ -4,13 +4,20 @@
   <meta charset="utf-8" />
   <!-- Нативный вид: запрет зума и масштабирования -->
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#f6f6f6" />
+  <!-- Стартовое значение; дальше JS перекрашивает его под текущий экран
+       (scripts/edge.js). Совпадает с фоном экрана по умолчанию (--bg). -->
+  <meta name="theme-color" content="#f7f7f7" />
+  <!-- Приложение только светлое: сообщаем системе, чтобы она не инвертировала
+       страницу и подбирала контрастные иконки в системных зонах. -->
+  <meta name="color-scheme" content="light" />
   <meta name="description" content="Заметки — офлайн PWA" />
 
   <!-- iOS PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <!-- apple-mobile-web-app-status-bar-style намеренно НЕ задаём: с iOS 26
+       black-translucent устарел, а Home Screen web app не рисует контент под
+       статус-баром — Safari сам красит его цветом фона body (см. edge.js). -->
   <meta name="apple-mobile-web-app-title" content="Заметки" />
   <meta name="format-detection" content="telephone=no" />
   <meta name="msapplication-tap-highlight" content="no" />

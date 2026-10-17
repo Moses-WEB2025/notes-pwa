@@ -91,7 +91,7 @@ body.toolbar-on .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 5
   outline: 0;
   font: 400 16.5px/1.6 var(--font);
   color: var(--text);
-  padding: 6px 20px 40px;
+  padding: 6px 20px calc(40px + var(--safe-bottom));
   user-select: text;
   -webkit-user-select: text;
   word-break: break-word;
@@ -175,6 +175,12 @@ body.toolbar-on > .format-toolbar {
 
 /* Инерция и блокировка pull-to-refresh */
 .scroll { overscroll-behavior-y: contain; }
+
+/* Нижняя системная зона (жестовая полоса / home-indicator): фон экрана
+   доходит до самого края, а контент отступает на safe-area — системные
+   элементы остаются видимыми и ничего их не перекрывает. */
+.folders-screen .scroll,
+.trash-screen .scroll { padding-bottom: calc(var(--safe-bottom) + 12px); }
 
 /* Полоска home-indicator внизу_ANDROID-эмуляция не нужна —indre */
 
