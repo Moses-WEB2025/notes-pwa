@@ -1054,7 +1054,11 @@ export function openEditor(id, opts = {}) {
   });
   window.addEventListener('pointercancel', cancelPress);
 
-  /* свайп по холсту — «спокойный» режим: убираем каретку, клавиатуру и выделение */
+  /* «Спокойный» режим — только осознанный БОКОВОЙ свайп по холсту: убираем
+     каретку, клавиатуру и выделение. Вертикальный жест оставляем прокрутке:
+     раньше любое смещение >18px в любую сторону (в т.ч. обычный скролл текста)
+     снимало фокус — и клавиатура с тулбаром закрывались прямо во время листания.
+     Теперь реагируем, лишь когда палец ушёл заметно вбок (|dx| >> |dy|). */
   let swipeFrom = null;
   bodyWrap.addEventListener('touchstart', e => {
     swipeFrom = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
@@ -1062,7 +1066,8 @@ export function openEditor(id, opts = {}) {
   bodyWrap.addEventListener('touchmove', e => {
     if (!swipeFrom) return;
     const t = e.touches[0]; if (!t) return;
-    if (Math.hypot(t.clientX - swipeFrom.x, t.clientY - swipeFrom.y) > 18) {
+    const dx = t.clientX - swipeFrom.x, dy = t.clientY - swipeFrom.y;
+    if (Math.abs(dx) > 20 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       swipeFrom = null;
       cancelPress();
       if (document.activeElement === content || document.activeElement === titleInput) { content.blur(); titleInput.blur(); }
