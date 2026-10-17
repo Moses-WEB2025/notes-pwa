@@ -231,22 +231,42 @@ export function openEditor(id, opts = {}) {
   });
 
   /* переключение панелей по клавиатуре; тулбар — в body, чтобы fixed был над клавиатурой */
-  function dockToolbar(open) {
-    if (open && toolbar.parentElement !== document.body) document.body.appendChild(toolbar);
-    else if (!open && toolbar.parentElement === document.body) el.appendChild(toolbar);
+  function dockToolbar(show) {
+    if (show && toolbar.parentElement !== document.body) document.body.appendChild(toolbar);
+    else if (!show && toolbar.parentElement === document.body) el.appendChild(toolbar);
+  }
+  /* Тулбар форматирования должен быть виден, пока идёт редактирование текста.
+     Опираться только на состояние клавиатуры нельзя: после системного диалога
+     выбора файла (input type=file) клавиатура на iOS/Android не открывается
+     заново сама, kb-change больше не присылает open:true — и тулбар пропадал
+     навсегда. Поэтому дополнительно учитываем фокус в холсте/заголовке. */
+  let kbOpen = false;
+  function editorActive() {
+    const a = document.activeElement;
+    return !!a && (a === content || a === titleInput || content.contains(a) || toolbar.contains(a));
+  }
+  function syncFormatBar() {
+    if (!el.isConnected) { document.body.classList.remove('toolbar-on'); dockToolbar(false); return; }
+    const show = kbOpen || editorActive();
+    dockToolbar(show);
+    document.body.classList.toggle('toolbar-on', show && !kbOpen);
   }
   function teardownKb() {
     document.removeEventListener('kb-change', onKb);
+    document.body.classList.remove('toolbar-on');
     dockToolbar(false);
   }
   document.addEventListener('kb-change', onKb);
   function onKb(e) {
     if (!el.isConnected) { teardownKb(); return; }
-    const open = e.detail.open;
-    topbar.classList.toggle('hidden', open);
-    topbarKb.classList.toggle('hidden', !open);
-    dockToolbar(open);
+    kbOpen = e.detail.open;
+    topbar.classList.toggle('hidden', kbOpen);
+    topbarKb.classList.toggle('hidden', !kbOpen);
+    syncFormatBar();
   }
+  /* фокус в редакторе тоже управляет тулбаром (клавиатура может быть скрыта) */
+  el.addEventListener('focusin', syncFormatBar);
+  el.addEventListener('focusout', () => setTimeout(syncFormatBar, 60));
 
   /* ---------- Сохранение ---------- */
   const saveContent = () => {

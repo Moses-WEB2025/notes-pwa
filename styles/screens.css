@@ -61,7 +61,8 @@ body.kb-open .screen.under { visibility: hidden; }
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
-body.kb-open .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px); }
+body.kb-open .editor-screen .editor-body,
+body.toolbar-on .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px); }
 .editor-body::-webkit-scrollbar { display: none; }
 
 .note-title-input {
@@ -133,7 +134,8 @@ body.kb-open .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px
   height: var(--toolbar-h, 54px);
   z-index: 200;
 }
-body.kb-open > .format-toolbar {
+body.kb-open > .format-toolbar,
+body.toolbar-on > .format-toolbar {
   display: flex;
   position: fixed;
   left: 0;
