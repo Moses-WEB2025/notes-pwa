@@ -27,7 +27,7 @@ export function mainScreen() {
     <button class="icon-btn" data-a="folders" data-press aria-label="Папки"><span class="material-symbols-rounded">folder_open</span></button>
     <span class="spacer"></span>
     <button class="icon-btn" data-a="trash" data-press aria-label="Корзина"><span class="material-symbols-rounded">delete</span></button>
-    <button class="icon-btn sel-only" data-a="sel-all" data-press aria-label="Выбрать все"><span class="material-symbols-rounded">checklist</span></button>`;
+    <button class="icon-btn sel-only" data-a="sel-all" data-press aria-label="Выбрать все"><span class="material-symbols-rounded">select_all</span></button>`;
 
   const h1row = document.createElement('div');
   h1row.className = 'h1-row';
@@ -71,10 +71,10 @@ export function mainScreen() {
   const selBar = document.createElement('div');
   selBar.className = 'select-bar hidden';
   selBar.innerHTML = `
-    <button data-sel="hide"><span class="material-symbols-rounded">lock</span><span>Скрыть</span></button>
-    <button data-sel="pin"><span class="material-symbols-rounded">push_pin</span><span>Закрепить</span></button>
-    <button data-sel="move"><span class="material-symbols-rounded">drive_file_move</span><span>Переместить</span></button>
-    <button data-sel="delete"><span class="material-symbols-rounded">delete</span><span>Удалить</span></button>`;
+    <button data-sel="hide"><span class="material-symbols-rounded">lock</span><span class="lbl">Скрыть</span></button>
+    <button data-sel="pin"><span class="material-symbols-rounded">push_pin</span><span class="lbl">Закрепить</span></button>
+    <button data-sel="move"><span class="material-symbols-rounded">drive_file_move</span><span class="lbl">Переместить</span></button>
+    <button data-sel="delete"><span class="material-symbols-rounded">delete</span><span class="lbl">Удалить</span></button>`;
 
   el.append(appbar, h1row, searchWrap, chipsRow, gridHolder, fab, tabbar, selBar);
 
@@ -130,12 +130,42 @@ export function mainScreen() {
     renderSelBar();
   }
 
+  /* заметки, попадающие под текущий фильтр режима выбора */
+  function selectionList() {
+    const q = searchInput.value.trim().toLowerCase();
+    let list = selFilter === 'hidden' ? notes.filter(n => n.hidden) : notes.filter(n => !n.hidden);
+    if (selFilter === 'notes') list = list.filter(n => (n.title || '').trim() || htmlToPlain(n.content));
+    if (selFilter === 'nocat') list = list.filter(n => !n.folderId);
+    if (q) list = list.filter(n => (n.title || '').toLowerCase().includes(q) || htmlToPlain(n.content).toLowerCase().includes(q));
+    return list;
+  }
+
   function renderSelBar() {
     selBar.classList.toggle('hidden', !sel.active);
     const n = sel.set.size;
     h1row.querySelector('h1').textContent = !sel.active ? 'Заметки' : (n ? `Выбрано ${n} объект${n % 10 === 1 && n % 100 !== 11 ? '' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'а' : 'ов')}` : 'Выбрано');
     const any = n > 0;
     selBar.querySelectorAll('button').forEach(b => b.disabled = !any);
+    if (!sel.active) return;
+
+    const picked = [...sel.set].map(id => notes.find(x => x.id === id)).filter(Boolean);
+    /* Кнопки показывают, что произойдёт по нажатию: закреплённое снимаем,
+       а скрытое — показываем (иначе действие необратимо). */
+    const allPinned = picked.length > 0 && picked.every(x => x.pinned);
+    const pinBtn = selBar.querySelector('[data-sel=pin]');
+    pinBtn.querySelector('.lbl').textContent = allPinned ? 'Открепить' : 'Закрепить';
+    pinBtn.querySelector('.material-symbols-rounded').classList.toggle('filled', allPinned);
+
+    const allHidden = picked.length > 0 && picked.every(x => x.hidden);
+    const hideBtn = selBar.querySelector('[data-sel=hide]');
+    hideBtn.querySelector('.lbl').textContent = allHidden ? 'Показать' : 'Скрыть';
+    hideBtn.querySelector('.material-symbols-rounded').textContent = allHidden ? 'visibility' : 'lock';
+
+    /* «Выбрать все» превращается в «Снять все», когда выбрано уже всё */
+    const list = selectionList();
+    const allSelected = list.length > 0 && list.every(x => sel.set.has(x.id));
+    appbar.querySelector('[data-a=sel-all] .material-symbols-rounded').textContent = allSelected ? 'deselect' : 'select_all';
+    appbar.querySelector('[data-a=sel-all]').setAttribute('aria-label', allSelected ? 'Снять выбор' : 'Выбрать все');
   }
 
   /* ---------- состояние ---------- */
@@ -179,11 +209,10 @@ export function mainScreen() {
   appbar.querySelector('[data-a=trash]').addEventListener('click', () => Nav.pushEl(openTrashScreen()));
   appbar.querySelector('[data-a=sel-close]').addEventListener('click', exitSelection);
   appbar.querySelector('[data-a=sel-all]').addEventListener('click', () => {
-    const q = searchInput.value.trim().toLowerCase();
-    let list = selFilter === 'hidden' ? notes.filter(n => n.hidden) : notes.filter(n => !n.hidden);
-    if (selFilter === 'nocat') list = list.filter(n => !n.folderId);
-    if (q) list = list.filter(n => (n.title || '').toLowerCase().includes(q) || htmlToPlain(n.content).toLowerCase().includes(q));
-    list.forEach(n => sel.set.add(n.id));
+    const list = selectionList();
+    const allSelected = list.length > 0 && list.every(n => sel.set.has(n.id));
+    if (allSelected) sel.set.clear();
+    else list.forEach(n => sel.set.add(n.id));
     refresh();
   });
   fab.addEventListener('click', () => openEditor(null, { folderId: filterFolder }));
@@ -194,8 +223,11 @@ export function mainScreen() {
     const ids = [...sel.set];
     const act = b.dataset.sel;
     if (act === 'pin') {
-      for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.pinned = !nn.pinned; await Store.saveNote(nn); } }
-      toast('Готово'); exitSelection(); load();
+      const picked = ids.map(id => notes.find(x => x.id === id)).filter(Boolean);
+      /* если всё выбранное уже закреплено — снимаем закрепление со всех */
+      const target = !(picked.length > 0 && picked.every(x => x.pinned));
+      for (const nn of picked) { nn.pinned = target; await Store.saveNote(nn); }
+      toast(target ? 'Закреплено' : 'Откреплено'); exitSelection(); load();
     } else if (act === 'move') {
       const folders = await Store.folders();
       sheetSections({ title: 'В папку', sections: [api => {
@@ -215,8 +247,11 @@ export function mainScreen() {
         toast('Заметки удалены'); exitSelection(); load();
       }
     } else if (act === 'hide') {
-      for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.hidden = true; await Store.saveNoteRaw(nn); } }
-      toast('Скрыто'); exitSelection(); load();
+      const picked = ids.map(id => notes.find(x => x.id === id)).filter(Boolean);
+      /* скрытые заметки можно вернуть: если всё выбранное уже скрыто — показываем */
+      const target = !(picked.length > 0 && picked.every(x => x.hidden));
+      for (const nn of picked) { nn.hidden = target; await Store.saveNoteRaw(nn); }
+      toast(target ? 'Скрыто' : 'Показано'); exitSelection(); load();
     }
   });
 

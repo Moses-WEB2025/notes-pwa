@@ -276,6 +276,8 @@ body {
   font-variation-settings: 'FILL' 0, 'wght' 500;
   transition: transform var(--dur-1) var(--ease-standard);
 }
+/* Закреплённое состояние — иконка залита, как у булавки на карточке */
+.select-bar button .material-symbols-rounded.filled { font-variation-settings: 'FILL' 1, 'wght' 500; }
 
 /* ===== Доступность: системное «Уменьшить движение» (как в iOS) =====
    Если пользователь включил его — гасим движение почти полностью,

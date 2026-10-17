@@ -22,8 +22,20 @@
 }
 .back-header { padding-left: 8px; padding-right: 8px; }
 
-.h1-row { padding: 8px 20px 14px; }
-.h1-row h1 { font-size: 40px; font-weight: 600; letter-spacing: -.5px; color: var(--text); line-height: 1.12; }
+.h1-row { display: flex; align-items: center; min-height: 67px; padding: 8px 20px 14px; }
+.h1-row h1 {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -.5px;
+  color: var(--text);
+  line-height: 1.12;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* В режиме выбора заголовок длиннее («Выбрано N объектов»). Уменьшаем кегль и
+   держим одну строку — высота шапки не меняется, страница не «прыгает». */
+.main-screen.selecting .h1-row h1 { font-size: 26px; letter-spacing: -.2px; }
 
 /* ===== Поиск + «Отмена» ===== */
 .searchbar { flex: none; }
