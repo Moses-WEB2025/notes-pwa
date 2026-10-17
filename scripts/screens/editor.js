@@ -812,12 +812,22 @@ export function openEditor(id, opts = {}) {
     const dir = corner.includes('r') ? 1 : -1;
     const target = e.currentTarget;
     try { target.setPointerCapture(e.pointerId); } catch (err) {}
-    const move = ev => {
-      const w = Math.max(44, Math.min(maxW, startW + (ev.clientX - sx) * dir));
-      img.style.width = w + 'px';
+    /* батчим перерисовку к одному кадру: pointermove приходит слишком часто,
+       а layout-чтение в positionImageTools() дорогое */
+    let pendingW = null, rafId = 0;
+    const apply = () => {
+      rafId = 0;
+      if (pendingW == null) return;
+      img.style.width = pendingW + 'px';
       positionImageTools();
     };
+    const move = ev => {
+      pendingW = Math.max(44, Math.min(maxW, startW + (ev.clientX - sx) * dir));
+      if (!rafId) rafId = requestAnimationFrame(apply);
+    };
     const up = () => {
+      if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+      pendingW = null;
       target.removeEventListener('pointermove', move);
       target.removeEventListener('pointerup', up);
       target.removeEventListener('pointercancel', up);
