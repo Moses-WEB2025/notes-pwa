@@ -62,7 +62,10 @@ body.kb-open .screen.under { visibility: hidden; }
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  overscroll-behavior-y: contain;
+  /* Сдерживаем overscroll по обеим осям: при фокусе iOS делает прокручиваемой
+     саму страницу, и «хвост» жеста у края контейнера уходил на страницу —
+     а прокрутка страницы при открытой клавиатуре её закрывает. */
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   transition: padding-bottom var(--dur-kb) var(--ease-out);

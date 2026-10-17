@@ -287,11 +287,17 @@ export function initKeyboard(){
     return { open, kbH, vvTop:open?vvTop:0 };
   };
 
-  const apply=({open,kbH,vvTop})=>{
+  const apply=({open,kbH,vvTop},resetScroll)=>{
     document.documentElement.style.setProperty('--kb-h',open?kbH+'px':'0px');
     document.documentElement.style.setProperty('--vv-top',open?vvTop+'px':'0px');
     document.body.classList.toggle('kb-open',open);
-    if(open) window.scrollTo(0,0);
+    /* Скролл страницы сбрасываем ТОЛЬКО в момент открытия клавиатуры.
+       Раньше это делалось на каждом обновлении visualViewport — в том числе
+       на vv.scroll во время листания текста. Программная запись скролла
+       посреди жеста срывает сам жест: WebKit/Blink считают прокрутку
+       «машинной», гасят её — и клавиатура с тулбаром закрываются ровно тогда,
+       когда пользователь всего лишь листает заметку. */
+    if(open&&resetScroll) window.scrollTo(0,0);
   };
 
   const upd=(ev)=>{
@@ -299,11 +305,11 @@ export function initKeyboard(){
     const m=measure();
     const opening=m.open&&!lastOpen;
     lastOpen=m.open;
-    apply(m);
+    apply(m,opening);
     if(!m.open) refH=window.innerHeight;
     else refH=Math.max(refH,window.innerHeight);
     if(opening){
-      requestAnimationFrame(()=>apply(measure()));
+      requestAnimationFrame(()=>apply(measure(),true));
       setTimeout(()=>apply(measure()),150);
     }
     document.dispatchEvent(new CustomEvent('kb-change',{detail:{open:m.open,height:m.kbH,offsetTop:m.vvTop}}));

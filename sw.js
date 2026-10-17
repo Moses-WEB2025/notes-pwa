@@ -1,5 +1,8 @@
 /* Заметки — Service Worker: полный офлайн (прекэш всех ресурсов, fallback навигации) */
-const VERSION = 'notes-v2.4.1';
+/* ВАЖНО: при любой правке файлов из PRECACHE_URLS поднимайте VERSION.
+   Статика отдаётся cache-first, поэтому без смены версии устройство
+   продолжает работать на старых скриптах (правки «не доезжают»). */
+const VERSION = 'notes-v2.4.2';
 const PRECACHE = `precache-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 
