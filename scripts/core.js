@@ -246,15 +246,24 @@ export function initKeyboard(){
 
   const measure=()=>{
     const shrink=Math.max(0,refH-window.innerHeight);
+    /* Сжатие визуального вьюпорта (iOS) — надёжный признак открытой клавиатуры:
+       он не зависит от offsetTop, в отличие от «высоты клавиатуры». */
+    const vvShrink=vv?Math.max(0,refH-vv.height):0;
     let vvTop=0,vvKb=0;
     if(vv){
       vvTop=vv.offsetTop;
       vvKb=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
     }
-    /* iOS: inset через visualViewport; Android resize: окно уже сжато — kbH=0 */
-    const open=vvKb>80||shrink>80;
-    const kbH=vvKb>80?vvKb:0;
-    return { open, kbH, vvTop:vvKb>80?vvTop:0 };
+    /* Клавиатура открыта, если уменьшилось окно (Android) или визуальный
+       вьюпорт (iOS). Раньше проверяли vvKb>80 — но при тапе по самым нижним
+       строкам длинного текста iOS сдвигает visualViewport вверх (offsetTop
+       растёт), vvKb «проседал» и kb-open снимался: тулбар терял позицию над
+       клавиатурой. Теперь позиция считается, пока клавиатура реально открыта. */
+    const open=shrink>80||vvShrink>80;
+    /* Android уменьшает само окно — там клавиатуру компенсирует layout (kbH=0).
+       iOS — берём отступ от низа visualViewport (учёт offsetTop сохраняем). */
+    const kbH=!open?0:(shrink>80?0:vvKb);
+    return { open, kbH, vvTop:open?vvTop:0 };
   };
 
   const apply=({open,kbH,vvTop})=>{
