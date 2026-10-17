@@ -149,6 +149,9 @@ body.kb-open > .format-toolbar {
   cursor: pointer;
   color: var(--text);
   border-radius: 12px;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
   transition: background-color .15s ease, transform .15s var(--ease-standard);
 }
 .format-toolbar .tool:active { background: var(--surface2); transform: scale(.92); }

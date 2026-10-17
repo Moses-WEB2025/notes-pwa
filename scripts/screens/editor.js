@@ -77,14 +77,14 @@ export function openEditor(id, opts = {}) {
   const toolbar = document.createElement('div');
   toolbar.className = 'format-toolbar';
   toolbar.innerHTML = `
-    <button class="tool" data-tool="audio" aria-label="Аудио"><span class="material-symbols-rounded">graphic_eq</span></button>
-    <button class="tool" data-tool="image" aria-label="Фото"><span class="material-symbols-rounded">image</span></button>
-    <button class="tool" data-tool="draw" aria-label="Рисунок"><span class="material-symbols-rounded">gesture</span></button>
-    <button class="tool" data-tool="check" aria-label="Чек-лист"><span class="material-symbols-rounded">check_box_outline_blank</span></button>
-    <button class="tool" data-tool="heading" aria-label="Заголовок"><span class="material-symbols-rounded">title</span></button>
-    <button class="tool" data-tool="bold" aria-label="Жирный"><span class="material-symbols-rounded">format_bold</span></button>
-    <button class="tool" data-tool="italic" aria-label="Курсив"><span class="material-symbols-rounded">format_italic</span></button>
-    <button class="tool" data-tool="list" aria-label="Список"><span class="material-symbols-rounded">format_list_bulleted</span></button>`;
+    <button type="button" class="tool" data-tool="audio" aria-label="Аудио"><span class="material-symbols-rounded">graphic_eq</span></button>
+    <button type="button" class="tool" data-tool="image" aria-label="Фото"><span class="material-symbols-rounded">image</span></button>
+    <button type="button" class="tool" data-tool="draw" aria-label="Рисунок"><span class="material-symbols-rounded">gesture</span></button>
+    <button type="button" class="tool" data-tool="check" aria-label="Чек-лист"><span class="material-symbols-rounded">check_box_outline_blank</span></button>
+    <button type="button" class="tool" data-tool="heading" aria-label="Заголовок"><span class="material-symbols-rounded">title</span></button>
+    <button type="button" class="tool" data-tool="bold" aria-label="Жирный"><span class="material-symbols-rounded">format_bold</span></button>
+    <button type="button" class="tool" data-tool="italic" aria-label="Курсив"><span class="material-symbols-rounded">format_italic</span></button>
+    <button type="button" class="tool" data-tool="list" aria-label="Список"><span class="material-symbols-rounded">format_list_bulleted</span></button>`;
 
   el.append(topbar, topbarKb, bodyWrap, toolbar);
 
@@ -109,6 +109,9 @@ export function openEditor(id, opts = {}) {
     titleInput.value = note.title || '';
     const c = note.content || '';
     content.innerHTML = /[<>]/.test(c) ? c : c.split('\n').join('<br>');
+    content.querySelectorAll('.check-item input[type="checkbox"]').forEach(cb => {
+      cb.closest('.check-item')?.classList.toggle('checked', cb.checked);
+    });
     updFolderChip(); updMeta(); renderPlayers(); applyTheme();
   })();
 
@@ -165,9 +168,37 @@ export function openEditor(id, opts = {}) {
   const typed = debounce(() => { pushUndo(); updMeta(); scheduleSave(); }, 350);
   titleInput.addEventListener('input', typed);
   content.addEventListener('input', typed);
-  content.addEventListener('click', e => {
-    const cb = e.target.closest('input[type="checkbox"]');
-    if (cb) { setTimeout(scheduleSave, 0); }
+  content.addEventListener('pointerdown', e => {
+    const cb = e.target.closest('.check-item input[type="checkbox"]');
+    if (!cb) return;
+    e.preventDefault();
+    cb.checked = !cb.checked;
+    cb.closest('.check-item')?.classList.toggle('checked', cb.checked);
+    scheduleSave();
+  });
+  content.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || e.isComposing) return;
+    const item = e.target.closest?.('.check-item');
+    if (!item || !content.contains(item)) return;
+    const lbl = item.querySelector('.lbl');
+    if (!lbl) return;
+    const sel = window.getSelection();
+    if (!sel?.rangeCount || !sel.isCollapsed || !lbl.contains(sel.anchorNode)) return;
+    const tail = sel.getRangeAt(0).cloneRange();
+    tail.selectNodeContents(lbl);
+    tail.setStart(sel.anchorNode, sel.anchorOffset);
+    if (tail.toString().length) return;
+    e.preventDefault();
+    pushUndo();
+    const next = document.createElement('div');
+    next.className = 'check-item';
+    next.dataset.check = '1';
+    next.innerHTML = '<input type="checkbox"><span class="lbl"></span>';
+    item.after(next);
+    const nl = next.querySelector('.lbl');
+    placeCaretIn(nl);
+    saveSelection();
+    scheduleSave();
   });
 
   /* переключение панелей по клавиатуре; тулбар — в body, чтобы fixed был над клавиатурой */
@@ -307,73 +338,184 @@ export function openEditor(id, opts = {}) {
 
   folderChip.addEventListener('click', folderSheet);
 
-  /* ---------- Тулбар: рабочие кнопки, набор как на скриншоте (AI, аудио, фото, рисунок, чек-лист, заголовок) ---------- */
-  let lastFocusRange = null;
-  content.addEventListener('blur', () => {
-    const s = window.getSelection();
-    if (s && s.rangeCount && content.contains(s.anchorNode)) { lastFocusRange = s.getRangeAt(0).cloneRange(); }
+  /* ---------- Тулбар: selection + вставка (не терять каретку при тапе по кнопкам) ---------- */
+  let savedRange = null;
+
+  function saveSelection() {
+    const sel = window.getSelection();
+    if (!sel?.rangeCount) return;
+    const n = sel.anchorNode;
+    if (!n || !content.contains(n)) return;
+    savedRange = sel.getRangeAt(0).cloneRange();
+  }
+
+  function restoreSelection() {
+    if (!savedRange) return false;
+    if (!content.contains(savedRange.startContainer)) return false;
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+    return true;
+  }
+
+  function placeCaretIn(node) {
+    const r = document.createRange();
+    r.selectNodeContents(node);
+    r.collapse(true);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+    savedRange = r.cloneRange();
+  }
+
+  function focusEditor() {
+    content.focus({ preventScroll: true });
+    if (!restoreSelection()) {
+      const r = document.createRange();
+      r.selectNodeContents(content);
+      r.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+      savedRange = r.cloneRange();
+    }
+  }
+
+  function ensureBlock() {
+    if (content.querySelector('img, ul, ol, .check-item, h1, h2, div, p')) return;
+    if ((content.textContent || '').trim()) return;
+    content.innerHTML = '<div><br></div>';
+    placeCaretIn(content.firstChild);
+  }
+
+  function insertAtCursor(html) {
+    ensureBlock();
+    focusEditor();
+    let inserted = false;
+    try {
+      if (document.queryCommandSupported('insertHTML')) {
+        inserted = document.execCommand('insertHTML', false, html);
+      }
+    } catch (err) { inserted = false; }
+    if (!inserted) {
+      const sel = window.getSelection();
+      if (sel?.rangeCount) {
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        const frag = range.createContextualFragment(html);
+        range.insertNode(frag);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        savedRange = range.cloneRange();
+      } else {
+        content.insertAdjacentHTML('beforeend', html);
+      }
+    }
+    saveSelection();
+  }
+
+  function runFormat(mutate) {
+    pushUndo();
+    ensureBlock();
+    focusEditor();
+    mutate();
+    saveSelection();
+    scheduleSave();
+    updMeta();
+  }
+
+  content.addEventListener('keyup', saveSelection);
+  content.addEventListener('mouseup', saveSelection);
+  content.addEventListener('focus', saveSelection);
+  document.addEventListener('selectionchange', () => {
+    const sel = window.getSelection();
+    if (sel?.anchorNode && content.contains(sel.anchorNode)) saveSelection();
   });
-  const refocus = () => {
-    content.focus();
-    const s = window.getSelection();
-    if (lastFocusRange && s) { s.removeAllRanges(); s.addRange(lastFocusRange); }
-    return content;
-  };
+
+  const keepFocus = e => { e.preventDefault(); saveSelection(); };
+  toolbar.addEventListener('pointerdown', keepFocus);
+  toolbar.addEventListener('mousedown', keepFocus);
+
   toolbar.querySelectorAll('.tool').forEach(btn => btn.addEventListener('click', () => {
     vibrate(8);
+    saveSelection();
     const k = btn.dataset.tool;
     if (k === 'audio') {
+      saveSelection();
       content.blur();
-      openRecorder(note, async (rec) => { note.audio = rec; await Store.saveNote(note); renderPlayers(); toast('Аудио добавлено'); });
+      openRecorder(note, async (rec) => {
+        note.audio = rec;
+        await Store.saveNote(note);
+        renderPlayers();
+        toast('Аудио добавлено');
+        focusEditor();
+      });
     } else if (k === 'image') {
       pickImage();
     } else if (k === 'draw') {
+      saveSelection();
       content.blur();
       openDrawing(async (dataUrl) => {
-        pushUndo(); refocus();
-        document.execCommand('insertHTML', false, `<div data-drawing="1"><img src="${dataUrl}"></div><div><br></div>`);
-        scheduleSave();
+        runFormat(() => {
+          insertAtCursor(`<div data-drawing="1"><img class="rich-img" src="${dataUrl}" alt=""></div><div><br></div>`);
+        });
       });
     } else if (k === 'check') {
-      pushUndo(); refocus();
-      document.execCommand('insertHTML', false, `<div class="check-item" data-check="1"><input type="checkbox"><span class="lbl">Пункт</span> </div><div><br></div>`);
-      scheduleSave();
+      runFormat(() => {
+        insertAtCursor('<div class="check-item" data-check="1"><input type="checkbox"><span class="lbl">Пункт</span></div><div><br></div>');
+        const items = content.querySelectorAll('.check-item');
+        const lbl = items[items.length - 1]?.querySelector('.lbl');
+        if (lbl) {
+          const r = document.createRange();
+          r.selectNodeContents(lbl);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(r);
+          savedRange = r.cloneRange();
+        }
+      });
     } else if (k === 'heading') {
-      /* Заголовок — toggle: h1 <-> обычный текст */
-      pushUndo(); refocus();
-      const sel = window.getSelection();
-      let node = sel && sel.anchorNode;
-      if (node && node.nodeType === 3) node = node.parentElement;
-      const inH1 = !!(node && node.closest && node.closest('h1'));
-      document.execCommand('formatBlock', false, inH1 ? 'div' : 'h1');
-      scheduleSave();
+      runFormat(() => {
+        let node = window.getSelection()?.anchorNode;
+        if (node?.nodeType === 3) node = node.parentElement;
+        const inH1 = !!(node?.closest?.('h1'));
+        document.execCommand('formatBlock', false, inH1 ? 'div' : 'h1');
+      });
     } else if (k === 'bold') {
-      pushUndo(); refocus(); document.execCommand('bold'); scheduleSave();
+      runFormat(() => {
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('bold');
+      });
     } else if (k === 'italic') {
-      pushUndo(); refocus(); document.execCommand('italic'); scheduleSave();
-    } else if (k === 'highlight') {
-      pushUndo(); refocus();
-      document.execCommand('styleWithCSS', false, true);
-      document.execCommand('hiliteColor', false, '#fae5a2');
-      scheduleSave();
+      runFormat(() => {
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('italic');
+      });
     } else if (k === 'list') {
-      pushUndo(); refocus(); document.execCommand('insertUnorderedList'); scheduleSave();
+      runFormat(() => { document.execCommand('insertUnorderedList'); });
     }
   }));
 
   function pickImage() {
+    saveSelection();
     const inp = document.createElement('input');
-    inp.type = 'file'; inp.accept = 'image/*';
+    inp.type = 'file';
+    inp.accept = 'image/*';
     inp.onchange = async () => {
-      const f = inp.files[0]; if (!f) return;
+      const f = inp.files[0];
+      if (!f) return;
       try {
         const imgId = 'img_' + uid();
         await Store.putBlob(imgId, f);
         const url = URL.createObjectURL(f);
-        pushUndo(); content.focus();
-        document.execCommand('insertHTML', false, `<img class="rich-img" src="${url}" data-blob="${imgId}"><div><br></div>`);
-        scheduleSave(); toast('Фото добавлено');
-      } catch (e) { toast('Не удалось добавить фото'); }
+        runFormat(() => {
+          insertAtCursor(`<img class="rich-img" src="${url}" data-blob="${imgId}" alt=""><div><br></div>`);
+        });
+        toast('Фото добавлено');
+      } catch (e) {
+        toast('Не удалось добавить фото');
+      }
     };
     inp.click();
   }
