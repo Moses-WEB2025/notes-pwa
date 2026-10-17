@@ -33,7 +33,7 @@
 .editor-screen .editor-topbar .icon-btn { color: var(--ed-ink, var(--text)); }
 .editor-screen .editor-topbar .icon-btn:active { background: rgba(128,128,128,.18); }
 .editor-screen .note-title-input { color: var(--ed-ink, var(--text)) !important; caret-color: var(--ed-caret, var(--accent)); }
-.editor-screen .note-title-input::placeholder { color: var(--ed-muted, #c9c9cd) !important; opacity: .8; font-weight: 700; }
+.editor-screen .note-title-input::placeholder { color: var(--ed-muted, #c9c9cd) !important; opacity: .8; font-weight: 800; }
 .editor-screen .meta-row { color: var(--ed-muted, var(--text-tertiary)) !important; transition: color .25s ease; }
 .editor-screen .meta-row .dot { background: color-mix(in srgb, var(--ed-ink, #1c1d21) 30%, transparent); }
 .editor-screen .note-content-input { color: var(--ed-ink, var(--text)) !important; caret-color: var(--ed-caret, var(--accent)); transition: color .25s ease; }
@@ -76,11 +76,12 @@ body.toolbar-on .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 5
   width: calc(100% - 40px);
   margin: 16px 20px 0;
   border: 0; outline: 0; background: transparent;
-  font: 700 26px/1.25 var(--font);
+  /* Заголовок всегда жирный и не меняется от форматирования текста */
+  font: 800 26px/1.25 var(--font);
   color: var(--text);
   caret-color: var(--accent);
 }
-.note-title-input::placeholder { color: #c9c9cd; font-weight: 700; }
+.note-title-input::placeholder { color: #c9c9cd; font-weight: 800; }
 
 .meta-row { display: flex; align-items: center; gap: 10px; padding: 12px 20px 8px; color: var(--text-tertiary); font: 400 13px/1.3 var(--font); }
 .meta-row .dot { width: 1px; height: 11px; background: #d8d8dc; }

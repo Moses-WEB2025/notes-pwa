@@ -107,7 +107,8 @@
 
 .note-card .nc-title {
   font-size: 17px;
-  font-weight: 700;
+  /* Заголовок всегда жирный и не меняется от форматирования текста */
+  font-weight: 800;
   line-height: 1.32;
   color: var(--text);
   display: -webkit-box;
