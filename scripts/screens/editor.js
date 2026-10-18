@@ -265,14 +265,51 @@ export function openEditor(id, opts = {}) {
   document.addEventListener('kb-change', onKb);
   function onKb(e) {
     if (!el.isConnected) { teardownKb(); return; }
+    const opening = e.detail.open && !kbOpen;
     kbOpen = e.detail.open;
     topbar.classList.toggle('hidden', kbOpen);
     topbarKb.classList.toggle('hidden', !kbOpen);
     syncFormatBar();
+    /* Клавиатура выехала — под сфокусированной строкой снова нужно место. */
+    if (opening) { ensureCaretClear(); setTimeout(ensureCaretClear, 120); }
   }
   /* фокус в редакторе тоже управляет тулбаром (клавиатура может быть скрыта) */
   el.addEventListener('focusin', syncFormatBar);
   el.addEventListener('focusout', () => setTimeout(syncFormatBar, 60));
+
+  /* ---------- Под сфокусированной строкой всегда остаётся место ----------
+     Открывая клавиатуру, система показывает сфокусированную строку ровно у её
+     верхнего края — а там лежит наш тулбар форматирования: он position: fixed
+     и накрывает нижние 54px холста. Из-за этого каретка у нижнего края
+     пряталась под тулбаром. После каждого смещения каретки досдвигаем холст
+     так, чтобы под строкой остался запас (высота тулбара + CARET_GAP). */
+  const CARET_GAP = 20;
+  function caretRect() {
+    if (document.activeElement === titleInput) return titleInput.getBoundingClientRect();
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return null;
+    const range = sel.getRangeAt(0);
+    if (!content.contains(range.startContainer)) return null;
+    const rects = range.getClientRects();
+    const r = rects.length ? rects[rects.length - 1] : range.getBoundingClientRect();
+    return r && (r.height || r.width) ? r : null;
+  }
+  function ensureCaretClear() {
+    /* Тулбар в body = он лежит поверх холста; в заголовке его нет и запас не нужен. */
+    if (!el.isConnected || toolbar.parentElement !== document.body) return;
+    const r = caretRect();
+    if (!r) return;
+    const safeBottom = bodyWrap.getBoundingClientRect().bottom
+      - (toolbar.offsetHeight || 0) - CARET_GAP;
+    const delta = r.bottom - safeBottom;
+    if (delta > 0.5) bodyWrap.scrollTop += delta;
+  }
+  el.addEventListener('focusin', () => {
+    ensureCaretClear();
+    /* Строку система двигает уже после начала анимации клавиатуры. */
+    setTimeout(ensureCaretClear, 120);
+    setTimeout(ensureCaretClear, 360);
+  });
 
   /* ---------- Сохранение ---------- */
   const saveContent = () => {
@@ -485,7 +522,7 @@ export function openEditor(id, opts = {}) {
   content.addEventListener('focus', saveSelection);
   document.addEventListener('selectionchange', () => {
     const sel = window.getSelection();
-    if (sel?.anchorNode && content.contains(sel.anchorNode)) saveSelection();
+    if (sel?.anchorNode && content.contains(sel.anchorNode)) { saveSelection(); ensureCaretClear(); }
   });
 
   const keepFocus = e => { e.preventDefault(); saveSelection(); };
