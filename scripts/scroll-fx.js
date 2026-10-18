@@ -9,6 +9,11 @@
    случилось уже посреди обычной прокрутки. Отдельного «дотягивающего» касания
    не требуется.
 
+   Отдельно обрабатываем инерцию: если палец отпущен, а список доезжает до края
+   по инерции (бросок), touchmove уже не приходит — и включить протяжку некому,
+   поэтому у края список резко встаёт. В этом случае следим за scroll и запускаем
+   пружину со скоростью броска в момент удара о край (см. onScroll).
+
    Работает за счёт CSS-переменной --pull-y на скроллере (см. styles/theme.css
    и styles/screens.css): сама нативная инерция и плавность не подменяются —
    трогаем только протяжку за границей, поэтому обычная прокрутка остаётся
@@ -19,6 +24,11 @@ const PULL_SELECTOR = '.scroll, .editor-body';
 const AXIS_LOCK = 8;
 /* Предел протяжки относительно высоты контейнера (насколько далеко уедет край) */
 const MAX_PULL_RATIO = 0.6;
+/* Бросок по инерции: ниже этого порога считаем, что список просто довели
+   пальцем, а не «швырнули» — пружину не запускаем. Верхний предел ограничивает
+   «вылет» края, чтобы он не уезжал слишком далеко. */
+const FLING_MIN = 350;   /* px/s */
+const FLING_MAX = 2600;  /* px/s */
 
 let drag = null;
 
@@ -30,6 +40,19 @@ function isTextTarget(t) {
 
 function reducedMotion() {
   return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+
+/* На iOS менять transform скроллера во время инерционной прокрутки нельзя:
+   композитный слой отрывается, пружина не докручивается до конца,
+   `will-change: transform` и сдвиг --pull-y «залипают» — и список перестаёт
+   скроллиться вообще. Поэтому протяжку по инерции (см. onScroll) включаем
+   только вне iOS: там удар о край по инерции нативный скролл переносит,
+   и «резинка» срабатывает сразу, без повторного касания. */
+function isIOS() {
+  const p = navigator.platform || '';
+  return /iP(hone|ad|od)/.test(p)
+    || (p === 'MacIntel' && navigator.maxTouchPoints > 1)
+    || /iPhone|iPad|iPod/.test(navigator.userAgent || '');
 }
 
 /* Затухающая протяжка: в начале следует за пальцем почти один в один, а чем
@@ -55,10 +78,12 @@ function resetPull(el) {
   el.style.willChange = '';
 }
 
-/* Возврат пружиной к нулю: лёгкий перелёт и мягкое затухание, как у iOS. */
-function springBack(el, from) {
+/* Возврат пружиной к нулю: лёгкий перелёт и мягкое затухание, как у iOS.
+   v0 — начальная скорость (px/s): при протяжке пальцем её нет, а при ударе о
+   край по инерции пружина стартует со скоростью броска и край «выстреливает». */
+function springBack(el, from, v0 = 0) {
   cancelSpring(el);
-  let x = from, v = 0, last = performance.now();
+  let x = from, v = v0, last = performance.now();
   const K = 190;  /* жёсткость */
   const C = 25;   /* демпфирование: чуть меньше критического — есть перелёт */
   const step = (now) => {
@@ -93,6 +118,39 @@ function endDrag() {
   if (!d.engaged) return;
   const cur = parseFloat(d.el.style.getPropertyValue('--pull-y')) || 0;
   springBack(d.el, cur);
+}
+
+/* Следим за положением края и скоростью прокрутки.
+   1) Обновляем флаги «у верхнего/нижнего края» — по ним touchmove решает,
+      включать ли протяжку: на iOS scrollTop в момент жеста может отставать.
+   2) Если палец уже отпущен (нет drag) и список по инерции доезжает до края,
+      запускаем пружину со скоростью броска — растяжка появляется ровно в
+      момент достижения конца, без отдельного повторного скролла. */
+function onScroll(e) {
+  const el = e.target;
+  if (!el || !el.classList || !el.matches || !el.matches(PULL_SELECTOR)) return;
+  const top = el.scrollTop;
+  el.__sfAtTop = top <= 0;
+  el.__sfAtBottom = top + el.clientHeight >= el.scrollHeight - 1.5;
+
+  const now = performance.now();
+  const prevTop = el.__sfTop, prevT = el.__sfTime;
+  el.__sfTop = top; el.__sfTime = now;
+
+  if (drag || reducedMotion() || el.__pullSpring) return;
+  if (prevTop == null) return;
+  const dt = (now - prevT) / 1000;
+  if (dt <= 0 || dt > 0.1) return;         /* пауза перед этим кадром — не скорость */
+  const v = (top - prevTop) / dt;          /* > 0 — движемся к нижнему краю */
+  const speed = Math.abs(v);
+  if (speed < FLING_MIN) return;
+  /* Направление «вылета»: снизу контент уходит вверх (−), сверху — вниз (+). */
+  let dir = 0;
+  if (el.__sfAtBottom && v > 0) dir = -1;
+  else if (el.__sfAtTop && v < 0) dir = 1;
+  if (!dir) return;
+  beginPull(el);
+  springBack(el, 0, dir * Math.min(speed, FLING_MAX));
 }
 
 function onTouchStart(e) {
@@ -130,8 +188,10 @@ function onTouchMove(e) {
      включиться сразу, без второго касания. Пока до края не дошли — не мешаем
      браузеру и просто отдаём ему прокрутку. */
   if (!drag.engaged) {
-    const atTop = el.scrollTop <= 0;
-    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+    /* Флаги с scroll-события подстраховывают: на iOS scrollTop в момент жеста
+       может отставать на кадр, и прямое сравнение не заметило бы край. */
+    const atTop = el.scrollTop <= 0 || el.__sfAtTop;
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1 || el.__sfAtBottom;
     let edge = null;
     if (atTop && dy > 0) edge = 'top';
     else if (atBottom && dy < 0) edge = 'bottom';
@@ -163,4 +223,8 @@ export function initScrollFx() {
   document.addEventListener('touchmove', onTouchMove, { passive: false });
   document.addEventListener('touchend', endDrag, { passive: true });
   document.addEventListener('touchcancel', endDrag, { passive: true });
+  /* scroll не всплывает — ловим на фазе перехвата. Нужен для протяжки по
+     инерции (см. onScroll) и для флагов «у края». На iOS слушатель не ставим
+     вовсе: там протяжка по инерции ломает прокрутку (см. isIOS). */
+  if (!isIOS()) document.addEventListener('scroll', onScroll, { capture: true, passive: true });
 }
