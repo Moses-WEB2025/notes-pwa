@@ -88,18 +88,21 @@
   pointer-events: none;
 }
 
-/* ===== Поиск + «Отмена» ===== */
+/* ===== Поиск + «Отмена» =====
+   Строка поиска компактная во всех состояниях (покой, фокус/подъём, ввод):
+   её размер задаётся только здесь, поэтому уменьшение высоты и отступов
+   одинаково освобождает место над заметками и в обычном виде, и при поиске. */
 .searchbar { flex: none; }
-.searchbar-row { display: flex; align-items: center; gap: 12px; padding: 0 20px 16px; }
+.searchbar-row { display: flex; align-items: center; gap: 10px; padding: 0 16px 10px; }
 .searchbar-row .searchfield { flex: 1; min-width: 0; }
 .searchfield {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 50px;
+  gap: 8px;
+  height: 42px;
   background: #ececec;
-  border-radius: 25px;
-  padding: 0 8px 0 18px;
+  border-radius: 21px;
+  padding: 0 6px 0 14px;
   /* Тонкое кольцо по контуру: строка всегда сохраняет свои границы и не
      сливается с фоном — даже когда поднимается наверх, на серый холст
      того же цвета (#ececec). */
@@ -110,17 +113,19 @@
    как на главной (#ececec), но кольцо становится заметнее, чтобы границы
    читались на сером холсте. */
 .searchfield:focus-within { background: #ececec; box-shadow: 0 0 0 1.5px rgba(0,0,0,.12); }
-.searchfield > .material-symbols-rounded { font-size: 21px; color: var(--text-tertiary); font-variation-settings: 'FILL' 1, 'wght' 500; }
+.searchfield > .material-symbols-rounded { font-size: 19px; color: var(--text-tertiary); font-variation-settings: 'FILL' 1, 'wght' 500; }
 .searchfield input {
   flex: 1;
   min-width: 0;
   border: 0; outline: 0; background: transparent;
+  /* Кегль держим не меньше 16px: iOS при фокусе сам зумит страницу под
+     мелкий шрифт поля, и «нативного» поведения после фокуса не получается. */
   font: 400 16px/1.3 var(--font);
   color: var(--text);
 }
-.searchfield input::placeholder { color: var(--text-tertiary); font-size: 15.5px; }
+.searchfield input::placeholder { color: var(--text-tertiary); font-size: 15px; }
 .searchfield .search-clear {
-  width: 34px; height: 34px;
+  width: 30px; height: 30px;
   border: 0; border-radius: 50%;
   background: transparent;
   color: var(--text-tertiary);
@@ -132,7 +137,7 @@
   flex: none;
   white-space: nowrap;
   border: 0; background: transparent;
-  font: 500 15.5px/1.3 var(--font);
+  font: 500 15px/1.3 var(--font);
   color: var(--link-blue);
   cursor: pointer;
   padding: 6px 2px;

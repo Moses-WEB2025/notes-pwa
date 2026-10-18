@@ -201,13 +201,37 @@ export function openEditor(id, opts = {}) {
   function doUndo() {
     if (histIndex <= 0) return;
     histIndex--; applyState(history[histIndex]); updUndoBtns();
+    restoreEditFocus();
   }
   function doRedo() {
     if (histIndex >= history.length - 1) return;
     histIndex++; applyState(history[histIndex]); updUndoBtns();
+    restoreEditFocus();
+  }
+  /* Возвращаем каретку туда, где она была: в заголовок или в текст заметки.
+     applyState() заменяет содержимое холста, поэтому сохранённый диапазон
+     становится недействительным — focusEditor() тогда поставит каретку в конец
+     текста. Без этого фокус (а с ним и клавиатура) терялись, и режим
+     редактирования закрывался. */
+  function restoreEditFocus() {
+    if (document.activeElement === titleInput) {
+      titleInput.focus({ preventScroll: true });
+      const end = titleInput.value.length;
+      try { titleInput.setSelectionRange(end, end); } catch (e) {}
+    } else {
+      focusEditor();
+    }
   }
   undoBtn.addEventListener('click', doUndo);
   redoBtn.addEventListener('click', doRedo);
+  /* Стрелки «отменить/вернуть» не должны уводить фокус из холста: гасим фокус
+     кнопки на pointerdown/mousedown — так же, как это делает тулбар
+     форматирования. Иначе клавиатура закрывалась вместе с режимом правки. */
+  const keepEditFocus = e => { e.preventDefault(); saveSelection(); };
+  [undoBtn, redoBtn].forEach(b => {
+    b.addEventListener('pointerdown', keepEditFocus);
+    b.addEventListener('mousedown', keepEditFocus);
+  });
 
   /* ввод */
   const typed = debounce(() => { commit(); updMeta(); scheduleSave(); }, 350);
@@ -251,24 +275,18 @@ export function openEditor(id, opts = {}) {
     if (show && toolbar.parentElement !== document.body) document.body.appendChild(toolbar);
     else if (!show && toolbar.parentElement === document.body) el.appendChild(toolbar);
   }
-  /* Тулбар форматирования должен быть виден, пока идёт редактирование текста.
-     Опираться только на состояние клавиатуры нельзя: после системного диалога
-     выбора файла (input type=file) клавиатура на iOS/Android не открывается
-     заново сама, kb-change больше не присылает open:true — и тулбар пропадал
-     навсегда. Поэтому дополнительно учитываем фокус в холсте заметки. */
+  /* Тулбар форматирования виден ровно столько, сколько открыта клавиатура:
+     как только она закрывается, тулбар обязан уйти вместе с ней. Опираться на
+     фокус в холсте нельзя — клавиатура может закрыться, а фокус остаться, и
+     тогда тулбар «зависал» бы поверх заметки. */
   let kbOpen = false;
   /* Панель форматирования относится к тексту заметки, а не к заголовку: пока
      курсор в заголовке — прячем её, даже если клавиатура открыта. */
   function editingTitle() { return document.activeElement === titleInput; }
-  function editorActive() {
-    const a = document.activeElement;
-    return !!a && (a === content || content.contains(a) || toolbar.contains(a));
-  }
   function syncFormatBar() {
     if (!el.isConnected) { document.body.classList.remove('toolbar-on'); dockToolbar(false); return; }
-    const show = !editingTitle() && (kbOpen || editorActive());
+    const show = !editingTitle() && kbOpen;
     dockToolbar(show);
-    document.body.classList.toggle('toolbar-on', show && !kbOpen);
   }
   function teardownKb() {
     document.removeEventListener('kb-change', onKb);
