@@ -3,8 +3,10 @@ import { initKeyboard, bindPress, Store, Nav } from './core.js';
 import { refreshEdgeColor } from './edge.js';
 import { mainScreen } from './main-screen.js';
 import { seedDemo } from './seed.js';
+import { initScrollFx } from './scroll-fx.js';
 
 initKeyboard();
+initScrollFx();
 
 (async () => {
   const notes = await Store.notes();

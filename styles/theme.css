@@ -162,6 +162,10 @@ body {
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  /* «Резинка» на границах списка. --pull-y выставляет JS во время протяжки:
+     содержимое уезжает за край и пружиной возвращается назад — тот же эффект,
+     что при протяжке списка на iPhone. В покое значение равно 0. */
+  transform: translateY(var(--pull-y, 0px));
 }
 .scroll::-webkit-scrollbar { display: none; }
 

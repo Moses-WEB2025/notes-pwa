@@ -97,7 +97,10 @@
      (статус-бар iOS/Android) рисуется ПОВЕРХ страницы, и её верхняя граница
      перекрывала бы рамку строки. Небольшой зазор оставляет кольцо видимым. */
   --search-top: calc(var(--safe-top) + 8px);
+  /* Подъём списка при поиске (0 — список на месте) */
+  --grid-lift: 0px;
 }
+.main-screen.searching { --grid-lift: calc(var(--search-top) - var(--hd-up, 120px)); }
 .main-screen .appbar,
 .main-screen .h1-row,
 .main-screen .searchbar,
@@ -113,9 +116,12 @@
 .main-screen.searching .searchbar {
   transform: translateY(calc(var(--search-top) - var(--hd-up, 120px))) translateX(var(--search-dx, 0px));
 }
-.main-screen.searching .grid-holder {
-  transform: translateY(calc(var(--search-top) - var(--hd-up, 120px)));
-  margin-bottom: calc(var(--search-top) - var(--hd-up, 120px));
+/* Подъём списка при поиске (--grid-lift) и упругая протяжка (--pull-y) — одна
+   и та же CSS-величина transform, поэтому складываем их в одном правиле.
+   Иначе один transform перекрывал бы другой. */
+.main-screen .grid-holder {
+  transform: translateY(calc(var(--grid-lift, 0px) + var(--pull-y, 0px)));
+  margin-bottom: var(--grid-lift, 0px);
 }
 /* Во время свайпа строка следует за пальцем без задержки */
 .main-screen.search-drag .searchbar { transition: none; }
