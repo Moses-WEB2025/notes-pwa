@@ -21,7 +21,7 @@
   box-shadow: 0 10px 40px rgba(0,0,0,.16);
   transform: translateY(calc(100% + 40px));
   opacity: 0;
-  transition: transform var(--dur-3) var(--ease-spring), opacity var(--dur-2) ease;
+  transition: transform var(--dur-3) var(--ease-out), opacity var(--dur-2) ease;
   max-height: 84%;
   overflow: hidden auto;
   overscroll-behavior: contain;
@@ -145,7 +145,7 @@
   box-shadow: var(--shadow-raised);
   opacity: 0;
   transform: translateY(12px) scale(.96);
-  transition: opacity var(--dur-2) ease, transform var(--dur-2) var(--ease-spring);
+  transition: opacity var(--dur-2) ease, transform var(--dur-2) var(--ease-out);
 }
 .toast.show { opacity: 1; transform: translateY(0) scale(1); }
 
@@ -313,7 +313,7 @@
   padding: 8px 6px calc(8px + var(--safe-bottom));
   box-shadow: 0 -6px 24px rgba(0,0,0,.08);
   transform: translateY(100%);
-  animation: imgBarIn .22s var(--ease-spring) forwards;
+  animation: imgBarIn .22s var(--ease-out) forwards;
 }
 @keyframes imgBarIn { to { transform: translateY(0); } }
 .img-bar .img-act {

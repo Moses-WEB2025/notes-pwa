@@ -66,9 +66,13 @@ body.kb-open .screen.under { visibility: hidden; }
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   transition: padding-bottom var(--dur-kb) var(--ease-out);
-  /* Та же «резинка», что и у списков: --pull-y задаёт JS при протяжке
-     за верхний/нижний край страницы. */
+  /* Лёгкая «резинка»: --pull-y задаёт JS при протяжке за верхний/нижний
+     край. В редакторе протяжка很小 — текст почти не смещается (см.
+     --pull-max-ratio ниже), в отличие от списков на других экранах. */
   transform: translateY(var(--pull-y, 0px));
+  /* Предел протяжки относительно высоты: в редакторе растягиваем строчки
+     совсем немного, чтобы не мешать работе с текстом. */
+  --pull-max-ratio: .1;
 }
 body.kb-open .editor-screen .editor-body,
 body.toolbar-on .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px); }
@@ -168,9 +172,9 @@ body.toolbar-on > .format-toolbar {
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
-  transition: background-color .15s ease, transform .15s var(--ease-standard);
+  transition: background-color var(--dur-1) ease, transform var(--dur-1) var(--ease-out);
 }
-.format-toolbar .tool:active { background: var(--surface2); transform: scale(.92); }
+.format-toolbar .tool:active { background: var(--surface2); transform: scale(.96); }
 .format-toolbar .tool .material-symbols-rounded {
   font-size: 24px;
   font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;

@@ -60,7 +60,6 @@
   --ease-emphasized: cubic-bezier(.2,0,0,1);    /* акцентированный (экраны) */
   --ease-out: cubic-bezier(.22,.61,.36,1);      /* замедление к концу */
   --ease-in: cubic-bezier(.4,0,1,1);            /* разгон в начале */
-  --ease-spring: cubic-bezier(.34,1.28,.64,1);  /* мягкий «отскок» как у iOS */
   --ease-ios: cubic-bezier(.25,.1,.25,1);       /* классический iOS ease-in-out */
 }
 
@@ -264,7 +263,7 @@ body {
   padding: 10px 8px calc(10px + var(--safe-bottom));
   transform: translateY(100%);
   opacity: 0;
-  transition: transform var(--dur-3) var(--ease-spring), opacity var(--dur-2) ease;
+  transition: transform var(--dur-3) var(--ease-out), opacity var(--dur-2) ease;
   pointer-events: none;
 }
 .select-bar:not(.hidden) { transform: translateY(0); opacity: 1; pointer-events: auto; }

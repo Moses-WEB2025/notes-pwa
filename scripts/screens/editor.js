@@ -1054,7 +1054,11 @@ export function openEditor(id, opts = {}) {
   });
   window.addEventListener('pointercancel', cancelPress);
 
-  /* свайп по холсту — «спокойный» режим: убираем каретку, клавиатуру и выделение */
+  /* Прокрутка холста НЕ закрывает клавиатуру и не снимает фокус. Клавиатура
+     уходит только по системному жесту (свайп по самой клавиатуре), кнопке
+     «назад» Android или клавише завершения на клавиатуре. Свайп по холсту лишь
+     отменяет незавершённый тап по фото, чтобы случайное смещение пальца не
+     выделяло картинку. */
   let swipeFrom = null;
   bodyWrap.addEventListener('touchstart', e => {
     swipeFrom = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
@@ -1065,10 +1069,34 @@ export function openEditor(id, opts = {}) {
     if (Math.hypot(t.clientX - swipeFrom.x, t.clientY - swipeFrom.y) > 18) {
       swipeFrom = null;
       cancelPress();
-      if (document.activeElement === content || document.activeElement === titleInput) { content.blur(); titleInput.blur(); }
-      clearImageSelection();
     }
   }, { passive: true });
+
+  /* Заголовок → основной текст. Пока набирается заголовок, увод холста вниз
+     (без подтверждения заголовка) не должен закрывать клавиатуру: каретка
+     переходит в самое начало текста заметки, и печатать можно дальше. */
+  let lastBodyTop = bodyWrap.scrollTop;
+  bodyWrap.addEventListener('scroll', () => {
+    const top = bodyWrap.scrollTop;
+    const scrolledDown = top > lastBodyTop + 6;
+    lastBodyTop = top;
+    if (!scrolledDown || document.activeElement !== titleInput) return;
+    if (!titleInput.value.trim()) return;
+    focusBodyStart();
+  }, { passive: true });
+
+  function focusBodyStart() {
+    ensureBlock();
+    content.focus({ preventScroll: true });
+    const sel = window.getSelection();
+    if (!sel) return;
+    const r = document.createRange();
+    r.setStart(content, 0);
+    r.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    savedRange = r.cloneRange();
+  }
 
   bodyWrap.addEventListener('scroll', positionImageTools, { passive: true });
   window.addEventListener('resize', positionImageTools);
