@@ -159,10 +159,17 @@ body.toolbar-on > .format-toolbar {
   left: 0;
   right: 0;
   bottom: var(--kb-h, 0px);
-  transition: bottom var(--dur-kb) var(--ease-out);
   box-shadow: 0 -1px 0 var(--divider);
-  /* Выезд тулбара снизу вместе с клавиатурой (display не анимируется) */
-  animation: toolbarIn var(--dur-3) var(--ease-standard) both;
+  /* Позицию ведём БЕЗ CSS-перехода — по той же причине, что и геометрию
+     .editor-screen выше (см. комментарий к top/bottom экрана).
+     Переход давал отставание: при появлении клавиатуры iOS сдвигает
+     visualViewport (--vv-top растёт), из-за чего --kb-h уменьшается, и
+     анимированный bottom «зависал» выше нужной точки — тулбар на миг
+     поднимался выше, чем в итоге остаётся, и потом опускался. Без перехода
+     bottom всегда точно равен --kb-h, поэтому тулбар ни в каком случае не
+     окажется выше своего итогового места. Плавность даёт системная анимация
+     клавиатуры: события visualViewport приходят каждый кадр. */
+  animation: toolbarIn var(--dur-3) var(--ease-standard) both;  /* выезд снизу вместе с клавиатурой (display не анимируется) */
 }
 @keyframes toolbarIn { from { opacity: .3; transform: translateY(100%); } to { opacity: 1; transform: none; } }
 .format-toolbar .tool {
