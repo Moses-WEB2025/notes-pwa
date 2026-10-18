@@ -83,6 +83,9 @@ reduced = false;
   assert.equal(el.classList.contains('morph-fade'), false, 'служебный класс прозрачности не снят');
   assert.equal(el.style.transform, '', 'инлайновый transform не очищен');
   assert.equal(el.style.borderRadius, '');
+  /* Класс «морфинг управляет раскрытием» должен остаться: если его снять,
+     анимация входа шапки запустится заново и она мигнёт после морфинга. */
+  assert.ok(el.classList.contains('morph-flat'), 'снял morph-flat — шапка мигнёт повторно');
   console.log('рост: ok');
 }
 

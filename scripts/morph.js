@@ -105,6 +105,10 @@ function reset(el) {
 export function morphOpen(el, card) {
   const t = begin(el);
   phase.set(el, 'open');
+  /* Раскрытием содержимого управляет только морфинг: снимаем собственную
+     анимацию входа у шапки редактора, иначе она раскрывает верхнюю панель
+     отдельно от тела окна (см. .morph-flat в theme.css). */
+  el.classList.add('morph-flat');
   const f = frameOf(card);
   el.classList.remove('morphing');      /* без перехода — задаём старт вручную */
   el.style.transformOrigin = '0 0';
