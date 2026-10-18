@@ -24,7 +24,9 @@ export function openFolders() {
 
   async function load() {
     const [folders, allNotes] = await Promise.all([Store.folders(), Store.notes()]);
-    const active = allNotes.filter(n => !n.deleted);
+    /* Скрытые (личная папка) заметки не показываем и не считаем: они доступны
+       только за системной проверкой на экране «Скрытые». */
+    const active = allNotes.filter(n => !n.deleted && !n.hidden);
     scroll.innerHTML = '';
 
     /* «Все» — с галочкой (выбрано) */
@@ -78,7 +80,7 @@ export function openFolders() {
       <div class="scroll grid-holder"></div>`;
     const grid = vEl.querySelector('.grid-holder');
     const fill = async () => {
-      const notes = (await Store.notes()).filter(n => !n.deleted && n.folderId === f.id).sort((a, b) => b.updatedAt - a.updatedAt);
+      const notes = (await Store.notes()).filter(n => !n.deleted && !n.hidden && n.folderId === f.id).sort((a, b) => b.updatedAt - a.updatedAt);
       grid.innerHTML = '';
       if (!notes.length) {
         grid.innerHTML = `<div style="padding:60px 20px;text-align:center;color:var(--text-tertiary);width:100%">В папке пока нет заметок</div>`;

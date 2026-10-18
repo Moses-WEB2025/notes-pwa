@@ -23,6 +23,8 @@
   --divider: #ececec;
   --folder-blue: #1a4a76;
   --folder-blue-soft: #e4ecf4;
+  /* Синий системного вида — для замка личной папки и подписи к нему */
+  --private-blue: #0a84ff;
 
   /* Форма */
   --card-radius: 20px;

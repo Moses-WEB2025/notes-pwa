@@ -113,7 +113,7 @@ export function openEditor(id, opts = {}) {
     } else {
       note = {
         id: uid(), title: '', content: '', color: null, folderId: opts.folderId || null,
-        pinned: false, audio: null, createdAt: Date.now(), updatedAt: Date.now(),
+        pinned: false, hidden: !!opts.hidden, audio: null, createdAt: Date.now(), updatedAt: Date.now(),
       };
     }
     titleInput.value = note.title || '';

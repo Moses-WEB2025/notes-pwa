@@ -421,3 +421,40 @@ mark.hm { background: transparent; color: #e0473a; font-weight: 700; }
 /* ===== Тосты над клавиатурой ===== */
 .toast-holder { transition: bottom var(--dur-kb) var(--ease-out); }
 body.kb-open .toast-holder { bottom: calc(var(--kb-h, 0px) + 24px); }
+
+/* ===== Протяжка вниз → личная папка =====
+   Пока список оттянут за верхний край, по центру экрана плавно проявляется
+   контурный синий замок с подсказкой. Прогресс (0..1) приходит из JS в --pp:
+   внутри жеста слой идёт строго за пальцем (без transition), а на отпускании
+   JS добавляет класс .animate — тогда подсказка мягко растворяется. */
+.pull-private {
+  position: absolute;
+  inset: 0;
+  z-index: 14;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  pointer-events: none;
+  opacity: var(--pp, 0);
+}
+.pull-private.animate { transition: opacity var(--dur-2) var(--ease-standard); }
+.pull-private .pp-icon {
+  width: 54px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--private-blue);
+  transform: scale(calc(.9 + var(--pp, 0) * .1));
+}
+.pull-private .pp-icon .material-symbols-rounded {
+  font-size: 44px;
+  font-variation-settings: 'FILL' 0, 'wght' 500;
+}
+.pull-private.ready .pp-icon { transform: scale(1.05); }
+.pull-private .pp-text {
+  font: 400 14px/1.3 var(--font);
+  color: var(--private-blue);
+}

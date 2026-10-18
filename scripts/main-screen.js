@@ -6,6 +6,7 @@ import { openEditor } from './screens/editor.js';
 import { openFolders } from './screens/folders.js';
 import { renderNotesGrid } from './screens/grid.js';
 import { openTrashScreen } from './screens/trash.js';
+import { verifyIdentity } from './auth.js';
 
 const COLORS = [
   { key: 'none', label: 'Без цвета', css: '#ffffff' },
@@ -16,7 +17,13 @@ const COLORS = [
   { key: 'red', label: 'Красная', css: '#e05555' },
 ];
 
-export function mainScreen() {
+export function mainScreen(opts = {}) {
+  /* Один и тот же экран в двух режимах: обычные «Заметки» и личная папка
+     «Скрытые» (только заметки с флагом hidden). Разметка, поиск и режим
+     выбора общие — меняются подпись и набор заметок. */
+  const isPrivate = opts.mode === 'hidden';
+  const TITLE = isPrivate ? 'Скрытые' : 'Заметки';
+
   const el = document.createElement('div');
   el.className = 'screen main-screen';
 
@@ -32,7 +39,7 @@ export function mainScreen() {
 
   const h1row = document.createElement('div');
   h1row.className = 'h1-row';
-  h1row.innerHTML = `<h1>Заметки</h1>`;
+  h1row.innerHTML = `<h1>${TITLE}</h1>`;
 
   /* поиск + «Отмена» */
   const searchWrap = document.createElement('div');
@@ -60,8 +67,7 @@ export function mainScreen() {
   chipsRow.innerHTML = `
     <button class="chip active" data-c="all">Все</button>
     <button class="chip" data-c="notes">Заметки</button>
-    <button class="chip" data-c="nocat">Без категории</button>
-    <button class="chip" data-c="hidden">Скрытые</button>`;
+    <button class="chip" data-c="nocat">Без категории</button>`;
 
   const fab = document.createElement('button');
   fab.className = 'fab';
@@ -70,7 +76,7 @@ export function mainScreen() {
   const tabbar = document.createElement('div');
   tabbar.className = 'tabbar';
   tabbar.innerHTML = `
-    <button class="tab active"><span class="material-symbols-rounded">edit_note</span><span class="lbl">Заметки</span></button>`;
+    <button class="tab active"><span class="material-symbols-rounded">edit_note</span><span class="lbl">${TITLE}</span></button>`;
 
   /* нижняя панель режима выбора: Скрыть | Закрепить | Переместить | Удалить */
   const selBar = document.createElement('div');
@@ -82,6 +88,19 @@ export function mainScreen() {
     <button data-sel="delete"><span class="material-symbols-rounded">delete</span><span class="lbl">Удалить</span></button>`;
 
   el.append(appbar, h1row, searchWrap, searchCanvas, chipsRow, gridHolder, fab, tabbar, selBar);
+
+  /* Слой протяжки вниз (только на главной): пока список оттянут за верхний
+     край, поверх проявляется замок с подсказкой. Живёт в разметке всегда —
+     показывает/скрывает его JS через --pp. */
+  let pullEl = null;
+  if (!isPrivate) {
+    pullEl = document.createElement('div');
+    pullEl.className = 'pull-private';
+    pullEl.innerHTML = `
+      <div class="pp-icon"><span class="material-symbols-rounded">lock</span></div>
+      <div class="pp-text">Отпустите, чтобы открыть личную папку</div>`;
+    el.appendChild(pullEl);
+  }
 
   /* ---------- режим выбора (долгий тап) ---------- */
   let selFilter = 'all';
@@ -132,11 +151,9 @@ export function mainScreen() {
     const q = searchInput.value.trim().toLowerCase();
     let list = notes;
     if (sel.active) {
-      list = selFilter === 'hidden' ? notes.filter(n => n.hidden) : notes.filter(n => !n.hidden);
       if (selFilter === 'notes') list = list.filter(n => (n.title || '').trim() || htmlToPlain(n.content));
       if (selFilter === 'nocat') list = list.filter(n => !n.folderId);
     } else {
-      list = list.filter(n => !n.hidden);
       if (filterColor) list = list.filter(n => n.color === filterColor);
       if (filterFolder) list = list.filter(n => n.folderId === filterFolder);
     }
@@ -157,7 +174,7 @@ export function mainScreen() {
   /* заметки, попадающие под текущий фильтр режима выбора */
   function selectionList() {
     const q = searchInput.value.trim().toLowerCase();
-    let list = selFilter === 'hidden' ? notes.filter(n => n.hidden) : notes.filter(n => !n.hidden);
+    let list = notes;
     if (selFilter === 'notes') list = list.filter(n => (n.title || '').trim() || htmlToPlain(n.content));
     if (selFilter === 'nocat') list = list.filter(n => !n.folderId);
     if (q) list = list.filter(n => (n.title || '').toLowerCase().includes(q) || htmlToPlain(n.content).toLowerCase().includes(q));
@@ -167,7 +184,7 @@ export function mainScreen() {
   function renderSelBar() {
     selBar.classList.toggle('hidden', !sel.active);
     const n = sel.set.size;
-    h1row.querySelector('h1').textContent = !sel.active ? 'Заметки' : (n ? `Выбрано ${n} объект${n % 10 === 1 && n % 100 !== 11 ? '' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'а' : 'ов')}` : 'Выбрано');
+    h1row.querySelector('h1').textContent = !sel.active ? TITLE : (n ? `Выбрано ${n} объект${n % 10 === 1 && n % 100 !== 11 ? '' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'а' : 'ов')}` : 'Выбрано');
     const any = n > 0;
     selBar.querySelectorAll('button').forEach(b => b.disabled = !any);
     if (!sel.active) return;
@@ -203,7 +220,11 @@ export function mainScreen() {
   const searchCancel = searchWrap.querySelector('.search-cancel');
 
   async function load() {
-    notes = (await Store.notes()).filter(n => !n.deleted)
+    /* Набор заметок задаёт режим: главная показывает всё, кроме скрытых,
+       личная папка — только скрытые. Поэтому скрытые никогда не попадают
+       на главный экран. */
+    notes = (await Store.notes())
+      .filter(n => !n.deleted && (isPrivate ? n.hidden : !n.hidden))
       .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.updatedAt - a.updatedAt);
     refresh();
   }
@@ -317,7 +338,9 @@ export function mainScreen() {
     else list.forEach(n => sel.set.add(n.id));
     refresh();
   });
-  fab.addEventListener('click', () => openEditor(null, { folderId: filterFolder }));
+  /* В личной папке новая заметка сразу скрытая — иначе она бы ушла на главную
+     и не появилась бы здесь. */
+  fab.addEventListener('click', () => openEditor(null, { folderId: filterFolder, hidden: isPrivate }));
 
   /* кнопки режима выбора */
   selBar.addEventListener('click', async e => {
@@ -402,6 +425,69 @@ export function mainScreen() {
       });
       return box;
     }]});
+  }
+
+  /* ---------- протяжка вниз → личная папка (только на главной) ----------
+     Список тянем за верхний край той же «резинкой», что и везде (--pull-y
+     ведёт scroll-fx). Пока натяжение растёт, поверх плавно проявляется замок
+     с подсказкой. Отпустили дальше порога — системная проверка личности, и при
+     успехе экран «Скрытые» въезжает обычной анимацией (как любой другой экран). */
+  if (pullEl) {
+    const PULL_THRESHOLD = 120;   /* насколько оттянут край, чтобы сработало */
+    let startY = 0, tracking = false, active = false;
+
+    const pullValue = () => parseFloat(gridHolder.style.getPropertyValue('--pull-y')) || 0;
+
+    /* Спрятать замок: включаем переход (класс .animate) и гасим прогресс —
+       подсказка мягко растворяется, а «резинка» списка возвращается сама. */
+    function hidePull() {
+      pullEl.classList.add('animate');
+      pullEl.classList.remove('on', 'ready');
+      pullEl.style.setProperty('--pp', '0');
+    }
+
+    gridHolder.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1) return;
+      /* В поиске и в режиме выбора протяжка не открывает личную папку. */
+      if (el.classList.contains('searching') || el.classList.contains('selecting')) return;
+      tracking = gridHolder.scrollTop <= 0;
+      startY = e.touches[0].clientY;
+      active = false;
+    }, { passive: true });
+
+    gridHolder.addEventListener('touchmove', e => {
+      if (!tracking || e.touches.length !== 1) return;
+      const dy = e.touches[0].clientY - startY;
+      if (dy <= 0 || gridHolder.scrollTop > 0) return;
+      active = true;
+      const y = pullValue();
+      const p = Math.min(1, y / PULL_THRESHOLD);
+      pullEl.classList.remove('animate');   /* внутри жеста — строго за пальцем */
+      pullEl.style.setProperty('--pp', p.toFixed(3));
+      pullEl.classList.add('on');
+      pullEl.classList.toggle('ready', y >= PULL_THRESHOLD);
+    }, { passive: true });
+
+    gridHolder.addEventListener('touchend', async () => {
+      if (!active) return;
+      active = false;
+      const reached = pullValue() >= PULL_THRESHOLD;
+      hidePull();
+      if (!reached) return;
+      if (await verifyIdentity()) openPrivate();
+    });
+
+    gridHolder.addEventListener('touchcancel', () => {
+      if (!active) return;
+      active = false;
+      hidePull();
+    }, { passive: true });
+  }
+
+  /* Открыть личную папку «Скрытые» обычной навигацией (слайд справа). */
+  function openPrivate() {
+    const s = mainScreen({ mode: 'hidden' });
+    Nav.pushEl(s.el);
   }
 
   /* выход из режима выбора по системной «назад» */
