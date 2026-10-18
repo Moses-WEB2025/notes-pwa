@@ -428,21 +428,34 @@ export function mainScreen(opts = {}) {
   }
 
   /* ---------- протяжка вниз → личная папка (только на главной) ----------
-     Список тянем за верхний край той же «резинкой», что и везде (--pull-y
-     ведёт scroll-fx). Пока натяжение растёт, поверх плавно проявляется замок
-     с подсказкой. Отпустили дальше порога — системная проверка личности, и при
-     успехе экран «Скрытые» въезжает обычной анимацией (как любой другой экран). */
+     Список тянем за верхний край той же «резинкой», что и везде (--pull-y ведёт
+     scroll-fx). Чем сильнее натянуто, тем выше открывшийся зазор. Замок с
+     подсказкой показываем ТОЛЬКО когда зазор стал размером со среднюю заметку —
+     и держим его по центру зазора, чтобы он ничего не перекрывал. Отпустили
+     дальше порога — системная проверка личности, и при успехе экран «Скрытые»
+     въезжает обычной анимацией (как любой другой экран). */
   if (pullEl) {
-    const PULL_THRESHOLD = 120;   /* насколько оттянут край, чтобы сработало */
-    let startY = 0, tracking = false, active = false;
+    const PULL_APPEAR = 110;   /* зазор (px), с которого замок начинает проявляться */
+    const PULL_OPEN   = 160;   /* зазор (px), при котором отпускание открывает папку */
+    let tracking = false, active = false, baseTop = 0;
 
     const pullValue = () => parseFloat(gridHolder.style.getPropertyValue('--pull-y')) || 0;
+
+    /* --pp: плавность появления (0, пока зазор меньше средней заметки);
+       --pp-top: центр зазора — под ним и стоит замок, ничего не перекрывая. */
+    function renderPull(y) {
+      const p = Math.max(0, Math.min(1, (y - PULL_APPEAR) / (PULL_OPEN - PULL_APPEAR)));
+      pullEl.classList.remove('animate');   /* внутри жеста — строго за пальцем */
+      pullEl.style.setProperty('--pp', p.toFixed(3));
+      pullEl.style.setProperty('--pp-top', (baseTop + y / 2).toFixed(1) + 'px');
+      pullEl.classList.toggle('ready', y >= PULL_OPEN);
+    }
 
     /* Спрятать замок: включаем переход (класс .animate) и гасим прогресс —
        подсказка мягко растворяется, а «резинка» списка возвращается сама. */
     function hidePull() {
       pullEl.classList.add('animate');
-      pullEl.classList.remove('on', 'ready');
+      pullEl.classList.remove('ready');
       pullEl.style.setProperty('--pp', '0');
     }
 
@@ -451,27 +464,24 @@ export function mainScreen(opts = {}) {
       /* В поиске и в режиме выбора протяжка не открывает личную папку. */
       if (el.classList.contains('searching') || el.classList.contains('selecting')) return;
       tracking = gridHolder.scrollTop <= 0;
-      startY = e.touches[0].clientY;
       active = false;
+      if (!tracking) return;
+      /* Верх сетки от верха экрана — отсчёт для центра зазора. Считаем один раз
+         за жест: за время протяжки шапка не двигается. */
+      baseTop = gridHolder.getBoundingClientRect().top - el.getBoundingClientRect().top;
     }, { passive: true });
 
     gridHolder.addEventListener('touchmove', e => {
       if (!tracking || e.touches.length !== 1) return;
-      const dy = e.touches[0].clientY - startY;
-      if (dy <= 0 || gridHolder.scrollTop > 0) return;
-      active = true;
-      const y = pullValue();
-      const p = Math.min(1, y / PULL_THRESHOLD);
-      pullEl.classList.remove('animate');   /* внутри жеста — строго за пальцем */
-      pullEl.style.setProperty('--pp', p.toFixed(3));
-      pullEl.classList.add('on');
-      pullEl.classList.toggle('ready', y >= PULL_THRESHOLD);
+      const y = pullValue();                /* ведёт scroll-fx, всегда ≥ 0 у верха */
+      if (y > 0) active = true;
+      if (active && gridHolder.scrollTop <= 0) renderPull(y);
     }, { passive: true });
 
     gridHolder.addEventListener('touchend', async () => {
       if (!active) return;
       active = false;
-      const reached = pullValue() >= PULL_THRESHOLD;
+      const reached = pullValue() >= PULL_OPEN;
       hidePull();
       if (!reached) return;
       if (await verifyIdentity()) openPrivate();

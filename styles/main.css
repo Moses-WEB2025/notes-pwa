@@ -423,21 +423,27 @@ mark.hm { background: transparent; color: #e0473a; font-weight: 700; }
 body.kb-open .toast-holder { bottom: calc(var(--kb-h, 0px) + 24px); }
 
 /* ===== Протяжка вниз → личная папка =====
-   Пока список оттянут за верхний край, по центру экрана плавно проявляется
-   контурный синий замок с подсказкой. Прогресс (0..1) приходит из JS в --pp:
-   внутри жеста слой идёт строго за пальцем (без transition), а на отпускании
-   JS добавляет класс .animate — тогда подсказка мягко растворяется. */
+   Замок с подсказкой появляется в «зазоре», который открывается, когда список
+   оттянут за верхний край: он стоит ровно по центру зазора, поэтому ничего не
+   перекрывает — ни карточки, ни шапку. Пока зазор меньше высоты средней
+   заметки, слой полностью прозрачен (--pp = 0), так что при лёгком потягивании
+   ничего не показывается.
+   --pp (0..1) — плавность появления, --pp-top — центр зазора (px); считает JS.
+   Внутри жеста обновляем значения каждый кадр (без transition), а на
+   отпускании JS вешает .animate — и подсказка мягко растворяется. */
 .pull-private {
   position: absolute;
-  inset: 0;
-  z-index: 14;
+  left: 0;
+  right: 0;
+  top: var(--pp-top, 0px);
+  z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
+  gap: 10px;
   pointer-events: none;
   opacity: var(--pp, 0);
+  transform: translateY(-50%);
 }
 .pull-private.animate { transition: opacity var(--dur-2) var(--ease-standard); }
 .pull-private .pp-icon {
@@ -447,13 +453,13 @@ body.kb-open .toast-holder { bottom: calc(var(--kb-h, 0px) + 24px); }
   align-items: center;
   justify-content: center;
   color: var(--private-blue);
-  transform: scale(calc(.9 + var(--pp, 0) * .1));
+  transform: scale(calc(.85 + var(--pp, 0) * .15));
 }
 .pull-private .pp-icon .material-symbols-rounded {
-  font-size: 44px;
+  font-size: 42px;
   font-variation-settings: 'FILL' 0, 'wght' 500;
 }
-.pull-private.ready .pp-icon { transform: scale(1.05); }
+.pull-private.ready .pp-icon { transform: scale(1.08); }
 .pull-private .pp-text {
   font: 400 14px/1.3 var(--font);
   color: var(--private-blue);
