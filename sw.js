@@ -1,5 +1,5 @@
 /* Заметки — Service Worker: полный офлайн (прекэш всех ресурсов, fallback навигации) */
-const VERSION = 'notes-v2.4.2';
+const VERSION = 'notes-v2.4.3';
 const PRECACHE = `precache-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 

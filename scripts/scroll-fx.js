@@ -5,6 +5,10 @@
    страницу за верхний или нижний край, содержимое следует за ним с растущим
    сопротивлением (эффект «резинки»), а после отпускания мягко доезжает назад.
 
+   Протяжка включается в тот момент, когда жест доходит до края — даже если это
+   случилось уже посреди обычной прокрутки. Отдельного «дотягивающего» касания
+   не требуется.
+
    Работает за счёт CSS-переменной --pull-y на скроллере (см. styles/theme.css
    и styles/screens.css): сама нативная инерция и плавность не подменяются —
    трогаем только протяжку за границей, поэтому обычная прокрутка остаётся
@@ -98,7 +102,11 @@ function onTouchStart(e) {
   /* Новое касание — прерываем возможный незавершённый возврат. */
   if (el.__pullSpring) resetPull(el);
   const t = e.touches[0];
-  drag = { el, sx: t.clientX, sy: t.clientY, decided: false, engaged: false, ignore: false };
+  drag = {
+    el, sx: t.clientX, sy: t.clientY,
+    startTop: el.scrollTop,   /* от какой позиции начался жест */
+    decided: false, engaged: false, horizontal: false,
+  };
 }
 
 function onTouchMove(e) {
@@ -111,29 +119,41 @@ function onTouchMove(e) {
     if (Math.abs(dx) < AXIS_LOCK && Math.abs(dy) < AXIS_LOCK) return;
     drag.decided = true;
     /* Горизонтальный жест (свайп «назад», прокрутка чипов) — не наш. */
-    if (Math.abs(dy) <= Math.abs(dx)) { drag.ignore = true; return; }
-    const el = drag.el;
+    if (Math.abs(dy) <= Math.abs(dx)) { drag.horizontal = true; return; }
+  }
+  if (drag.horizontal) return;
+
+  const el = drag.el;
+
+  /* Край проверяем на каждом кадре, а не один раз в начале жеста: список может
+     доехать до края уже в процессе обычной прокрутки, и «резинка» должна
+     включиться сразу, без второго касания. Пока до края не дошли — не мешаем
+     браузеру и просто отдаём ему прокрутку. */
+  if (!drag.engaged) {
     const atTop = el.scrollTop <= 0;
     const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
-    if (atTop && dy > 0) { drag.engaged = true; drag.edge = 'top'; beginPull(el); }
-    else if (atBottom && dy < 0) { drag.engaged = true; drag.edge = 'bottom'; beginPull(el); }
-    else {
-      /* Обычная прокрутка внутри содержимого — отдаём браузеру как есть. */
-      drag.ignore = true;
-      return;
-    }
+    let edge = null;
+    if (atTop && dy > 0) edge = 'top';
+    else if (atBottom && dy < 0) edge = 'bottom';
+    if (!edge) return;
+    drag.engaged = true;
+    drag.edge = edge;
+    /* Точка отсчёта протяжки. Если список не двигался с начала жеста — считаем
+       от старта (резинка отвечает с первого пикселя). Если до края доехали в
+       процессе прокрутки — отсчёт берём от текущего положения, иначе край
+       прыгнул бы сразу на всю пройденную дистанцию. */
+    drag.baseY = Math.abs(el.scrollTop - drag.startTop) < 2 ? drag.sy : t.clientY;
+    beginPull(el);
   }
 
-  if (drag.ignore || !drag.engaged) return;
   /* Гасим нативную протяжку и ведём край за пальцем с сопротивлением.
-     Обратный ход за точку старта не пускаем: у верхнего края край ходит
+     Обратный ход за точку отсчёта не пускаем: у верхнего края край ходит
      только вниз, у нижнего — только вверх. */
   e.preventDefault();
-  const dim = drag.el.clientHeight || 400;
-  let y;
-  if (drag.edge === 'top') y = Math.max(0, resist(dy, dim));
-  else y = Math.min(0, -resist(-dy, dim));
-  setPull(drag.el, y);
+  const dim = el.clientHeight || 400;
+  const pull = drag.edge === 'top' ? t.clientY - drag.baseY : drag.baseY - t.clientY;
+  const mag = pull > 0 ? resist(pull, dim) : 0;
+  setPull(el, drag.edge === 'top' ? mag : -mag);
 }
 
 /* Подключаем обработчики на документ: так жесты работают и на экранах,
