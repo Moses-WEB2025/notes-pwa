@@ -289,6 +289,61 @@
    иначе при подъёме строки поиска заметки разом прыгнули бы на его высоту. */
 .main-screen.selecting .folder-tabs { display: none; }
 
+/* ===== Протяжка вниз у самого верха: подсказка-замок =====
+   Пока палец тянет список вниз, из-под шапки выезжает замок и уезжает назад
+   вместе с пальцем. Без него протяжка никак себя не проявляет: системный
+   диалог появляется только на отпускании, и до него «ничего не происходит».
+   Слой лежит ПОД шапкой (z-index 11 против 12), поэтому в покое замок
+   полностью спрятан за ней, а показывается ровно в той полосе фона, которую
+   открывает уезжающий вниз список. */
+.hidden-pull {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;                    /* верх списка — его выставляет JS */
+  z-index: 11;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-standard);
+}
+/* Пока протяжка идёт, прозрачность ведёт JS по кадру — переход не нужен.
+   После отпускания класс снят, и замок гаснет вместе с возвратом пружины. */
+.hidden-pull.pulling { transition: none; }
+.hidden-pull-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px 9px 13px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card), 0 6px 18px rgba(0, 0, 0, .1);
+  font: 500 14px/1.2 var(--font);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  /* Выезд из-под шапки: 0 — замок полностью спрятан, --hidden-pull двигает его
+     вниз. Значение задаёт JS по ходу протяжки. */
+  transform: translateY(calc(var(--hidden-pull, 0px) - 100%));
+  transition: transform var(--dur-2) var(--ease-standard),
+              background-color var(--dur-1) ease, color var(--dur-1) ease;
+}
+/* Пока палец ведёт замок, он следует за ним один в один — без догоняющего
+   перехода. Возврат (когда класс снят) остаётся плавным. */
+.hidden-pull.pulling .hidden-pull-pill {
+  transition: background-color var(--dur-1) ease, color var(--dur-1) ease;
+}
+.hidden-pull-pill .material-symbols-rounded {
+  font-size: 18px;
+  font-variation-settings: 'FILL' 1;
+}
+/* Порог пройден: отпускание пальца вызовет системную проверку */
+.hidden-pull.ready .hidden-pull-pill {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+
 /* ===== Сетка карточек (masonry) ===== */
 /* Верхний отступ сетки убран: зазор до заметок даёт нижний отступ ряда
    категорий (12px) — он равен зазору между поиском и рядом. */

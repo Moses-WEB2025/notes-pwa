@@ -6,7 +6,7 @@ import { openEditor } from './screens/editor.js';
 import { openFolders } from './screens/folders.js';
 import { renderNotesGrid } from './screens/grid.js';
 import { openTrashScreen } from './screens/trash.js';
-import { systemUnlock, systemUnlockAvailable } from './system-unlock.js';
+import { systemUnlock, systemUnlockAvailable, systemUnlockError } from './system-unlock.js';
 
 const COLORS = [
   { key: 'none', label: 'Без цвета', css: '#ffffff' },
@@ -473,44 +473,133 @@ export function mainScreen() {
      Проверку запускаем на отпускании пальца, а не во время движения: системный
      диалог WebAuthn требует «короткого действия пользователя», и это действие
      даёт именно touchend (touchmove таким действием не считается). */
-  const HIDDEN_PULL_PX = 80;
+  const HIDDEN_PULL_PX = 72;   /* путь пальца, после которого проверка готова */
+  const HIDDEN_HINT_PX = 68;   /* на сколько выезжает подсказка-замок */
   let hiddenPull = null;
 
-  /* Жест доступен, только если скрытое есть и ещё не открыто. */
+  /* Подсказка-замок. Без неё протяжка выглядела как «ничего не происходит»:
+     единственным откликом был системный диалог, который появляется уже на
+     отпускании. Теперь замок выезжает из-под шапки вслед за пальцем и меняется
+     на «Отпустите», когда порог пройден. */
+  const pullHint = document.createElement('div');
+  pullHint.className = 'hidden-pull';
+  pullHint.innerHTML = `
+    <div class="hidden-pull-pill">
+      <span class="material-symbols-rounded">lock</span>
+      <span class="lbl">Потяните вниз</span>
+    </div>`;
+  el.append(pullHint);
+
+  const pullIcon = pullHint.querySelector('.material-symbols-rounded');
+  const pullLabel = pullHint.querySelector('.lbl');
+  let hintReady = false;
+
+  /* Порог пройден — меняем замок на открытый и зовём отпустить палец.
+     Переписываем подписи только в момент переключения, а не каждый кадр. */
+  function setHintReady(ready) {
+    if (ready === hintReady) return;
+    hintReady = ready;
+    pullHint.classList.toggle('ready', ready);
+    pullIcon.textContent = ready ? 'lock_open' : 'lock';
+    pullLabel.textContent = ready ? 'Отпустите' : 'Потяните вниз';
+  }
+
+  function placePullHint() {
+    /* Верх подсказки совпадает с верхом списка: замок «выезжает» из-под шапки
+       ровно там, где открывается полоса фона. Берём offsetTop, а не
+       getBoundingClientRect: последний вернул бы позицию, сдвинутую текущей
+       протяжкой («резинка» ещё возвращается), и замок встал бы не на место. */
+    pullHint.style.top = gridHolder.offsetTop + 'px';
+  }
+
+  function paintPullHint(dist) {
+    const t = Math.max(0, Math.min(1, dist / HIDDEN_PULL_PX));
+    pullHint.style.setProperty('--hidden-pull', (t * HIDDEN_HINT_PX).toFixed(1) + 'px');
+    pullHint.style.opacity = Math.min(1, t * 2.2).toFixed(2);
+    setHintReady(t >= 1);
+  }
+
+  function hidePullHint() {
+    setHintReady(false);
+    pullHint.classList.remove('pulling');
+    pullHint.style.opacity = '0';
+    pullHint.style.setProperty('--hidden-pull', '0px');
+  }
+
+  /* Жест доступен всегда, пока скрытое не открыто: проверка вызывается самим
+     протягиванием, независимо от того, есть ли уже скрытые папки. Иначе при
+     первой попытке (скрытых папок ещё нет) жест молча ничего не делал. */
   const canUnlockHidden = () => !hiddenUnlocked && !sel.active
-    && !el.classList.contains('searching') && folders.some(f => f.hidden);
+    && !el.classList.contains('searching');
 
   async function unlockHidden() {
     if (hiddenUnlocked) return;
-    if (!systemUnlockAvailable()) { toast('Системная проверка недоступна'); return; }
-    if (await systemUnlock()) {
+    if (!systemUnlockAvailable()) {
+      toast('Системная проверка недоступна: нужен HTTPS или localhost');
+      return;
+    }
+    /* Любая неожиданная ошибка обязана дойти до пользователя: иначе протяжка
+       выглядела бы как «ничего не произошло» (так было с прежней версией). */
+    let ok = false;
+    try {
+      ok = await systemUnlock();
+    } catch (e) {
+      toast('Ошибка системной проверки: ' + ((e && e.name) || e));
+      return;
+    }
+    if (ok) {
       hiddenUnlocked = true;
-      toast('Скрытое открыто');
+      toast(folders.some(f => f.hidden) ? 'Скрытое открыто' : 'Личность подтверждена');
       refresh();
     } else {
-      toast('Не удалось подтвердить');
+      toast(`Не удалось подтвердить${systemUnlockError() ? ': ' + systemUnlockError() : ''}`);
     }
   }
 
-  gridHolder.addEventListener('touchstart', e => {
-    hiddenPull = (canUnlockHidden() && e.touches.length === 1 && gridHolder.scrollTop <= 0)
-      ? { y: e.touches[0].clientY, ready: false } : null;
+  /* Слушаем весь экран, а не только сетку: протянуть можно и начав с любой
+     точки над заметками. Условие одно — список находится в самом верху. */
+  function beginHiddenPull(y) {
+    hiddenPull = { y, ready: false };
+    placePullHint();
+    pullHint.classList.add('pulling');
+    paintPullHint(0);
+  }
+
+  el.addEventListener('touchstart', e => {
+    if (canUnlockHidden() && e.touches.length === 1 && gridHolder.scrollTop <= 0) {
+      beginHiddenPull(e.touches[0].clientY);
+    } else {
+      hiddenPull = null;
+    }
   }, { passive: true });
 
-  gridHolder.addEventListener('touchmove', e => {
-    if (!hiddenPull || hiddenPull.ready) return;
+  el.addEventListener('touchmove', e => {
+    if (e.touches.length !== 1) return;
+    const y = e.touches[0].clientY;
+    /* Список мог доехать до верха уже в процессе прокрутки — тогда отсчёт
+       начинаем с этого места, как и «резинка» (см. scroll-fx.js). */
+    if (!hiddenPull) {
+      if (canUnlockHidden() && gridHolder.scrollTop <= 0) beginHiddenPull(y);
+      return;
+    }
     /* Список уехал от верха — это обычная прокрутка, а не вытягивание. */
-    if (gridHolder.scrollTop > 0) { hiddenPull = null; return; }
-    if (e.touches[0].clientY - hiddenPull.y >= HIDDEN_PULL_PX) hiddenPull.ready = true;
+    if (gridHolder.scrollTop > 0) { hiddenPull = null; hidePullHint(); return; }
+    const dist = y - hiddenPull.y;
+    if (dist < 0) return;
+    hiddenPull.ready = dist >= HIDDEN_PULL_PX;
+    paintPullHint(dist);
   }, { passive: true });
 
-  const endHiddenPull = () => {
+  /* Отпускание: если порог пройден — вызываем системную проверку. Именно
+     touchend, а не touchmove: диалогу WebAuthn нужно «короткое действие
+     пользователя», каковым движение пальца не считается. */
+  el.addEventListener('touchend', () => {
     const ready = hiddenPull && hiddenPull.ready;
     hiddenPull = null;
+    hidePullHint();
     if (ready) unlockHidden();
-  };
-  gridHolder.addEventListener('touchend', endHiddenPull, { passive: true });
-  gridHolder.addEventListener('touchcancel', () => { hiddenPull = null; }, { passive: true });
+  }, { passive: true });
+  el.addEventListener('touchcancel', () => { hiddenPull = null; hidePullHint(); }, { passive: true });
 
   /* выход из режима выбора по системной «назад» */
   el.addEventListener('app-exit-selection', exitSelection);

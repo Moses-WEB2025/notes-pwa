@@ -43,6 +43,18 @@
   <script>
     // Service Worker — полный офлайн
     if ('serviceWorker' in navigator) {
+      /* Статика отдаётся cache-first, поэтому после обновления кода страница
+         могла оставаться на старой версии до нескольких перезапусков. Ловим
+         момент, когда управление берёт НОВЫЙ воркер, и один раз перезагружаем
+         страницу: дальше она уже тянет свежий прекэш. На первом визите
+         (страница ещё не управлялась) перезагрузку не делаем. */
+      const hadController = !!navigator.serviceWorker.controller;
+      let swRefreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!hadController || swRefreshing) return;
+        swRefreshing = true;
+        location.reload();
+      });
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
       });
