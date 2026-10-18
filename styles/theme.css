@@ -23,6 +23,8 @@
   --divider: #ececec;
   --folder-blue: #1a4a76;
   --folder-blue-soft: #e4ecf4;
+  /* Кнопка «плюс» на странице «Скрытые» — голубая, чтобы отличалась от главной */
+  --fab-blue: #2f80ed;
 
   /* Форма */
   --card-radius: 20px;
@@ -241,6 +243,9 @@ body {
 .main-screen.selecting .icon-btn[data-a=sel-all] { display: inline-flex; }
 .main-screen.selecting .icon-btn[data-a=folders],
 .main-screen.selecting .icon-btn[data-a=trash] { display: none; }
+/* На странице «Скрытые» кнопки «выбрать все» стоит вместо корзины и видна
+   всегда: в покое она включает выбор всех скрытых заметок. */
+.main-screen.hidden-screen .icon-btn[data-a=sel-all] { display: inline-flex; }
 
 .chips-row {
   flex: none;

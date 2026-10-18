@@ -44,14 +44,16 @@ document.addEventListener('app-back', () => {
   /* 4. оверлей рисования */
   const draw = document.querySelector('.draw-overlay.open');
   if (draw) { const cl = draw.querySelector('[data-a=close]'); if (cl) { cl.click(); return; } draw.classList.remove('open'); return; }
-  /* 5. поиск на главном экране — закрыть и вернуть главную страницу */
-  const searching = document.querySelector('.main-screen.searching');
-  if (searching) { searching.dispatchEvent(new CustomEvent('app-exit-search')); return; }
-  /* 6. режим выбора на главном экране */
-  const selecting = document.querySelector('.main-screen.selecting');
-  if (selecting) { selecting.dispatchEvent(new CustomEvent('app-exit-selection')); return; }
+  /* 5–6. поиск и режим выбора — на ВЕРХНЕМ экране: их может показать и главная,
+     и страница «Скрытые» (у обеих класс .main-screen), а querySelector вернул бы
+     первую из них в DOM, то есть всегда главную. */
+  const topScreen = Nav.top();
+  if (topScreen && topScreen.classList.contains('main-screen')) {
+    if (topScreen.classList.contains('searching')) { topScreen.dispatchEvent(new CustomEvent('app-exit-search')); return; }
+    if (topScreen.classList.contains('selecting')) { topScreen.dispatchEvent(new CustomEvent('app-exit-selection')); return; }
+  }
   /* 7. редактор — сохранить и закрыть как по кнопке «назад» */
-  const top = Nav.top();
+  const top = topScreen;
   if (top?.classList.contains('editor-screen')) {
     const back = top.querySelector('[data-a=back]');
     if (back) { back.click(); return; }

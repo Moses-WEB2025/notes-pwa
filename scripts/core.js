@@ -209,11 +209,12 @@ let gesture = null;
 document.addEventListener('touchstart', e => {
   if (e.touches.length !== 1 || backGestureBlocked()) return;
   const screens = document.querySelectorAll('#screens-root > .screen');
-  /* Тот же свайп «назад» закрывает и поиск на главном экране, когда других
-     экранов нет: строка поиска уезжает вниз, возвращаясь на главную. */
-  const searching = document.querySelector('.main-screen.searching');
-  const searchMode = !!searching && screens.length <= 1;
-  if (screens.length <= 1 && !searching) return;
+  const topScreen = screens[screens.length - 1];
+  /* Свайп «назад» у левого края закрывает и поиск — но только если он открыт
+     именно на верхнем экране (главная или страница «Скрытые»). */
+  const searchMode = !!topScreen && topScreen.classList.contains('main-screen')
+    && topScreen.classList.contains('searching');
+  if (screens.length <= 1 && !searchMode) return;
   const t = e.touches[0];
   const w = window.innerWidth;
   /* Жест должен начаться у кромки: у левой ведём вправо (dir = +1), у правой —

@@ -17,23 +17,34 @@ const COLORS = [
   { key: 'red', label: 'Красная', css: '#e05555' },
 ];
 
-export function mainScreen() {
-  const el = document.createElement('div');
-  el.className = 'screen main-screen';
+export function mainScreen() { return notesScreen({}); }
 
-  /* шапка: папки + корзина */
+/* Страница «Скрытые» — тот же экран, что и главная, но без ряда категорий:
+   она открывается только после системной разблокировки (протяжка вниз у самого
+   верха главной). Все отличия собраны в опции hidden ниже. */
+export function hiddenScreen() { return notesScreen({ hidden: true }); }
+
+function notesScreen(opts = {}) {
+  const hiddenMode = !!opts.hidden;
+  const baseTitle = hiddenMode ? 'Скрытые' : 'Заметки';
+  const el = document.createElement('div');
+  el.className = 'screen main-screen' + (hiddenMode ? ' hidden-screen' : '');
+
+  /* шапка: папки + корзина (на «Скрытых» — стрелка «назад» + «выбрать все») */
   const appbar = document.createElement('div');
   appbar.className = 'appbar';
   appbar.innerHTML = `
     <button class="icon-btn sel-only" data-a="sel-close" data-press aria-label="Готово"><span class="material-symbols-rounded">close</span></button>
-    <button class="icon-btn" data-a="folders" data-press aria-label="Папки"><span class="material-symbols-rounded">folder_open</span></button>
+    ${hiddenMode
+      ? `<button class="icon-btn" data-a="back" data-press aria-label="Назад"><span class="material-symbols-rounded">arrow_back</span></button>`
+      : `<button class="icon-btn" data-a="folders" data-press aria-label="Папки"><span class="material-symbols-rounded">folder_open</span></button>`}
     <span class="spacer"></span>
-    <button class="icon-btn" data-a="trash" data-press aria-label="Корзина"><span class="material-symbols-rounded">delete</span></button>
+    ${hiddenMode ? '' : `<button class="icon-btn" data-a="trash" data-press aria-label="Корзина"><span class="material-symbols-rounded">delete</span></button>`}
     <button class="icon-btn sel-only" data-a="sel-all" data-press aria-label="Выбрать все"><span class="material-symbols-rounded">select_all</span></button>`;
 
   const h1row = document.createElement('div');
   h1row.className = 'h1-row';
-  h1row.innerHTML = `<h1>Заметки</h1>`;
+  h1row.innerHTML = `<h1>${baseTitle}</h1>`;
 
   /* поиск + «Отмена» */
   const searchWrap = document.createElement('div');
@@ -48,9 +59,10 @@ export function mainScreen() {
       <button class="search-cancel hidden" data-press>Отмена</button>
     </div>`;
 
-  /* категории папок — ровно под строкой поиска */
-  const folderChips = document.createElement('div');
-  folderChips.className = 'folder-tabs';
+  /* категории папок — ровно под строкой поиска. На «Скрытых» ряда нет: там
+     показываются только скрытые заметки, фильтровать по папкам нечего. */
+  const folderChips = hiddenMode ? null : document.createElement('div');
+  if (folderChips) folderChips.className = 'folder-tabs';
 
   const gridHolder = document.createElement('div');
   gridHolder.className = 'scroll grid-holder';
@@ -59,17 +71,20 @@ export function mainScreen() {
   const searchCanvas = document.createElement('div');
   searchCanvas.className = 'search-canvas';
 
-  /* чипы фильтров режима выбора */
-  const chipsRow = document.createElement('div');
-  chipsRow.className = 'chips-row hidden';
-  chipsRow.innerHTML = `
-    <button class="chip active" data-c="all">Все</button>
-    <button class="chip" data-c="notes">Заметки</button>
-    <button class="chip" data-c="nocat">Без категории</button>
-    <button class="chip" data-c="hidden">Скрытые</button>`;
+  /* чипы фильтров режима выбора (только на главной: на «Скрытых» фильтровать
+     нечего — там и так одни скрытые заметки) */
+  const chipsRow = hiddenMode ? null : document.createElement('div');
+  if (chipsRow) {
+    chipsRow.className = 'chips-row hidden';
+    chipsRow.innerHTML = `
+      <button class="chip active" data-c="all">Все</button>
+      <button class="chip" data-c="notes">Заметки</button>
+      <button class="chip" data-c="nocat">Без категории</button>
+      <button class="chip" data-c="hidden">Скрытые</button>`;
+  }
 
   const fab = document.createElement('button');
-  fab.className = 'fab';
+  fab.className = 'fab' + (hiddenMode ? ' fab-blue' : '');
   fab.innerHTML = `<span class="material-symbols-rounded">add</span>`;
 
   const tabbar = document.createElement('div');
@@ -77,16 +92,26 @@ export function mainScreen() {
   tabbar.innerHTML = `
     <button class="tab active"><span class="material-symbols-rounded">edit_note</span><span class="lbl">Заметки</span></button>`;
 
-  /* нижняя панель режима выбора: Скрыть | Закрепить | Переместить | Удалить */
+  /* нижняя панель режима выбора: Скрыть | Закрепить | Переместить | Удалить.
+     На «Скрытых» кнопки «Переместить» нет — там три действия, а заметки и так
+     скрыты, поэтому первая кнопка возвращает их в обычный список. */
   const selBar = document.createElement('div');
   selBar.className = 'select-bar hidden';
-  selBar.innerHTML = `
+  selBar.innerHTML = hiddenMode ? `
+    <button data-sel="hide"><span class="material-symbols-rounded">visibility</span><span class="lbl">Показать</span></button>
+    <button data-sel="pin"><span class="material-symbols-rounded">push_pin</span><span class="lbl">Закрепить</span></button>
+    <button data-sel="delete"><span class="material-symbols-rounded">delete</span><span class="lbl">Удалить</span></button>` : `
     <button data-sel="hide"><span class="material-symbols-rounded">lock</span><span class="lbl">Скрыть</span></button>
     <button data-sel="pin"><span class="material-symbols-rounded">push_pin</span><span class="lbl">Закрепить</span></button>
     <button data-sel="move"><span class="material-symbols-rounded">drive_file_move</span><span class="lbl">Переместить</span></button>
     <button data-sel="delete"><span class="material-symbols-rounded">delete</span><span class="lbl">Удалить</span></button>`;
 
-  el.append(appbar, h1row, searchWrap, folderChips, searchCanvas, chipsRow, gridHolder, fab, tabbar, selBar);
+  const parts = [appbar, h1row, searchWrap];
+  if (folderChips) parts.push(folderChips);
+  parts.push(searchCanvas);
+  if (chipsRow) parts.push(chipsRow);
+  parts.push(gridHolder, fab, tabbar, selBar);
+  el.append(...parts);
 
   /* ---------- режим выбора (долгий тап) ---------- */
   let selFilter = 'all';
@@ -114,18 +139,18 @@ export function mainScreen() {
 
   function enterSelection() {
     el.classList.add('selecting');
-    chipsRow.classList.remove('hidden');
+    chipsRow?.classList.remove('hidden');
     vibrate(12);
   }
   function exitSelection() {
     sel.active = false; sel.set.clear(); selFilter = 'all';
-    chipsRow.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.c === 'all'));
+    chipsRow?.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.c === 'all'));
     el.classList.remove('selecting');
-    chipsRow.classList.add('hidden');
+    chipsRow?.classList.add('hidden');
     refresh();
   }
 
-  chipsRow.addEventListener('click', e => {
+  chipsRow?.addEventListener('click', e => {
     const c = e.target.closest('.chip'); if (!c) return;
     selFilter = c.dataset.c;
     chipsRow.querySelectorAll('.chip').forEach(x => x.classList.toggle('active', x === c));
@@ -135,8 +160,12 @@ export function mainScreen() {
 
   function refresh() {
     const q = searchInput.value.trim().toLowerCase();
-    let list = notes;
-    if (sel.active) {
+    let list;
+    if (hiddenMode) {
+      /* На «Скрытых» показываем только скрытые заметки — и в покое, и в режиме
+         выбора: фильтры по папкам и цвету тут лишние. */
+      list = notes.filter(n => n.hidden);
+    } else if (sel.active) {
       list = selFilter === 'hidden' ? notes.filter(n => n.hidden) : notes.filter(n => !n.hidden);
       if (selFilter === 'notes') list = list.filter(n => (n.title || '').trim() || htmlToPlain(n.content));
       if (selFilter === 'nocat') list = list.filter(n => !n.folderId);
@@ -166,9 +195,14 @@ export function mainScreen() {
   /* заметки, попадающие под текущий фильтр режима выбора */
   function selectionList() {
     const q = searchInput.value.trim().toLowerCase();
-    let list = selFilter === 'hidden' ? notes.filter(n => n.hidden) : notes.filter(n => !n.hidden);
-    if (selFilter === 'notes') list = list.filter(n => (n.title || '').trim() || htmlToPlain(n.content));
-    if (selFilter === 'nocat') list = list.filter(n => !n.folderId);
+    let list;
+    if (hiddenMode) {
+      list = notes.filter(n => n.hidden);
+    } else {
+      list = selFilter === 'hidden' ? notes.filter(n => n.hidden) : notes.filter(n => !n.hidden);
+      if (selFilter === 'notes') list = list.filter(n => (n.title || '').trim() || htmlToPlain(n.content));
+      if (selFilter === 'nocat') list = list.filter(n => !n.folderId);
+    }
     if (q) list = list.filter(n => (n.title || '').toLowerCase().includes(q) || htmlToPlain(n.content).toLowerCase().includes(q));
     return list;
   }
@@ -176,9 +210,19 @@ export function mainScreen() {
   function renderSelBar() {
     selBar.classList.toggle('hidden', !sel.active);
     const n = sel.set.size;
-    h1row.querySelector('h1').textContent = !sel.active ? 'Заметки' : (n ? `Выбрано ${n} объект${n % 10 === 1 && n % 100 !== 11 ? '' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'а' : 'ов')}` : 'Выбрано');
+    h1row.querySelector('h1').textContent = !sel.active ? baseTitle : (n ? `Выбрано ${n} объект${n % 10 === 1 && n % 100 !== 11 ? '' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'а' : 'ов')}` : 'Выбрано');
     const any = n > 0;
     selBar.querySelectorAll('button').forEach(b => b.disabled = !any);
+
+    /* «Выбрать все» превращается в «Снять все», когда выбрано уже всё. Считаем
+       это ДО выхода из режима выбора: на «Скрытых» кнопка видна и без него, и
+       сброшенный заголовок «Снять всё» остался бы висеть после закрытия выбора. */
+    const list = selectionList();
+    const allSelected = sel.active && list.length > 0 && list.every(x => sel.set.has(x.id));
+    const selAllBtn = appbar.querySelector('[data-a=sel-all]');
+    selAllBtn.querySelector('.material-symbols-rounded').textContent = allSelected ? 'deselect' : 'select_all';
+    selAllBtn.setAttribute('aria-label', allSelected ? 'Снять выбор' : 'Выбрать все');
+
     if (!sel.active) return;
 
     const picked = [...sel.set].map(id => notes.find(x => x.id === id)).filter(Boolean);
@@ -193,12 +237,6 @@ export function mainScreen() {
     const hideBtn = selBar.querySelector('[data-sel=hide]');
     hideBtn.querySelector('.lbl').textContent = allHidden ? 'Показать' : 'Скрыть';
     hideBtn.querySelector('.material-symbols-rounded').textContent = allHidden ? 'visibility' : 'lock';
-
-    /* «Выбрать все» превращается в «Снять все», когда выбрано уже всё */
-    const list = selectionList();
-    const allSelected = list.length > 0 && list.every(x => sel.set.has(x.id));
-    appbar.querySelector('[data-a=sel-all] .material-symbols-rounded').textContent = allSelected ? 'deselect' : 'select_all';
-    appbar.querySelector('[data-a=sel-all]').setAttribute('aria-label', allSelected ? 'Снять выбор' : 'Выбрать все');
   }
 
   /* ---------- состояние ---------- */
@@ -238,11 +276,19 @@ export function mainScreen() {
     refresh();
   }
 
+  /* После правки списка на «Скрытых» главная под нами тоже должна перечитать
+     заметки — она слушает то же событие; на главной достаточно своего load(). */
+  const reload = () => {
+    if (hiddenMode) document.dispatchEvent(new CustomEvent('notes-changed'));
+    else load();
+  };
+
   /* ---------- категории папок под строкой поиска ----------
      Показываем только реально существующие папки. Скрытые в список не попадают,
      пока не пройдена системная разблокировка. Ряд нужен лишь тогда, когда есть
      куда переключаться: одна кнопка «Все» ничего не фильтрует. */
   function renderFolderChips() {
+    if (!folderChips) return;
     const visible = folders.filter(f => hiddenUnlocked || !f.hidden);
     folderChips.innerHTML = '';
     folderChips.classList.toggle('hidden', visible.length === 0);
@@ -260,7 +306,7 @@ export function mainScreen() {
     visible.forEach(f => folderChips.appendChild(mk(f.name, f.id, f.hidden)));
   }
 
-  folderChips.addEventListener('click', e => {
+  folderChips?.addEventListener('click', e => {
     const b = e.target.closest('.folder-tab'); if (!b) return;
     filterFolder = b.dataset.f || null;
     refresh();
@@ -298,7 +344,10 @@ export function mainScreen() {
     /* Вертикаль: центр заголовка в схлопнутой строке совпадает с центром иконок
        аппбара. Высоту строки после схлопывания берём из кегля и line-height,
        чтобы результат не зависел от незавершённого перехода. */
-    const icon = appbar.querySelector(el.classList.contains('selecting') ? '[data-a=sel-close]' : '[data-a=folders]');
+    const iconSel = el.classList.contains('selecting')
+      ? '[data-a=sel-close]'
+      : (hiddenMode ? '[data-a=back]' : '[data-a=folders]');
+    const icon = appbar.querySelector(iconSel);
     const iconMid = icon.getBoundingClientRect().top + icon.offsetHeight / 2;
     const rowTop = h1row.getBoundingClientRect().top;   /* верх строки = низ аппбара */
     el.style.setProperty('--h1-y', (iconMid - (rowTop + 26 * 1.12 / 2)) + 'px');
@@ -364,20 +413,28 @@ export function mainScreen() {
   searchInput.addEventListener('input', debounce(refresh, 100));
   searchClear.addEventListener('click', () => { searchInput.value = ''; refresh(); });
 
-  appbar.querySelector('[data-a=folders]').addEventListener('click', () => {
-    const foldersEl = openFolders();
-    Nav.pushEl(foldersEl);
-  });
-  appbar.querySelector('[data-a=trash]').addEventListener('click', () => Nav.pushEl(openTrashScreen()));
+  if (hiddenMode) {
+    appbar.querySelector('[data-a=back]').addEventListener('click', () => Nav.pop());
+  } else {
+    appbar.querySelector('[data-a=folders]').addEventListener('click', () => {
+      const foldersEl = openFolders();
+      Nav.pushEl(foldersEl);
+    });
+    appbar.querySelector('[data-a=trash]').addEventListener('click', () => Nav.pushEl(openTrashScreen()));
+  }
   appbar.querySelector('[data-a=sel-close]').addEventListener('click', exitSelection);
   appbar.querySelector('[data-a=sel-all]').addEventListener('click', () => {
     const list = selectionList();
     const allSelected = list.length > 0 && list.every(n => sel.set.has(n.id));
     if (allSelected) sel.set.clear();
     else list.forEach(n => sel.set.add(n.id));
+    /* На «Скрытых» кнопка видна всегда: если выбор ещё не начат, она его включает */
+    if (hiddenMode && !sel.active && !allSelected && list.length) { sel.active = true; enterSelection(); }
     refresh();
   });
-  fab.addEventListener('click', () => openEditor(null, { folderId: filterFolder }));
+  fab.addEventListener('click', () => hiddenMode
+    ? openEditor(null, { hidden: true })
+    : openEditor(null, { folderId: filterFolder }));
 
   /* кнопки режима выбора */
   selBar.addEventListener('click', async e => {
@@ -389,7 +446,7 @@ export function mainScreen() {
       /* если всё выбранное уже закреплено — снимаем закрепление со всех */
       const target = !(picked.length > 0 && picked.every(x => x.pinned));
       for (const nn of picked) { nn.pinned = target; await Store.saveNote(nn); }
-      toast(target ? 'Закреплено' : 'Откреплено'); exitSelection(); load();
+      toast(target ? 'Закреплено' : 'Откреплено'); exitSelection(); reload();
     } else if (act === 'move') {
       const folders = await selectableFolders();
       sheetSections({ title: 'В папку', sections: [api => {
@@ -399,33 +456,36 @@ export function mainScreen() {
         box.addEventListener('click', async ev => {
           const btn = ev.target.closest('[data-f]'); if (!btn) return;
           for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.folderId = btn.dataset.f || null; await Store.saveNote(nn); } }
-          toast('Перемещено'); api.close(); exitSelection(); load();
+          toast('Перемещено'); api.close(); exitSelection(); reload();
         });
         return box;
       }]});
     } else if (act === 'delete') {
       if (await confirmSheet({ title: 'Удалите заметки', text: ids.length === 1 ? 'Удалить эту заметку?' : `Удалить ${ids.length} заметок?` })) {
         for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.deleted = true; await Store.saveNoteRaw(nn); } }
-        toast('Заметки удалены'); exitSelection(); load();
+        toast('Заметки удалены'); exitSelection(); reload();
       }
     } else if (act === 'hide') {
       const picked = ids.map(id => notes.find(x => x.id === id)).filter(Boolean);
       /* скрытые заметки можно вернуть: если всё выбранное уже скрыто — показываем */
       const target = !(picked.length > 0 && picked.every(x => x.hidden));
       for (const nn of picked) { nn.hidden = target; await Store.saveNoteRaw(nn); }
-      toast(target ? 'Скрыто' : 'Показано'); exitSelection(); load();
+      toast(target ? 'Скрыто' : 'Показано'); exitSelection(); reload();
     }
   });
 
   function longPressMenu(n, card) {
     attachMenu(card, [
+      /* На «Скрытых» в том же меню первым пунктом — открытый замок: заметка
+         возвращается в обычный список. */
+      ...(hiddenMode ? [{ icon: 'lock_open', label: 'Отменить скрытие', onClick: async () => { n.hidden = false; await Store.saveNoteRaw(n); toast('Скрытие отменено'); reload(); } }] : []),
       { icon: 'palette', label: 'Цвет', onClick: () => colorSheetFor(n) },
       { icon: 'folder',  label: 'В папку', onClick: () => folderSheetFor(n) },
-      { icon: 'push_pin', label: n.pinned ? 'Открепить' : 'Закрепить', checked: !!n.pinned, onClick: async () => { n.pinned = !n.pinned; await Store.saveNote(n); toast(n.pinned ? 'Закреплено' : 'Откреплено'); load(); } },
-      { icon: 'content_copy', label: 'Копировать', onClick: async () => { const c = { ...n, id: uid(), createdAt: Date.now(), updatedAt: Date.now() }; await Store.saveNote(c); toast('Скопировано'); load(); } },
+      { icon: 'push_pin', label: n.pinned ? 'Открепить' : 'Закрепить', checked: !!n.pinned, onClick: async () => { n.pinned = !n.pinned; await Store.saveNote(n); toast(n.pinned ? 'Закреплено' : 'Откреплено'); reload(); } },
+      { icon: 'content_copy', label: 'Копировать', onClick: async () => { const c = { ...n, id: uid(), createdAt: Date.now(), updatedAt: Date.now() }; await Store.saveNote(c); toast('Скопировано'); reload(); } },
       { divider: true },
       { icon: 'delete', label: 'Удалить', onClick: async () => {
-        if (await confirmSheet({ title: 'Удалите заметки', text: 'Удалить эту заметку?' })) { await Store.delNote(n.id); toast('Заметка удалена'); load(); }
+        if (await confirmSheet({ title: 'Удалите заметки', text: 'Удалить эту заметку?' })) { await Store.delNote(n.id); toast('Заметка удалена'); reload(); }
       } },
     ]);
   }
@@ -440,7 +500,7 @@ export function mainScreen() {
       }).join('')}</div>`;
       row.querySelectorAll('.swatch').forEach(sw => sw.addEventListener('click', async () => {
         n.color = sw.dataset.k === 'none' ? null : sw.dataset.k;
-        await Store.saveNote(n); api.close(); load();
+        await Store.saveNote(n); api.close(); reload();
       }));
       return row;
     }]});
@@ -458,7 +518,7 @@ export function mainScreen() {
       box.addEventListener('click', async e => {
         const b = e.target.closest('[data-f]'); if (!b) return;
         n.folderId = b.dataset.f || null;
-        await Store.saveNote(n); toast('Перемещено'); api.close(); load();
+        await Store.saveNote(n); toast('Перемещено'); api.close(); reload();
       });
       return box;
     }]});
@@ -488,7 +548,8 @@ export function mainScreen() {
       <span class="material-symbols-rounded">lock</span>
       <span class="lbl">Потяните вниз</span>
     </div>`;
-  el.append(pullHint);
+  /* На самой странице «Скрытые» протяжка не нужна — подсказку туда не ставим */
+  if (!hiddenMode) el.append(pullHint);
 
   const pullIcon = pullHint.querySelector('.material-symbols-rounded');
   const pullLabel = pullHint.querySelector('.lbl');
@@ -529,7 +590,7 @@ export function mainScreen() {
   /* Жест доступен всегда, пока скрытое не открыто: проверка вызывается самим
      протягиванием, независимо от того, есть ли уже скрытые папки. Иначе при
      первой попытке (скрытых папок ещё нет) жест молча ничего не делал. */
-  const canUnlockHidden = () => !hiddenUnlocked && !sel.active
+  const canUnlockHidden = () => !hiddenMode && !hiddenUnlocked && !sel.active
     && !el.classList.contains('searching');
 
   async function unlockHidden() {
@@ -549,8 +610,10 @@ export function mainScreen() {
     }
     if (ok) {
       hiddenUnlocked = true;
-      toast(folders.some(f => f.hidden) ? 'Скрытое открыто' : 'Личность подтверждена');
       refresh();
+      /* Разблокировано — переходим на отдельную страницу «Скрытые», а не
+         показываем скрытое в общем списке. */
+      Nav.pushEl(hiddenScreen().el);
     } else {
       toast(`Не удалось подтвердить${systemUnlockError() ? ': ' + systemUnlockError() : ''}`);
     }
