@@ -242,15 +242,18 @@ export function openEditor(id, opts = {}) {
      Опираться только на состояние клавиатуры нельзя: после системного диалога
      выбора файла (input type=file) клавиатура на iOS/Android не открывается
      заново сама, kb-change больше не присылает open:true — и тулбар пропадал
-     навсегда. Поэтому дополнительно учитываем фокус в холсте/заголовке. */
+     навсегда. Поэтому дополнительно учитываем фокус в холсте заметки. */
   let kbOpen = false;
+  /* Панель форматирования относится к тексту заметки, а не к заголовку: пока
+     курсор в заголовке — прячем её, даже если клавиатура открыта. */
+  function editingTitle() { return document.activeElement === titleInput; }
   function editorActive() {
     const a = document.activeElement;
-    return !!a && (a === content || a === titleInput || content.contains(a) || toolbar.contains(a));
+    return !!a && (a === content || content.contains(a) || toolbar.contains(a));
   }
   function syncFormatBar() {
     if (!el.isConnected) { document.body.classList.remove('toolbar-on'); dockToolbar(false); return; }
-    const show = kbOpen || editorActive();
+    const show = !editingTitle() && (kbOpen || editorActive());
     dockToolbar(show);
     document.body.classList.toggle('toolbar-on', show && !kbOpen);
   }
