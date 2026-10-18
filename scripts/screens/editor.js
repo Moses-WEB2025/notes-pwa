@@ -1,6 +1,7 @@
 /* ============ Редактор заметки ============ */
 import { Store, Nav, fmtEditorDate, escapeHtml, uid, debounce, vibrate } from '../core.js';
 import { refreshEdgeColor } from '../edge.js';
+import { morphOpen, morphClose, morphDisabled, cardOnScreen } from '../morph.js';
 import { toast, attachMenu, sheetSections, openSheet, confirmSheet } from '../components/ui.js';
 import { openRecorder } from '../components/recorder.js';
 import { openDrawing } from '../components/drawing.js';
@@ -325,22 +326,36 @@ export function openEditor(id, opts = {}) {
     saveContent();
     await Store.saveNoteRaw(note);
   }, 450);
-  async function finalSave() {
+  async function finalSave(redrawDelay = 360) {
     saveContent();
     const empty = !note.title && !(content.textContent || '').trim() && !note.audio && !(note.content || '').includes('<img') && !(note.content || '').includes('data-drawing');
     if (empty && isNew) { await Store.delNote(note.id); }
     else { await Store.saveNote(note); }
-    /* Главную перерисовываем, когда слайд закрытия уже доехал (340 мс): иначе
+    /* Главную перерисовываем, когда анимация закрытия уже доехала: иначе
        перестройка сетки попадала в кадры анимации и «дёргала» её. */
-    setTimeout(() => document.dispatchEvent(new CustomEvent('notes-changed')), 360);
+    setTimeout(() => document.dispatchEvent(new CustomEvent('notes-changed')), redrawDelay);
   }
 
   async function done() {
     stopAudio(); clearImageSelection(); content.blur(); titleInput.blur(); teardownKb();
+    /* Сжатие в карточку — только если эта заметка всё ещё видна карточкой на
+       главной и экран не тянется пальцем/не растёт прямо сейчас: тогда закрытие
+       продолжает уже начатое движение (слайд), а не прыгает в морфинг. */
+    const card = note && document.querySelector(`.note-card[data-id="${note.id}"]`);
+    const busy = el.classList.contains('morphing') || !!el.style.transform;
+    if (card && !busy && !morphDisabled() && cardOnScreen(card)) {
+      /* Системные зоны — под главную сразу, вместе со стартом сжатия */
+      Nav.colorPrev();
+      morphClose(el, card, () => Nav.dropTop());
+      /* Сетку перерисовываем после сжатия, чтобы карточка не сменилась
+         посреди анимации. */
+      await finalSave(420);
+      return;
+    }
     /* Слайд запускаем сразу, не дожидаясь записи в базу: пауза перед анимацией
        и перерисовка главной «на ходу» делали возврат медленным и рваным. */
     Nav.pop();
-    await finalSave();
+    await finalSave(360);
   }
 
   topbar.querySelector('[data-a=back]').addEventListener('click', done);
@@ -1160,7 +1175,15 @@ export function openEditor(id, opts = {}) {
      полоса сначала получала базовый фон, а свой цвет — только после загрузки
      заметки, из-за чего цвет сверху менялся с заметной задержкой. */
   paintCanvas(opts.color);
-  Nav.pushEl(el);
+  /* Если редактор открывают из карточки — экран вырастает из неё (морфинг).
+     Иначе (новая заметка по кнопке «+», возврат из поиска) — обычный слайд. */
+  const origin = opts.origin && opts.origin.isConnected ? opts.origin : null;
+  if (origin && !morphDisabled()) {
+    Nav.pushElRaw(el);
+    morphOpen(el, origin);
+  } else {
+    Nav.pushEl(el);
+  }
   vibrate(5);
   return el;
 }

@@ -151,9 +151,9 @@ function buildCard(n, q, opts, m) {
     if (tapHandled) { tapHandled = false; return; }
     if (lpFired) { lpFired = false; return; }
     if (opts && opts.sel && opts.sel.active) opts.sel.onToggle(n.id);
-    /* Цвет передаём сразу: редактор покрасит холст и системную полосу
-       синхронно, не дожидаясь загрузки заметки из базы. */
-    else openEditor(n.id, { color: n.color });
+    /* Цвет и саму карточку передаём сразу: редактор покрасит холст и системную
+       полосу синхронно, не дожидаясь загрузки заметки, и вырастет из карточки. */
+    else openEditor(n.id, { color: n.color, origin: card });
   });
 
   return card;

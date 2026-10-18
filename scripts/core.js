@@ -121,7 +121,32 @@ export const Nav={
     vibrate(4);
     return true;
   },
-  top(){ const s=this.screens; return s[s.length-1]; }
+  top(){ const s=this.screens; return s[s.length-1]; },
+
+  /* ---------- Морфинг-навигация ----------
+     Экран не «выезжает» слайдом, а растёт из карточки: анимацией управляет
+     модуль morph, поэтому здесь только «сырые» операции без CSS-переходов. */
+  /* Добавить экран без анимации появления. */
+  pushElRaw(el) {
+    el.classList.add('screen');
+    document.getElementById('screens-root').appendChild(el);
+    refreshEdgeColor();
+    vibrate(5);
+  },
+  /* Пока сжимается верхний экран, открывшимся становится предыдущий —
+     красим системные зоны под него сразу, а не после анимации. */
+  colorPrev() {
+    const s = this.screens;
+    if (s.length > 1) refreshEdgeColorFor(s[s.length - 2]);
+  },
+  /* Убрать верхний экран, когда морфинг закрытия доехал. */
+  dropTop() {
+    const s = this.screens;
+    if (s.length <= 1) return false;
+    document.body.classList.remove('kb-open');
+    s[s.length - 1].remove();
+    return true;
+  }
 };
 
 /* ---------- Свайп «назад» от края экрана (iOS / Android edge-back) ----------
@@ -139,6 +164,9 @@ function backGestureBlocked() {
     document.querySelector('.menu-surface') ||
     document.querySelector('.rec-overlay.open') ||
     document.querySelector('.draw-overlay.open') ||
+    /* Пока экран растёт из карточки (морфинг), жест «назад» не начинаем:
+       он перетёр бы инлайновый transform анимации. */
+    document.querySelector('.screen.morphing') ||
     /* Выбранное фото: у его рамки есть угловые маркеры, в том числе у правого
        края экрана — свайп там тянет размер, а не закрывает экран. */
     document.querySelector('.img-frame')

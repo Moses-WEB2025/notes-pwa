@@ -157,6 +157,14 @@ body {
 .screen.under { transform: translateX(-26%); z-index: 1; }
 .screen.under::after { opacity: .07; }
 
+/* Морфинг: экран растёт из карточки (и сжимается обратно в неё).
+   Ведём только transform — он доводится композитором, поэтому переход
+   плавный и на iOS. top/bottom здесь не участвуют: высоту экран не меняет. */
+.screen.morphing {
+  transition: transform var(--dur-3) var(--ease-standard), border-radius var(--dur-3) var(--ease-standard);
+  will-change: transform;
+}
+
 .scroll {
   flex: 1;
   min-height: 0;

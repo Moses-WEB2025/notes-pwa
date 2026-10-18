@@ -1,5 +1,5 @@
 /* Заметки — Service Worker: полный офлайн (прекэш всех ресурсов, fallback навигации) */
-const VERSION = 'notes-v2.4.11';
+const VERSION = 'notes-v2.4.12';
 const PRECACHE = `precache-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 
@@ -14,6 +14,7 @@ const PRECACHE_URLS = [
   './styles/screens.css',
   './scripts/core.js',
   './scripts/edge.js',
+  './scripts/morph.js',
   './scripts/app.js',
   './scripts/scroll-fx.js',
   './scripts/main-screen.js',
