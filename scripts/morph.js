@@ -54,22 +54,24 @@ function reset(el) {
   el.style.transformOrigin = '';
   el.style.transform = '';
   el.style.borderRadius = '';
+  el.style.willChange = '';
 }
 
 /* Вырастить экран из карточки. el уже добавлен в DOM. */
 export function morphOpen(el, card) {
   const f = frameOf(card);
   el.style.transformOrigin = '0 0';
+  el.style.willChange = 'transform';
   el.style.transform = `translate3d(${f.x}px, ${f.y}px, 0) scale(${f.sx}, ${f.sy})`;
   el.style.borderRadius = cornerRadius(f);
-  /* Содержимое скрыто и меняет прозрачность с переходом (morph-fade), но сам
-     класс скрытия снимем позже — тогда содержимое проявится плавно, а не
-     рывком. Классы ставим до первого кадра, поэтому вспышки «полного» экрана
-     в размере карточки не будет. */
+  /* Содержимое скрыто с ПЕРВОГО кадра и меняет прозрачность с переходом
+     (morph-fade). Сам класс скрытия снимем позже — тогда содержимое проявится
+     плавно, а не рывком. */
   el.classList.add('morph-hide', 'morph-fade');
-  el.classList.add('morphing');             /* теперь включаем переход */
   void el.offsetWidth;                      /* фиксируем стартовое состояние */
   requestAnimationFrame(() => {
+    el.classList.add('morphing');           /* теперь включаем переход */
+    void el.offsetWidth;
     el.style.transform = 'translate3d(0px, 0px, 0) scale(1, 1)';
     el.style.borderRadius = '0px';
     setTimeout(() => el.classList.remove('morph-hide'), REVEAL);
@@ -82,13 +84,15 @@ export function morphOpen(el, card) {
 export function morphClose(el, card, onEnd) {
   const f = frameOf(card);
   el.style.transformOrigin = '0 0';
-  el.classList.add('morph-fade', 'morphing');   /* переход — от полного экрана */
+  el.style.willChange = 'transform';    /* слой готовим до старта перехода */
+  el.classList.add('morphing');         /* переход включён, геометрия ещё полного экрана */
   void el.offsetWidth;
-  requestAnimationFrame(() => {
-    el.classList.add('morph-hide');             /* содержимое гаснет, экран сжимается */
-    el.style.transform = `translate3d(${f.x}px, ${f.y}px, 0) scale(${f.sx}, ${f.sy})`;
-    el.style.borderRadius = cornerRadius(f);
-  });
+  /* Скрытие содержимого и старт сжатия — в одном кадре. Если спрятать
+     содержимое раньше, мелькнёт пустой экран; если позже (или с фейдом) —
+     на уменьшающейся заметке будут видны иконки верхней панели. */
+  el.classList.add('morph-hide');
+  el.style.transform = `translate3d(${f.x}px, ${f.y}px, 0) scale(${f.sx}, ${f.sy})`;
+  el.style.borderRadius = cornerRadius(f);
   setTimeout(() => { reset(el); onEnd && onEnd(); }, SETTLE);
 }
 

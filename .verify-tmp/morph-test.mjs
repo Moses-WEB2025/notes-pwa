@@ -59,9 +59,9 @@ reduced = false;
   card.__rect = { left: 20, top: 100, right: 190, bottom: 300, width: 170, height: 200 };
 
   morphOpen(el, card);
-  assert.ok(el.classList.contains('morphing'), 'класс перехода не поставлен');
   assert.ok(el.classList.contains('morph-hide'), 'содержимое не скрыто на старте');
   assert.ok(el.classList.contains('morph-fade'), 'переход прозрачности не подготовлен');
+  assert.equal(el.style.willChange, 'transform', 'слой не подготовлен под transform');
   assert.match(el.style.transform, /^translate3d\(20px, 100px, 0\) scale\(/, 'стартовая геометрия не от карточки');
 
   /* Радиус компенсируется ПО КАЖДОЙ ОСИ: иначе угол на экране вытянулся бы. */
@@ -69,11 +69,12 @@ reduced = false;
   assert.equal(el.style.borderRadius, `${(20 / sx).toFixed(1)}px / ${(20 / sy).toFixed(1)}px`,
     `стартовый радиус не компенсирован по осям (${el.style.borderRadius})`);
 
-  flush();  /* кадр: уходим в полный экран */
+  flush();  /* кадр: включаем переход и уходим в полный экран */
+  assert.ok(el.classList.contains('morphing'), 'класс перехода не поставлен');
   assert.equal(el.style.transform, 'translate3d(0px, 0px, 0) scale(1, 1)');
   assert.equal(el.style.borderRadius, '0px');
 
-  await sleep(160);
+  await sleep(180);
   assert.equal(el.classList.contains('morph-hide'), false, 'содержимое должно проявиться к концу роста');
   assert.equal(el.classList.contains('morph-fade'), true, 'класс перехода нужен до конца');
 
@@ -87,25 +88,29 @@ reduced = false;
 
 /* --- сжатие обратно в карточку --- */
 {
-  const el = makeEl([makeEl()]);
+  const el = makeEl([makeEl(), makeEl()]);   /* например, верхняя панель и тело */
   const card = makeEl();
   card.__radius = '20px';
   card.__rect = { left: 10, top: 50, right: 180, bottom: 250, width: 170, height: 200 };
 
   let ended = false;
   morphClose(el, card, () => { ended = true; });
-  assert.ok(el.classList.contains('morphing'));
-  assert.equal(el.style.transform, undefined, 'сжатие стартует из текущего (полного) состояния');
+  /* Главное регрессионное требование: содержимое не должно быть видно на
+     уменьшающейся заметке, поэтому скрываем его сразу и без фейда. */
+  assert.ok(el.classList.contains('morph-hide'), 'содержимое не скрыто при сжатии — будут видны иконки');
+  assert.equal(el.classList.contains('morph-fade'), false, 'при сжатии фейд содержимого недопустим');
+  assert.ok(el.classList.contains('morphing'), 'переход не включён');
   assert.equal(ended, false, 'экран убирается только по окончании');
-
-  flush();
+  /* Старт сжатия — синхронно, в том же кадре, что и скрытие содержимого. */
   assert.match(el.style.transform, /^translate3d\(10px, 50px, 0\) scale\(/, 'не сжался к прямоугольнику карточки');
-  assert.ok(el.classList.contains('morph-hide'), 'содержимое должно гаснуть при сжатии');
+  const fsx = 170 / 390, fsy = 200 / 844;
+  assert.equal(el.style.borderRadius, `${(20 / fsx).toFixed(1)}px / ${(20 / fsy).toFixed(1)}px`);
 
   await sleep(380);
   assert.equal(ended, true, 'колбэк окончания не вызван');
   assert.equal(el.classList.contains('morphing'), false);
   assert.equal(el.style.transform, '');
+  assert.equal(el.style.willChange, '');
   console.log('сжатие: ok');
 }
 
