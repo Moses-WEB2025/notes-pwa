@@ -45,7 +45,8 @@
    Цвет фона совпадает с фоном экрана, так что в покое шапка выглядит как прежде. */
 .main-screen .appbar,
 .main-screen .h1-row,
-.main-screen .searchbar {
+.main-screen .searchbar,
+.main-screen .folder-tabs {
   position: relative;
   z-index: 12;
   background: var(--bg);
@@ -93,7 +94,10 @@
    её размер задаётся только здесь, поэтому уменьшение высоты и отступов
    одинаково освобождает место над заметками и в обычном виде, и при поиске. */
 .searchbar { flex: none; }
-.searchbar-row { display: flex; align-items: center; gap: 10px; padding: 0 16px 10px; }
+/* Отступ снизу строки поиска задаёт зазор до ряда категорий. Он же (12px)
+   повторён под рядом и убран у сетки сверху — поэтому расстояние «поиск →
+   категории» и «категории → заметки» одинаковое. */
+.searchbar-row { display: flex; align-items: center; gap: 10px; padding: 0 16px 12px; }
 .searchbar-row .searchfield { flex: 1; min-width: 0; }
 .searchfield {
   display: flex;
@@ -239,19 +243,21 @@
 
 /* ===== Категории папок — ровно под строкой поиска =====
    Ряд реально существующих папок (плюс «Все»). Скрытые папки в него не попадают,
-   пока не пройдена системная разблокировка. Ряд горизонтальный, как и ряд
-   фильтров режима выбора. */
-.folder-chips {
+   пока не пройдена системная разблокировка. Класс назван folder-tab, а НЕ
+   folder-chip: имя folder-chip уже занято чипом папки в редакторе (screens.css),
+   и его внешние отступы разъезжали этот ряд. */
+.folder-tabs {
   flex: none;
   display: flex;
+  align-items: center;
   gap: 8px;
-  padding: 0 20px 12px;
+  padding: 0 16px 12px;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
-.folder-chips::-webkit-scrollbar { display: none; }
-.folder-chips .folder-chip {
+.folder-tabs::-webkit-scrollbar { display: none; }
+.folder-tabs .folder-tab {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -268,23 +274,25 @@
   transition: transform var(--dur-1) var(--ease-standard),
               background-color var(--dur-1) ease, color var(--dur-1) ease;
 }
-.folder-chips .folder-chip:active { transform: scale(.95); }
-.folder-chips .folder-chip.active {
+.folder-tabs .folder-tab:active { transform: scale(.95); }
+.folder-tabs .folder-tab.active {
   background: var(--accent-soft);
   color: var(--accent-deep);
   font-weight: 600;
 }
-.folder-chips .folder-chip .material-symbols-rounded {
+.folder-tabs .folder-tab .material-symbols-rounded {
   font-size: 16px;
   font-variation-settings: 'FILL' 1;
 }
 /* В режиме выбора верх занимает ряд фильтров — категории папок там лишние.
    Во время поиска ряд НЕ убираем из потока (его перекрывает серый холст):
    иначе при подъёме строки поиска заметки разом прыгнули бы на его высоту. */
-.main-screen.selecting .folder-chips { display: none; }
+.main-screen.selecting .folder-tabs { display: none; }
 
 /* ===== Сетка карточек (masonry) ===== */
-.grid-holder { display: flex; gap: 12px; padding: 2px 20px 130px; align-items: flex-start; }
+/* Верхний отступ сетки убран: зазор до заметок даёт нижний отступ ряда
+   категорий (12px) — он равен зазору между поиском и рядом. */
+.grid-holder { display: flex; gap: 12px; padding: 0 20px 130px; align-items: flex-start; }
 .grid-col { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 12px; max-width: 50%; }
 
 .note-card {

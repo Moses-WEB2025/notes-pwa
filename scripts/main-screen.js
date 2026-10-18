@@ -50,7 +50,7 @@ export function mainScreen() {
 
   /* категории папок — ровно под строкой поиска */
   const folderChips = document.createElement('div');
-  folderChips.className = 'folder-chips';
+  folderChips.className = 'folder-tabs';
 
   const gridHolder = document.createElement('div');
   gridHolder.className = 'scroll grid-holder';
@@ -250,7 +250,7 @@ export function mainScreen() {
 
     const mk = (label, id, hidden) => {
       const b = document.createElement('button');
-      b.className = 'folder-chip' + ((filterFolder || null) === id ? ' active' : '');
+      b.className = 'folder-tab' + ((filterFolder || null) === id ? ' active' : '');
       b.dataset.f = id || '';
       if (hidden) b.classList.add('is-hidden');
       b.innerHTML = `${hidden ? '<span class="material-symbols-rounded">lock</span>' : ''}${escapeHtml(label)}`;
@@ -261,7 +261,7 @@ export function mainScreen() {
   }
 
   folderChips.addEventListener('click', e => {
-    const b = e.target.closest('.folder-chip'); if (!b) return;
+    const b = e.target.closest('.folder-tab'); if (!b) return;
     filterFolder = b.dataset.f || null;
     refresh();
   });
@@ -518,6 +518,10 @@ export function mainScreen() {
   el.addEventListener('app-exit-search', closeSearch);
 
   document.addEventListener('notes-changed', () => { if (document.body.contains(el)) load(); });
+  /* Папку скрыли/показали/переименовали на экране «Папки» — перечитываем их.
+     Без этого кэш папок оставался прежним, и протяжка вниз (вход в скрытое)
+     молча ничего не делала: главный экран ещё «не знал» о скрытой папке. */
+  document.addEventListener('folders-changed', () => { if (document.body.contains(el)) load(); });
   load();
 
   return { el, load };

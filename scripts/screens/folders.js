@@ -22,6 +22,10 @@ export function openFolders() {
 
   el.append(appbar, scroll);
 
+  /* Сообщаем главному экрану, что папки изменились: он перечитывает свой кэш,
+     и скрытые папки сразу участвуют в протяжке вниз (вход в скрытое). */
+  const notify = () => document.dispatchEvent(new CustomEvent('folders-changed'));
+
   async function load() {
     const [folders, allNotes] = await Promise.all([Store.folders(), Store.notes()]);
     const active = allNotes.filter(n => !n.deleted);
@@ -60,6 +64,7 @@ export function openFolders() {
       if (!name) return;
       await Store.saveFolder({ id: uid(), name, createdAt: Date.now() });
       toast('Папка создана');
+      notify();
       load();
     });
     scroll.appendChild(add);
@@ -96,12 +101,13 @@ export function openFolders() {
     attachMenu(f, [
       { icon: 'edit', label: 'Переименовать', onClick: async () => {
         const name = await promptSheet({ title: 'Переименовать папку', value: f.name });
-        if (name) { f.name = name; await Store.saveFolder(f); load(); }
+        if (name) { f.name = name; await Store.saveFolder(f); notify(); load(); }
       } },
       { icon: f.hidden ? 'visibility' : 'visibility_off', label: f.hidden ? 'Показать папку' : 'Скрыть папку', onClick: async () => {
         f.hidden = !f.hidden;
         await Store.saveFolder(f);
         toast(f.hidden ? 'Папка скрыта' : 'Папка показана');
+        notify();
         load();
       } },
       { icon: 'delete', label: 'Удалить папку', onClick: async () => {
@@ -110,6 +116,7 @@ export function openFolders() {
           for (const n of notes.filter(n => n.folderId === f.id)) { n.folderId = null; await Store.saveNoteRaw(n); }
           await Store.delFolder(f.id);
           toast('Папка удалена');
+          notify();
           load();
         }
       } },
