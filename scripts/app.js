@@ -19,9 +19,6 @@ initScrollFx();
   refreshEdgeColor();
   bindPress();
   ms.load();
-
-  /* Перерисовка главной при возвращении из редактора */
-  document.addEventListener('notes-changed', () => ms.load());
 })();
 
 /* Перехват «назад» на Android — корректная работа как в нативном приложении:

@@ -3,6 +3,13 @@ import { fmtCardTime, escapeHtml, highlight, htmlToPlain, bindPress, vibrate } f
 import { openEditor } from './editor.js';
 
 export function renderNotesGrid(container, notes, q = '', opts = {}) {
+  /* Выезд карточек снизу играем ТОЛЬКО при первой отрисовке сетки за сессию.
+     Раньше анимация запускалась на каждой перерисовке (возврат из редактора,
+     поиск, смена фильтра) — заметки на главной «подпрыгивали» при каждом
+     обновлении списка. */
+  const firstPaint = !container.__gridPainted;
+  container.__gridPainted = true;
+
   container.innerHTML = '';
   container.classList.toggle('selectable', !!(opts && opts.sel && opts.sel.active));
 
@@ -22,7 +29,7 @@ export function renderNotesGrid(container, notes, q = '', opts = {}) {
   notes.forEach((n, i) => {
     const m = cardMetrics(n);
     const card = buildCard(n, q, opts, m);
-    if (!inSel && i < 8) { card.classList.add('entering'); card.style.animationDelay = Math.min(i * 28, 200) + 'ms'; }
+    if (firstPaint && !inSel && i < 8) { card.classList.add('entering'); card.style.animationDelay = Math.min(i * 28, 200) + 'ms'; }
     if (opts && opts.bounceId != null && card.dataset.id === opts.bounceId) card.classList.add('bounce');
     if (h1 <= h2) { col1.appendChild(card); h1 += m.height; }
     else { col2.appendChild(card); h2 += m.height; }

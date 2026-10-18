@@ -325,10 +325,18 @@ export function openEditor(id, opts = {}) {
     const empty = !note.title && !(content.textContent || '').trim() && !note.audio && !(note.content || '').includes('<img') && !(note.content || '').includes('data-drawing');
     if (empty && isNew) { await Store.delNote(note.id); }
     else { await Store.saveNote(note); }
-    document.dispatchEvent(new CustomEvent('notes-changed'));
+    /* Главную перерисовываем, когда слайд закрытия уже доехал (340 мс): иначе
+       перестройка сетки попадала в кадры анимации и «дёргала» её. */
+    setTimeout(() => document.dispatchEvent(new CustomEvent('notes-changed')), 360);
   }
 
-  async function done() { stopAudio(); clearImageSelection(); content.blur(); titleInput.blur(); teardownKb(); await finalSave(); Nav.pop(); }
+  async function done() {
+    stopAudio(); clearImageSelection(); content.blur(); titleInput.blur(); teardownKb();
+    /* Слайд запускаем сразу, не дожидаясь записи в базу: пауза перед анимацией
+       и перерисовка главной «на ходу» делали возврат медленным и рваным. */
+    Nav.pop();
+    await finalSave();
+  }
 
   topbar.querySelector('[data-a=back]').addEventListener('click', done);
   topbarKb.querySelector('[data-a=back2]').addEventListener('click', done);

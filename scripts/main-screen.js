@@ -141,12 +141,16 @@ export function mainScreen() {
       if (filterFolder) list = list.filter(n => n.folderId === filterFolder);
     }
     if (q) list = list.filter(n => (n.title || '').toLowerCase().includes(q) || htmlToPlain(n.content).toLowerCase().includes(q));
+    /* Перерисовка сетки не должна «прыгать»: сохраняем позицию прокрутки.
+       Исключение — поиск: там результаты логично показать сверху. */
+    const keepTop = el.classList.contains('searching') ? 0 : gridHolder.scrollTop;
     renderNotesGrid(gridHolder, list, q, { sel: { active: sel.active, selected: sel.set, onEnter: sel.onEnter.bind(sel), onToggle: sel.onToggle.bind(sel) }, bounceId });
     bounceId = null;
+    if (keepTop) gridHolder.scrollTop = keepTop;
     searchField.classList.toggle('has-text', !!searchInput.value.trim());
     renderChip();
     renderSelBar();
-    /* Перерисовка сетки сбрасывает прокрутку — приводим шапку в соответствие */
+    /* Прокрутка восстановлена — приводим шапку в соответствие */
     syncHeaderShrink();
   }
 

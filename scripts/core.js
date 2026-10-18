@@ -124,7 +124,11 @@ export const Nav={
   top(){ const s=this.screens; return s[s.length-1]; }
 };
 
-/* ---------- Свайп «назад» от левого края (iOS / Android edge-back) ---------- */
+/* ---------- Свайп «назад» от края экрана (iOS / Android edge-back) ----------
+   Работает с ОБОИХ краёв, как системный жест Android: и от левого края вправо,
+   и от правого края влево. Направление сведено к одной величине dx — насколько
+   жест продвинулся к закрытию экрана, — поэтому сдвиг, доводка и пружинный
+   возврат общие для обоих краёв. */
 const EDGE_BACK_PX = 28;
 const BACK_COMMIT_PX = 110;
 const BACK_COMMIT_RATIO = 0.33;
@@ -134,7 +138,10 @@ function backGestureBlocked() {
     document.querySelector('.sheet-backdrop.open') ||
     document.querySelector('.menu-surface') ||
     document.querySelector('.rec-overlay.open') ||
-    document.querySelector('.draw-overlay.open')
+    document.querySelector('.draw-overlay.open') ||
+    /* Выбранное фото: у его рамки есть угловые маркеры, в том числе у правого
+       края экрана — свайп там тянет размер, а не закрывает экран. */
+    document.querySelector('.img-frame')
   );
 }
 
@@ -180,26 +187,36 @@ document.addEventListener('touchstart', e => {
   const searchMode = !!searching && screens.length <= 1;
   if (screens.length <= 1 && !searching) return;
   const t = e.touches[0];
-  if (t.clientX > EDGE_BACK_PX) return;
+  const w = window.innerWidth;
+  /* Жест должен начаться у кромки: у левой ведём вправо (dir = +1), у правой —
+     влево (dir = −1). Закрытие поиска — только от левого края: строка поиска
+     уезжает вправо, у правого края такой жест смысла не имеет. */
+  let dir = 0;
+  if (t.clientX <= EDGE_BACK_PX) dir = 1;
+  else if (t.clientX >= w - EDGE_BACK_PX) dir = -1;
+  if (!dir) return;
+  if (searchMode && dir !== 1) return;
   const top = screens[screens.length - 1];
   const prev = screens[screens.length - 2] || null;
   gesture = {
-    sx: t.clientX, sy: t.clientY,
+    sx: t.clientX, sy: t.clientY, dir,
     top, prev, search: searchMode,
     started: false, dx: 0,
-    lastX: t.clientX, lastT: performance.now(), vx: 0,
+    lastP: 0, lastT: performance.now(), vx: 0,
   };
 }, { passive: true });
 
 document.addEventListener('touchmove', e => {
   if (!gesture || e.touches.length !== 1) return;
   const t = e.touches[0];
-  const dx = t.clientX - gesture.sx;
+  /* Прогресс жеста к закрытию — общий для обоих краёв: у левого это смещение
+     вправо, у правого — влево. */
+  const dx = (t.clientX - gesture.sx) * gesture.dir;
   const dy = Math.abs(t.clientY - gesture.sy);
   const now = performance.now();
   const dt = Math.max(1, now - gesture.lastT);
-  gesture.vx = (t.clientX - gesture.lastX) / dt;
-  gesture.lastX = t.clientX;
+  gesture.vx = (dx - gesture.lastP) / dt;
+  gesture.lastP = dx;
   gesture.lastT = now;
 
   if (!gesture.started && dx > 14 && dy < 32 && dx > dy * 0.6) {

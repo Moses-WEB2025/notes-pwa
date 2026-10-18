@@ -144,9 +144,13 @@ body {
   transition: opacity var(--dur-3) var(--ease-standard);
 }
 /* Сам экран ведёт transform, а также top/bottom (редактор при клавиатуре),
-   чтобы при закрытии высота менялась плавно, а не рывком. */
+   чтобы при закрытии высота менялась плавно, а не рывком.
+   Переход ставим ТОЛЬКО на сам экран: раньше правило `.screen.anim *` вешало
+   transition: transform на каждый вложенный элемент, и во время слайда в
+   композитный слой попадали все карточки сразу — на iOS это давало рваную
+   анимацию. Вложенным элементам с собственной анимацией это не нужно: у них
+   transition объявлен там, где он действительно используется. */
 .screen.anim { transition: transform var(--dur-3) var(--ease-standard), top var(--dur-kb) var(--ease-out), bottom var(--dur-kb) var(--ease-out) !important; }
-.screen.anim * { transition: transform var(--dur-3) var(--ease-standard) !important; }
 /* Композитный слой только на время анимации — экономит память и видеоядро */
 .screen.anim, .screen.under { will-change: transform; }
 .screen.enter-right { transform: translateX(100%); }
