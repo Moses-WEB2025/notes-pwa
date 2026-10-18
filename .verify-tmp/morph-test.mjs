@@ -33,7 +33,7 @@ function makeEl(children = []) {
 globalThis.getComputedStyle = (el) => ({ borderTopLeftRadius: el.__radius || '0px' });
 
 const mod = await import(pathToFileURL('/workspace/scripts/morph.js').href);
-const { morphOpen, morphClose, morphDisabled, cardOnScreen } = mod;
+const { morphOpen, morphClose, morphDisabled, cardOnScreen, morphPhase } = mod;
 
 /* --- «уменьшить движение» отключает морфинг --- */
 assert.equal(morphDisabled(), false);
@@ -112,6 +112,37 @@ reduced = false;
   assert.equal(el.style.transform, '');
   assert.equal(el.style.willChange, '');
   console.log('сжатие: ok');
+}
+
+/* --- быстрый «открыл — закрыл»: старая анимация не доигрывается ---
+   Раньше отложенный кадр роста срабатывал уже во время сжатия и переписывал
+   его — экран дёргался и «возвращалась старая анимация». */
+{
+  const el = makeEl([makeEl()]);
+  const card = makeEl();
+  card.__radius = '20px';
+  card.__rect = { left: 20, top: 100, right: 190, bottom: 300, width: 170, height: 200 };
+
+  morphOpen(el, card);
+  assert.equal(morphPhase(el), 'open', 'состояние роста не отмечено');
+  const openTransform = el.style.transform;
+
+  /* Закрываем до того, как отработал запланированный кадр роста. */
+  let ended = 0;
+  morphClose(el, card, () => { ended++; });
+  assert.equal(morphPhase(el), 'close', 'состояние сжатия не отмечено');
+  const closeTransform = el.style.transform;
+  assert.equal(closeTransform, openTransform, 'сжатие должно стартовать с геометрии карточки');
+
+  flush();   /* устаревший кадр роста обязан молча выйти */
+  assert.equal(el.style.transform, closeTransform, 'старый кадр роста переписал сжатие');
+  assert.equal(ended, 0, 'экран не должен выгружаться на старте сжатия');
+
+  await sleep(380);
+  assert.equal(ended, 1, 'колбэк окончания должен сработать ровно один раз');
+  assert.equal(morphPhase(el), null, 'состояние морфинга не сброшено');
+  assert.equal(el.style.transform, '', 'служебные стили не сняты');
+  console.log('быстрое закрытие: ok');
 }
 
 console.log('OK');

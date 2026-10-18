@@ -14,9 +14,50 @@ const DUR = 300;      /* длительность перехода — как у
 const SETTLE = 340;   /* когда снимаем служебные стили / убираем экран */
 const REVEAL = 140;   /* когда проявляем содержимое растущего экрана */
 
+/* Состояние анимации по каждому экрану. Каждой новой анимации выдаём номер
+   поколения: незавершённые колбэки (rAF/setTimeout) предыдущей запоминают свой
+   номер и, если экран успел уехать в другую анимацию, молча выходят. Без этого
+   при быстром «открыл — закрыл — открыл» отложенные шаги старой анимации
+   доигрывались поверх новой (экран дёргался и «возвращалась старая анимация»). */
+const phase = new WeakMap();     /* 'open' | 'close' — пока анимация не доехала */
+const token = new WeakMap();     /* номер текущего поколения */
+const timers = new WeakMap();    /* Set<timeout id> — чтобы отменять по поколению */
+
+/* Начать новое поколение: гасим все отложенные шаги предыдущей анимации. */
+function begin(el) {
+  const set = timers.get(el);
+  if (set) { set.forEach(clearTimeout); set.clear(); }
+  const t = (token.get(el) || 0) + 1;
+  token.set(el, t);
+  return t;
+}
+
+/* setTimeout, живущий только пока актуально его поколение. */
+function later(el, t, ms, fn) {
+  const id = setTimeout(() => {
+    const s = timers.get(el); if (s) s.delete(id);
+    if (token.get(el) !== t) return;
+    fn();
+  }, ms);
+  let s = timers.get(el); if (!s) { s = new Set(); timers.set(el, s); }
+  s.add(id);
+}
+
+/* requestAnimationFrame с той же проверкой поколения. */
+function frame(el, t, fn) {
+  requestAnimationFrame(() => { if (token.get(el) === t) fn(); });
+}
+
 /* Системная настройка «уменьшить движение» — тогда морфинг не играем. */
 export function morphDisabled() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/* Идёт ли морфинг этого экрана ('open'/'close'), иначе null.
+   Нужно редактору: при быстром закрытии нельзя закрывать экран слайдом
+   поверх незаконченного морфинга — вместо этого морфинг разворачиваем. */
+export function morphPhase(el) {
+  return phase.get(el) || null;
 }
 
 /* Видна ли карточка: морфинг к уехавшей за экран карточке выглядел бы
@@ -50,6 +91,7 @@ function cornerRadius(f) {
 }
 
 function reset(el) {
+  phase.delete(el);
   el.classList.remove('morphing', 'morph-hide', 'morph-fade');
   el.style.transformOrigin = '';
   el.style.transform = '';
@@ -57,9 +99,14 @@ function reset(el) {
   el.style.willChange = '';
 }
 
-/* Вырастить экран из карточки. el уже добавлен в DOM. */
+/* Вырастить экран из карточки. el уже добавлен в DOM.
+   Повторный вызов на том же экране (в т.ч. если он ещё сжимался) отменяет
+   предыдущую анимацию и стартует заново с геометрии карточки. */
 export function morphOpen(el, card) {
+  const t = begin(el);
+  phase.set(el, 'open');
   const f = frameOf(card);
+  el.classList.remove('morphing');      /* без перехода — задаём старт вручную */
   el.style.transformOrigin = '0 0';
   el.style.willChange = 'transform';
   el.style.transform = `translate3d(${f.x}px, ${f.y}px, 0) scale(${f.sx}, ${f.sy})`;
@@ -68,20 +115,23 @@ export function morphOpen(el, card) {
      (morph-fade). Сам класс скрытия снимем позже — тогда содержимое проявится
      плавно, а не рывком. */
   el.classList.add('morph-hide', 'morph-fade');
-  void el.offsetWidth;                      /* фиксируем стартовое состояние */
-  requestAnimationFrame(() => {
-    el.classList.add('morphing');           /* теперь включаем переход */
+  void el.offsetWidth;                  /* фиксируем стартовое состояние */
+  frame(el, t, () => {
+    el.classList.add('morphing');       /* теперь включаем переход */
     void el.offsetWidth;
     el.style.transform = 'translate3d(0px, 0px, 0) scale(1, 1)';
     el.style.borderRadius = '0px';
-    setTimeout(() => el.classList.remove('morph-hide'), REVEAL);
+    later(el, t, REVEAL, () => el.classList.remove('morph-hide'));
   });
-  setTimeout(() => reset(el), SETTLE);
+  later(el, t, SETTLE, () => reset(el));
 }
 
 /* Сжать экран обратно в карточку. onEnd — когда анимация закончилась
-   (там экран и убирается). */
+   (там экран и убирается). Если открытие ещё не доехало, оно отменяется,
+   и экран плавно возвращается в карточку с текущего места. */
 export function morphClose(el, card, onEnd) {
+  const t = begin(el);
+  phase.set(el, 'close');
   const f = frameOf(card);
   el.style.transformOrigin = '0 0';
   el.style.willChange = 'transform';    /* слой готовим до старта перехода */
@@ -93,7 +143,7 @@ export function morphClose(el, card, onEnd) {
   el.classList.add('morph-hide');
   el.style.transform = `translate3d(${f.x}px, ${f.y}px, 0) scale(${f.sx}, ${f.sy})`;
   el.style.borderRadius = cornerRadius(f);
-  setTimeout(() => { reset(el); onEnd && onEnd(); }, SETTLE);
+  later(el, t, SETTLE, () => { reset(el); onEnd && onEnd(); });
 }
 
 export { DUR };

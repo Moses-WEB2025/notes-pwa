@@ -1,7 +1,7 @@
 /* ============ Редактор заметки ============ */
 import { Store, Nav, fmtEditorDate, escapeHtml, uid, debounce, vibrate } from '../core.js';
 import { refreshEdgeColor } from '../edge.js';
-import { morphOpen, morphClose, morphDisabled, cardOnScreen } from '../morph.js';
+import { morphOpen, morphClose, morphDisabled, cardOnScreen, morphPhase } from '../morph.js';
 import { toast, attachMenu, sheetSections, openSheet, confirmSheet } from '../components/ui.js';
 import { openRecorder } from '../components/recorder.js';
 import { openDrawing } from '../components/drawing.js';
@@ -23,10 +23,16 @@ function lum(hex) {
   const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16);
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
-function textColorFor(bg) { return bg && lum(bg) < 160 ? '#ffffff' : 'var(--ink, #1c1d21)'; }
-function mutedFor(bg)     { return bg && lum(bg) < 160 ? 'rgba(255,255,255,.62)' : 'var(--text-tertiary)'; }
-function caretFor(bg)     { return bg && lum(bg) < 160 ? 'rgba(255,255,255,.9)' : 'var(--accent)'; }
-function folderChipFor(bg){ return bg && lum(bg) < 160 ? 'rgba(255,255,255,.16)' : 'var(--surface2)'; }
+/* Порог яркости, ниже которого на фоне нужен светлый текст.
+   Жёлтая (#f3b13c, ~183) заметно светлее синей/розовой/красной, но на
+   карточках у неё уже белый текст — при пороге 160 редактор оставлял на ней
+   чёрный заголовок и серую дату, и заметка выглядела чужой. 200 выравнивает
+   жёлтую с остальными цветными темами, «Бумага» (~243) остаётся тёмной. */
+const LIGHT_TEXT_MAX = 200;
+function textColorFor(bg) { return bg && lum(bg) < LIGHT_TEXT_MAX ? '#ffffff' : 'var(--ink, #1c1d21)'; }
+function mutedFor(bg)     { return bg && lum(bg) < LIGHT_TEXT_MAX ? 'rgba(255,255,255,.62)' : 'var(--text-tertiary)'; }
+function caretFor(bg)     { return bg && lum(bg) < LIGHT_TEXT_MAX ? 'rgba(255,255,255,.9)' : 'var(--accent)'; }
+function folderChipFor(bg){ return bg && lum(bg) < LIGHT_TEXT_MAX ? 'rgba(255,255,255,.16)' : 'var(--surface2)'; }
 
 export function openEditor(id, opts = {}) {
   const isNew = !id;
@@ -351,12 +357,17 @@ export function openEditor(id, opts = {}) {
 
   async function done() {
     stopAudio(); clearImageSelection(); content.blur(); titleInput.blur(); teardownKb();
-    /* Сжатие в карточку — только если эта заметка всё ещё видна карточкой на
-       главной и экран не тянется пальцем/не растёт прямо сейчас: тогда закрытие
-       продолжает уже начатое движение (слайд), а не прыгает в морфинг. */
+    /* Сжатие в карточку — только если заметка всё ещё видна карточкой на
+       главной и экран не тянется пальцем: тогда закрытие продолжает уже
+       начатое движение, а не прыгает. Если морфинг уже сжимает экран
+       (повторное нажатие «назад»), второй раз не запускаем — иначе отменим
+       выгрузку экрана и он «застрянет» на месте карточки. */
+    if (morphPhase(el) === 'close') return;
     const card = note && document.querySelector(`.note-card[data-id="${note.id}"]`);
-    const busy = el.classList.contains('morphing') || !!el.style.transform;
-    if (card && !busy && !morphDisabled() && cardOnScreen(card)) {
+    /* Свайп «назад» тянет экран пальцем — там свой слайд (Nav.pop), морфинг
+       только передрался бы с ним. Морфинг же в процессе разворачиваем назад. */
+    const swiped = el.classList.contains('swipe-back') || (!!el.style.transform && !morphPhase(el));
+    if (card && !swiped && !morphDisabled() && cardOnScreen(card)) {
       /* Системные зоны — под главную сразу, вместе со стартом сжатия */
       Nav.colorPrev();
       morphClose(el, card, () => Nav.dropTop());
