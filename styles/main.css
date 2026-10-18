@@ -37,6 +37,26 @@
    держим одну строку — высота шапки не меняется, страница не «прыгает». */
 .main-screen.selecting .h1-row h1 { font-size: 26px; letter-spacing: -.2px; }
 
+/* ===== Сжимающаяся шапка при прокрутке списка =====
+   Как только список прокручен вниз, строка с крупным заголовком «схлопывается»
+   (уходит её высота и отступы), а сам заголовок уменьшается и поднимается на
+   одну линию с иконками аппбара — так видно больше заметок. Смещение заголовка
+   к центру линии иконок считает JS (--h1-x, --h1-y): ширина текста зависит от
+   кегля, поэтому её нельзя вывести одной лишь CSS-формулой. */
+.main-screen .h1-row h1 {
+  transition: font-size var(--dur-3) var(--ease-emphasized),
+              transform var(--dur-3) var(--ease-emphasized);
+}
+.main-screen.hd-shrink .h1-row { min-height: 0; padding-top: 0; padding-bottom: 0; }
+.main-screen.hd-shrink .h1-row h1 { font-size: 26px; letter-spacing: -.2px; }
+/* В режиме выбора заголовок длинный («Выбрано N объектов») — оставляем его слева,
+   чтобы он не наезжал на иконки, но строку всё равно сжимаем. */
+.main-screen.hd-shrink:not(.selecting) .h1-row h1 {
+  transform: translateX(var(--h1-x, 0px)) translateY(var(--h1-y, 0px));
+  /* Заголовок «висит» над аппбаром — не перехватываем тапы по иконкам */
+  pointer-events: none;
+}
+
 /* ===== Поиск + «Отмена» ===== */
 .searchbar { flex: none; }
 .searchbar-row { display: flex; align-items: center; gap: 12px; padding: 0 20px 16px; }
@@ -122,6 +142,13 @@
 .main-screen .grid-holder {
   transform: translateY(calc(var(--grid-lift, 0px) + var(--pull-y, 0px)));
   margin-bottom: var(--grid-lift, 0px);
+}
+/* Строка заголовка, кроме transform, анимирует схлопывание высоты и отступов
+   при прокрутке списка. Правило идёт после общего — потому и перекрывает его. */
+.main-screen .h1-row {
+  transition: transform var(--dur-3) var(--ease-emphasized),
+              min-height var(--dur-3) var(--ease-emphasized),
+              padding var(--dur-3) var(--ease-emphasized);
 }
 /* Во время свайпа строка следует за пальцем без задержки */
 .main-screen.search-drag .searchbar { transition: none; }

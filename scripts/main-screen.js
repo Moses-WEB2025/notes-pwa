@@ -146,6 +146,8 @@ export function mainScreen() {
     searchField.classList.toggle('has-text', !!searchInput.value.trim());
     renderChip();
     renderSelBar();
+    /* Перерисовка сетки сбрасывает прокрутку — приводим шапку в соответствие */
+    syncHeaderShrink();
   }
 
   /* заметки, попадающие под текущий фильтр режима выбора */
@@ -214,9 +216,50 @@ export function mainScreen() {
     }
   }
 
+  /* ---------- сжимающаяся шапка при прокрутке списка ----------
+     Список прокручен вниз → строка с крупным заголовком схлопывается, а сам
+     заголовок уменьшается и поднимается на линию иконок аппбара. */
+  let hdShrunk = false, hdRaf = 0;
+
+  /* Сдвиг заголовка к линии иконок. Ширину текста в сжатом кегле иначе не
+     вычислить — измеряем её, временно применив кегль (кадр не рисуется). */
+  function measureShrinkShift() {
+    const h1 = h1row.querySelector('h1');
+    const prev = h1.style.fontSize;
+    h1.style.fontSize = '26px';
+    const textW = h1.offsetWidth;               /* offsetWidth игнорирует transform */
+    h1.style.fontSize = prev;
+    el.style.setProperty('--h1-x', Math.max(0, (h1row.clientWidth - textW) / 2) + 'px');
+
+    /* Вертикаль: центр заголовка в схлопнутой строке совпадает с центром иконок
+       аппбара. Высоту строки после схлопывания берём из кегля и line-height,
+       чтобы результат не зависел от незавершённого перехода. */
+    const icon = appbar.querySelector(el.classList.contains('selecting') ? '[data-a=sel-close]' : '[data-a=folders]');
+    const iconMid = icon.getBoundingClientRect().top + icon.offsetHeight / 2;
+    const rowTop = h1row.getBoundingClientRect().top;   /* верх строки = низ аппбара */
+    el.style.setProperty('--h1-y', (iconMid - (rowTop + 26 * 1.12 / 2)) + 'px');
+  }
+
+  function syncHeaderShrink() {
+    const on = !el.classList.contains('searching') && gridHolder.scrollTop > 12;
+    if (on === hdShrunk) return;
+    hdShrunk = on;
+    if (on) measureShrinkShift();
+    el.classList.toggle('hd-shrink', on);
+  }
+
+  gridHolder.addEventListener('scroll', () => {
+    if (hdRaf) return;
+    hdRaf = requestAnimationFrame(() => { hdRaf = 0; syncHeaderShrink(); });
+  }, { passive: true });
+  window.addEventListener('resize', () => { if (hdShrunk) measureShrinkShift(); });
+
   /* ---------- поиск: при фокусе строка поднимается наверх экрана ---------- */
   function syncSearchLift() {
     const on = document.activeElement === searchInput || !!searchInput.value.trim();
+    /* В поиске шапка уезжает вверх целиком — сжатое состояние сбрасываем, чтобы
+       --hd-up (высота шапки) считалась по полной строке заголовка. */
+    if (on && hdShrunk) { hdShrunk = false; el.classList.remove('hd-shrink'); }
     /* Высота шапки, которую строка поиска «переезжает» */
     if (on) el.style.setProperty('--hd-up', (appbar.offsetHeight + h1row.offsetHeight) + 'px');
     el.classList.toggle('searching', on);
