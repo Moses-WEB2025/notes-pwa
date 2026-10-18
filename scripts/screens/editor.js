@@ -119,9 +119,12 @@ export function openEditor(id, opts = {}) {
   })();
 
   /* ---------- Тема холста (цвет + автоконтраст текста) ---------- */
-  /* окрашиваем весь экран: фон .screen + элементы в CSS от переменных */
-  function applyTheme() {
-    const c = COLORS.find(c => c.key === (note.color || 'none'));
+  /* Красим холст по ключу цвета. Отдельная функция нужна, чтобы успеть
+     применить цвет ДО первого кадра: фон экрана, переменные контраста и
+     системные зоны (верхняя полоса) выставляются синхронно, в том числе пока
+     заметка ещё грузится из базы. */
+  function paintCanvas(colorKey) {
+    const c = COLORS.find(c => c.key === (colorKey || 'none'));
     const bg = c && c.css;
     el.style.background = bg || 'var(--bg)';
     el.style.setProperty('--ed-ink', textColorFor(bg));
@@ -131,6 +134,8 @@ export function openEditor(id, opts = {}) {
     /* Смена цвета холста — сразу перекрашиваем и системные зоны. */
     refreshEdgeColor();
   }
+
+  function applyTheme() { paintCanvas(note.color); }
 
   function updFolderChip() {
     const f = foldersList.find(f => f.id === note.folderId);
@@ -1150,6 +1155,11 @@ export function openEditor(id, opts = {}) {
   window.addEventListener('resize', positionImageTools);
   document.addEventListener('kb-change', () => { if (selImg) setTimeout(positionImageTools, 60); });
 
+  /* Цвет холста применяем СИНХРОННО, до появления экрана: заметка ещё грузится
+     из базы, но её цвет уже известен из списка (opts.color). Иначе системная
+     полоса сначала получала базовый фон, а свой цвет — только после загрузки
+     заметки, из-за чего цвет сверху менялся с заметной задержкой. */
+  paintCanvas(opts.color);
   Nav.pushEl(el);
   vibrate(5);
   return el;
