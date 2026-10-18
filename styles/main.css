@@ -22,7 +22,7 @@
 }
 .back-header { padding-left: 8px; padding-right: 8px; }
 
-.h1-row { display: flex; align-items: center; min-height: 67px; padding: 8px 20px 14px; }
+.h1-row { display: flex; align-items: center; min-height: var(--h1-row-h, 67px); padding: 8px 20px 14px; }
 .h1-row h1 {
   font-size: 40px;
   font-weight: 600;
@@ -37,6 +37,25 @@
    держим одну строку — высота шапки не меняется, страница не «прыгает». */
 .main-screen.selecting .h1-row h1 { font-size: 26px; letter-spacing: -.2px; }
 
+/* ===== Шапка — непрозрачный слой над списком =====
+   При протяжке списка за нижний край резинка уводит содержимое вверх. Раньше
+   оно выезжало ПОВЕРХ шапки (аппбар, заголовок, поиск) — карточки наползали на
+   иконки и строку поиска. Теперь у шапки есть фон и она поднята над сеткой,
+   поэтому заметки уходят ПОД неё, как содержимое под навбаром в iOS.
+   Цвет фона совпадает с фоном экрана, так что в покое шапка выглядит как прежде. */
+.main-screen .appbar,
+.main-screen .h1-row,
+.main-screen .searchbar {
+  position: relative;
+  z-index: 12;
+  background: var(--bg);
+}
+/* Во время поиска верх экрана занимает серый холст — шапка красится в его цвет,
+   иначе поверх холста проступила бы светлая полоса. */
+.main-screen.searching .appbar,
+.main-screen.searching .h1-row,
+.main-screen.searching .searchbar { background: #ececec; }
+
 /* ===== Сжимающаяся шапка при прокрутке списка =====
    Как только список прокручен вниз, строка с крупным заголовком «схлопывается»
    (уходит её высота и отступы), а сам заголовок уменьшается и поднимается на
@@ -47,7 +66,19 @@
   transition: font-size var(--dur-3) var(--ease-emphasized),
               transform var(--dur-3) var(--ease-emphasized);
 }
-.main-screen.hd-shrink .h1-row { min-height: 0; padding-top: 0; padding-bottom: 0; }
+/* Строка заголовка схлопывается целиком: её собственные отступы (min-height +
+   padding) убираются, а высота оставшейся строки (кегль заголовка × его
+   line-height = 26 × 1.12) «вычитается» из потока отрицательным margin-bottom.
+   Так строка не занимает в потоке ни пикселя, и строка поиска плавно поднимается
+   ровно в освободившееся место — вплотную под аппбар. Заголовок при этом уже
+   переехал на линию иконок (--h1-y), поэтому визуально шапка становится
+   компактнее и видно больше заметок. */
+.main-screen.hd-shrink .h1-row {
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-bottom: calc(-1 * 26px * 1.12);
+}
 .main-screen.hd-shrink .h1-row h1 { font-size: 26px; letter-spacing: -.2px; }
 /* В режиме выбора заголовок длинный («Выбрано N объектов») — оставляем его слева,
    чтобы он не наезжал на иконки, но строку всё равно сжимаем. */
@@ -113,6 +144,11 @@
    компенсирует сдвиг, чтобы снизу не осталось пустоты. --hd-up задаёт JS. */
 .main-screen {
   --hd-up: 120px;
+  /* Высота строки заголовка в развёрнутом (несжатом) виде. Задаём здесь, чтобы
+     JS мог взять её при расчёте подъёма поиска, не читая layout в момент, когда
+     строка ещё «доезжает» переходом (тогда offsetHeight вернул бы схлопнутую
+     высоту). Схлопывание задаётся в --h1-row-h ниже по min-height. */
+  --h1-row-h: 67px;
   /* Верх лифтуемой строки поиска. Не ровно safe-area: системная полоса
      (статус-бар iOS/Android) рисуется ПОВЕРХ страницы, и её верхняя граница
      перекрывала бы рамку строки. Небольшой зазор оставляет кольцо видимым. */
@@ -143,12 +179,15 @@
   transform: translateY(calc(var(--grid-lift, 0px) + var(--pull-y, 0px)));
   margin-bottom: var(--grid-lift, 0px);
 }
-/* Строка заголовка, кроме transform, анимирует схлопывание высоты и отступов
-   при прокрутке списка. Правило идёт после общего — потому и перекрывает его. */
+/* Строка заголовка, кроме transform, анимирует схлопывание высоты, отступов и
+   «вычета» своей высоты из потока (margin-bottom) при прокрутке списка — той же
+   длительностью и кривой, что и у строки поиска, поэтому подъём идёт синхронно.
+   Правило идёт после общего — потому и перекрывает его. */
 .main-screen .h1-row {
   transition: transform var(--dur-3) var(--ease-emphasized),
               min-height var(--dur-3) var(--ease-emphasized),
-              padding var(--dur-3) var(--ease-emphasized);
+              padding var(--dur-3) var(--ease-emphasized),
+              margin-bottom var(--dur-3) var(--ease-emphasized);
 }
 /* Во время свайпа строка следует за пальцем без задержки */
 .main-screen.search-drag .searchbar { transition: none; }

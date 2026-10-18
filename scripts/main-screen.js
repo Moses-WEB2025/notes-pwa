@@ -260,8 +260,15 @@ export function mainScreen() {
     /* В поиске шапка уезжает вверх целиком — сжатое состояние сбрасываем, чтобы
        --hd-up (высота шапки) считалась по полной строке заголовка. */
     if (on && hdShrunk) { hdShrunk = false; el.classList.remove('hd-shrink'); }
-    /* Высота шапки, которую строка поиска «переезжает» */
-    if (on) el.style.setProperty('--hd-up', (appbar.offsetHeight + h1row.offsetHeight) + 'px');
+    /* Высота шапки, которую строка поиска «переезжает»: аппбар + строка
+       заголовка в развёрнутом виде. Высоту строки берём из CSS-переменной, а не
+       из offsetHeight: сразу после снятия .hd-shrink строка ещё «доезжает»
+       переходом, и layout вернул бы схлопнутую высоту — строка поиска встала бы
+       не на место, а заметки получили бы неверный подъём. */
+    if (on) {
+      const rowH = parseFloat(getComputedStyle(el).getPropertyValue('--h1-row-h')) || 67;
+      el.style.setProperty('--hd-up', (appbar.offsetHeight + rowH) + 'px');
+    }
     el.classList.toggle('searching', on);
     /* Пока запрос пуст — заметки скрыты под серым холстом; с вводом текста
        результаты поднимаются над холстом. */
