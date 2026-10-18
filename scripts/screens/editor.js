@@ -198,29 +198,63 @@ export function openEditor(id, opts = {}) {
     if (selImg && !content.contains(selImg)) clearImageSelection();
     updMeta(); scheduleSave();
   }
+  /* Каретка как смещение в символах от начала текста холста. applyState()
+     подменяет innerHTML снимком из истории, поэтому позиции узлов становятся
+     недействительными, а смещение — переживает подмену. Без него каретка
+     «улетала» в конец заметки, холст доскролливался к ней — и весь редактор
+     дёргался при нажатии стрелок отмены/возврата. */
+  function caretOffset() {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return null;
+    const r = sel.getRangeAt(0);
+    if (!content.contains(r.startContainer)) return null;
+    const pre = r.cloneRange();
+    pre.selectNodeContents(content);
+    pre.setEnd(r.startContainer, r.startOffset);
+    return pre.toString().length;
+  }
+  function setCaretAt(offset) {
+    const sel = window.getSelection();
+    const r = document.createRange();
+    let placed = false;
+    if (offset != null) {
+      const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+      let node, remaining = offset;
+      while ((node = walker.nextNode())) {
+        const len = node.nodeValue.length;
+        if (remaining <= len) { r.setStart(node, remaining); r.collapse(true); placed = true; break; }
+        remaining -= len;
+      }
+    }
+    if (!placed) { r.selectNodeContents(content); r.collapse(false); }
+    sel.removeAllRanges();
+    sel.addRange(r);
+    savedRange = r.cloneRange();
+  }
+  /* Возвращаем каретку туда, где она была: в заголовок или в текст заметки.
+     Фокус обычно никуда не уходит — кнопки его не забирают (см. keepEditFocus),
+     поэтому лишний focus() не зовём: он мог бы сдвинуть visualViewport и
+     «дёрнуть» экран. */
+  function restoreEditFocus(offset) {
+    if (document.activeElement === titleInput) {
+      const end = titleInput.value.length;
+      try { titleInput.setSelectionRange(end, end); } catch (e) {}
+      return;
+    }
+    if (!content.contains(document.activeElement)) content.focus({ preventScroll: true });
+    setCaretAt(offset);
+  }
   function doUndo() {
     if (histIndex <= 0) return;
+    const off = caretOffset();
     histIndex--; applyState(history[histIndex]); updUndoBtns();
-    restoreEditFocus();
+    restoreEditFocus(off);
   }
   function doRedo() {
     if (histIndex >= history.length - 1) return;
+    const off = caretOffset();
     histIndex++; applyState(history[histIndex]); updUndoBtns();
-    restoreEditFocus();
-  }
-  /* Возвращаем каретку туда, где она была: в заголовок или в текст заметки.
-     applyState() заменяет содержимое холста, поэтому сохранённый диапазон
-     становится недействительным — focusEditor() тогда поставит каретку в конец
-     текста. Без этого фокус (а с ним и клавиатура) терялись, и режим
-     редактирования закрывался. */
-  function restoreEditFocus() {
-    if (document.activeElement === titleInput) {
-      titleInput.focus({ preventScroll: true });
-      const end = titleInput.value.length;
-      try { titleInput.setSelectionRange(end, end); } catch (e) {}
-    } else {
-      focusEditor();
-    }
+    restoreEditFocus(off);
   }
   undoBtn.addEventListener('click', doUndo);
   redoBtn.addEventListener('click', doRedo);

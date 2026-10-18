@@ -237,6 +237,52 @@
 }
 .cat-chip .material-symbols-rounded { font-size: 17px; font-variation-settings: 'FILL' 1; color: var(--text-secondary); }
 
+/* ===== Категории папок — ровно под строкой поиска =====
+   Ряд реально существующих папок (плюс «Все»). Скрытые папки в него не попадают,
+   пока не пройдена системная разблокировка. Ряд горизонтальный, как и ряд
+   фильтров режима выбора. */
+.folder-chips {
+  flex: none;
+  display: flex;
+  gap: 8px;
+  padding: 0 20px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.folder-chips::-webkit-scrollbar { display: none; }
+.folder-chips .folder-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: var(--surface);
+  color: var(--text-secondary);
+  border-radius: 20px;
+  padding: 8px 15px;
+  font: 500 14px/1.2 var(--font);
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: transform var(--dur-1) var(--ease-standard),
+              background-color var(--dur-1) ease, color var(--dur-1) ease;
+}
+.folder-chips .folder-chip:active { transform: scale(.95); }
+.folder-chips .folder-chip.active {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+.folder-chips .folder-chip .material-symbols-rounded {
+  font-size: 16px;
+  font-variation-settings: 'FILL' 1;
+}
+/* В режиме выбора верх занимает ряд фильтров — категории папок там лишние.
+   Во время поиска ряд НЕ убираем из потока (его перекрывает серый холст):
+   иначе при подъёме строки поиска заметки разом прыгнули бы на его высоту. */
+.main-screen.selecting .folder-chips { display: none; }
+
 /* ===== Сетка карточек (masonry) ===== */
 .grid-holder { display: flex; gap: 12px; padding: 2px 20px 130px; align-items: flex-start; }
 .grid-col { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 12px; max-width: 50%; }

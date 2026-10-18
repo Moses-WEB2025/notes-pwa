@@ -38,10 +38,10 @@ export function openFolders() {
     /* папки */
     folders.filter(f => !f.deleted).forEach(f => {
       const row = document.createElement('div');
-      row.className = 'folder-row';
+      row.className = 'folder-row' + (f.hidden ? ' f-hidden' : '');
       row.setAttribute('data-press', '');
       const cnt = active.filter(n => n.folderId === f.id).length;
-      row.innerHTML = `<span class="material-symbols-rounded f-fold" style="color:var(--accent)">folder</span><span class="f-name">${escapeHtml(f.name)}</span><span class="f-count">${cnt}</span>`;
+      row.innerHTML = `<span class="material-symbols-rounded f-fold" style="color:var(--accent)">${f.hidden ? 'lock' : 'folder'}</span><span class="f-name">${escapeHtml(f.name)}</span><span class="f-count">${cnt}</span>`;
       let lp = null, fired = false;
       row.addEventListener('touchstart', () => { fired = false; lp = setTimeout(() => { fired = true; vibrate(20); folderMenu(f); }, 480); }, { passive: true });
       ['touchmove', 'touchend', 'touchcancel'].forEach(ev => row.addEventListener(ev, () => clearTimeout(lp), { passive: true }));
@@ -97,6 +97,12 @@ export function openFolders() {
       { icon: 'edit', label: 'Переименовать', onClick: async () => {
         const name = await promptSheet({ title: 'Переименовать папку', value: f.name });
         if (name) { f.name = name; await Store.saveFolder(f); load(); }
+      } },
+      { icon: f.hidden ? 'visibility' : 'visibility_off', label: f.hidden ? 'Показать папку' : 'Скрыть папку', onClick: async () => {
+        f.hidden = !f.hidden;
+        await Store.saveFolder(f);
+        toast(f.hidden ? 'Папка скрыта' : 'Папка показана');
+        load();
       } },
       { icon: 'delete', label: 'Удалить папку', onClick: async () => {
         if (await confirmSheet({ title: 'Удалите папку', text: `Удалить папку «${f.name}»? Заметки останутся, но потеряют папку.` })) {

@@ -6,6 +6,7 @@ import { openEditor } from './screens/editor.js';
 import { openFolders } from './screens/folders.js';
 import { renderNotesGrid } from './screens/grid.js';
 import { openTrashScreen } from './screens/trash.js';
+import { systemUnlock, systemUnlockAvailable } from './system-unlock.js';
 
 const COLORS = [
   { key: 'none', label: 'Без цвета', css: '#ffffff' },
@@ -47,6 +48,10 @@ export function mainScreen() {
       <button class="search-cancel hidden" data-press>Отмена</button>
     </div>`;
 
+  /* категории папок — ровно под строкой поиска */
+  const folderChips = document.createElement('div');
+  folderChips.className = 'folder-chips';
+
   const gridHolder = document.createElement('div');
   gridHolder.className = 'scroll grid-holder';
 
@@ -81,7 +86,7 @@ export function mainScreen() {
     <button data-sel="move"><span class="material-symbols-rounded">drive_file_move</span><span class="lbl">Переместить</span></button>
     <button data-sel="delete"><span class="material-symbols-rounded">delete</span><span class="lbl">Удалить</span></button>`;
 
-  el.append(appbar, h1row, searchWrap, searchCanvas, chipsRow, gridHolder, fab, tabbar, selBar);
+  el.append(appbar, h1row, searchWrap, folderChips, searchCanvas, chipsRow, gridHolder, fab, tabbar, selBar);
 
   /* ---------- режим выбора (долгий тап) ---------- */
   let selFilter = 'all';
@@ -137,6 +142,9 @@ export function mainScreen() {
       if (selFilter === 'nocat') list = list.filter(n => !n.folderId);
     } else {
       list = list.filter(n => !n.hidden);
+      /* Заметки скрытых папок прячем из общего списка: они появляются только
+         после системной разблокировки (протяжка вниз у верха экрана). */
+      if (!hiddenUnlocked) list = list.filter(n => !noteInHiddenFolder(n));
       if (filterColor) list = list.filter(n => n.color === filterColor);
       if (filterFolder) list = list.filter(n => n.folderId === filterFolder);
     }
@@ -148,6 +156,7 @@ export function mainScreen() {
     renderNotesGrid(gridHolder, list, q, { sel: { active: sel.active, selected: sel.set, onEnter: sel.onEnter.bind(sel), onToggle: sel.onToggle.bind(sel) }, bounceId, keepTop });
     bounceId = null;
     searchField.classList.toggle('has-text', !!searchInput.value.trim());
+    renderFolderChips();
     renderChip();
     renderSelBar();
     /* Прокрутка восстановлена — приводим шапку в соответствие */
@@ -194,8 +203,21 @@ export function mainScreen() {
 
   /* ---------- состояние ---------- */
   let notes = [];
+  let folders = [];
+  /* id скрытых папок: их заметки не показываем, пока не разблокировано */
+  const hiddenFolderIds = new Set();
+  /* Пока false — скрытые папки и их заметки в общем списке не видны. Ставится
+     в true после системной разблокировки (протяжка вниз у самого верха). */
+  let hiddenUnlocked = false;
   let filterColor = null, filterFolder = null;
   let chipEl = null;
+
+  const noteInHiddenFolder = n => !!(n.folderId && hiddenFolderIds.has(n.folderId));
+
+  /* Папки для списков выбора («В папку»): скрытые не показываем, пока не открыто,
+     иначе их названия проступали бы в обычных меню. */
+  const selectableFolders = async () =>
+    (await Store.folders()).filter(f => !f.deleted && (hiddenUnlocked || !f.hidden));
 
   const searchInput = searchWrap.querySelector('input');
   const searchField = searchWrap.querySelector('.searchfield');
@@ -203,19 +225,57 @@ export function mainScreen() {
   const searchCancel = searchWrap.querySelector('.search-cancel');
 
   async function load() {
-    notes = (await Store.notes()).filter(n => !n.deleted)
+    [notes, folders] = await Promise.all([Store.notes(), Store.folders()]);
+    notes = notes.filter(n => !n.deleted)
       .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.updatedAt - a.updatedAt);
+    folders = folders.filter(f => !f.deleted);
+    hiddenFolderIds.clear();
+    for (const f of folders) if (f.hidden) hiddenFolderIds.add(f.id);
+    /* Скрытая папка могла исчезнуть (удалена или снова скрыта) — снимаем фильтр,
+       иначе список остался бы пустым без видимой причины. */
+    if (filterFolder && !folders.some(f => f.id === filterFolder && (hiddenUnlocked || !f.hidden)))
+      filterFolder = null;
     refresh();
   }
 
+  /* ---------- категории папок под строкой поиска ----------
+     Показываем только реально существующие папки. Скрытые в список не попадают,
+     пока не пройдена системная разблокировка. Ряд нужен лишь тогда, когда есть
+     куда переключаться: одна кнопка «Все» ничего не фильтрует. */
+  function renderFolderChips() {
+    const visible = folders.filter(f => hiddenUnlocked || !f.hidden);
+    folderChips.innerHTML = '';
+    folderChips.classList.toggle('hidden', visible.length === 0);
+    if (!visible.length) return;
+
+    const mk = (label, id, hidden) => {
+      const b = document.createElement('button');
+      b.className = 'folder-chip' + ((filterFolder || null) === id ? ' active' : '');
+      b.dataset.f = id || '';
+      if (hidden) b.classList.add('is-hidden');
+      b.innerHTML = `${hidden ? '<span class="material-symbols-rounded">lock</span>' : ''}${escapeHtml(label)}`;
+      return b;
+    };
+    folderChips.appendChild(mk('Все', null, false));
+    visible.forEach(f => folderChips.appendChild(mk(f.name, f.id, f.hidden)));
+  }
+
+  folderChips.addEventListener('click', e => {
+    const b = e.target.closest('.folder-chip'); if (!b) return;
+    filterFolder = b.dataset.f || null;
+    refresh();
+  });
+
   function renderChip() {
     if (chipEl) { chipEl.remove(); chipEl = null; }
-    if (filterColor || filterFolder) {
+    /* Папку теперь показывает активный чип в ряду категорий, поэтому плавающий
+       чип оставляем только под фильтр цвета. */
+    if (filterColor) {
       const c = COLORS.find(c => c.key === filterColor);
       chipEl = document.createElement('button');
       chipEl.className = 'cat-chip';
-      chipEl.innerHTML = `<span class="material-symbols-rounded">${c ? 'palette' : 'folder_open'}</span>${c ? c.label : 'Папка'}<span class="material-symbols-rounded" style="font-size:16px">close</span>`;
-      chipEl.addEventListener('click', () => { filterColor = null; filterFolder = null; refresh(); });
+      chipEl.innerHTML = `<span class="material-symbols-rounded">palette</span>${c ? c.label : 'Цвет'}<span class="material-symbols-rounded" style="font-size:16px">close</span>`;
+      chipEl.addEventListener('click', () => { filterColor = null; refresh(); });
       searchWrap.after(chipEl);
     }
   }
@@ -331,7 +391,7 @@ export function mainScreen() {
       for (const nn of picked) { nn.pinned = target; await Store.saveNote(nn); }
       toast(target ? 'Закреплено' : 'Откреплено'); exitSelection(); load();
     } else if (act === 'move') {
-      const folders = await Store.folders();
+      const folders = await selectableFolders();
       sheetSections({ title: 'В папку', sections: [api => {
         const box = document.createElement('div'); box.className = 'sheet-actions';
         box.innerHTML = [`<button class="sheet-action" data-f=""><span class="material-symbols-rounded">block</span>Без папки</button>`,
@@ -387,7 +447,7 @@ export function mainScreen() {
   }
 
   async function folderSheetFor(n) {
-    const folders = await Store.folders();
+    const folders = await selectableFolders();
     sheetSections({ title: 'В папку', sections: [api => {
       const box = document.createElement('div');
       box.className = 'sheet-actions';
@@ -403,6 +463,54 @@ export function mainScreen() {
       return box;
     }]});
   }
+
+  /* ---------- скрытые папки: протяжка экрана вниз у самого верха ----------
+     Как в MIUI: длинная протяжка списка за верхний край вызывает системную
+     проверку личности, и только после неё появляются скрытые папки. Своего
+     экрана не рисуем — диалог (ПИН/графический ключ/биометрия) показывает сама
+     система через WebAuthn.
+
+     Проверку запускаем на отпускании пальца, а не во время движения: системный
+     диалог WebAuthn требует «короткого действия пользователя», и это действие
+     даёт именно touchend (touchmove таким действием не считается). */
+  const HIDDEN_PULL_PX = 80;
+  let hiddenPull = null;
+
+  /* Жест доступен, только если скрытое есть и ещё не открыто. */
+  const canUnlockHidden = () => !hiddenUnlocked && !sel.active
+    && !el.classList.contains('searching') && folders.some(f => f.hidden);
+
+  async function unlockHidden() {
+    if (hiddenUnlocked) return;
+    if (!systemUnlockAvailable()) { toast('Системная проверка недоступна'); return; }
+    if (await systemUnlock()) {
+      hiddenUnlocked = true;
+      toast('Скрытое открыто');
+      refresh();
+    } else {
+      toast('Не удалось подтвердить');
+    }
+  }
+
+  gridHolder.addEventListener('touchstart', e => {
+    hiddenPull = (canUnlockHidden() && e.touches.length === 1 && gridHolder.scrollTop <= 0)
+      ? { y: e.touches[0].clientY, ready: false } : null;
+  }, { passive: true });
+
+  gridHolder.addEventListener('touchmove', e => {
+    if (!hiddenPull || hiddenPull.ready) return;
+    /* Список уехал от верха — это обычная прокрутка, а не вытягивание. */
+    if (gridHolder.scrollTop > 0) { hiddenPull = null; return; }
+    if (e.touches[0].clientY - hiddenPull.y >= HIDDEN_PULL_PX) hiddenPull.ready = true;
+  }, { passive: true });
+
+  const endHiddenPull = () => {
+    const ready = hiddenPull && hiddenPull.ready;
+    hiddenPull = null;
+    if (ready) unlockHidden();
+  };
+  gridHolder.addEventListener('touchend', endHiddenPull, { passive: true });
+  gridHolder.addEventListener('touchcancel', () => { hiddenPull = null; }, { passive: true });
 
   /* выход из режима выбора по системной «назад» */
   el.addEventListener('app-exit-selection', exitSelection);
