@@ -142,11 +142,11 @@ export function mainScreen() {
     }
     if (q) list = list.filter(n => (n.title || '').toLowerCase().includes(q) || htmlToPlain(n.content).toLowerCase().includes(q));
     /* Перерисовка сетки не должна «прыгать»: сохраняем позицию прокрутки.
-       Исключение — поиск: там результаты логично показать сверху. */
+       Исключение — поиск: там результаты логично показать сверху. Прокрутку
+       восстанавливает сам рендер (до расчёта FLIP-перестановки). */
     const keepTop = el.classList.contains('searching') ? 0 : gridHolder.scrollTop;
-    renderNotesGrid(gridHolder, list, q, { sel: { active: sel.active, selected: sel.set, onEnter: sel.onEnter.bind(sel), onToggle: sel.onToggle.bind(sel) }, bounceId });
+    renderNotesGrid(gridHolder, list, q, { sel: { active: sel.active, selected: sel.set, onEnter: sel.onEnter.bind(sel), onToggle: sel.onToggle.bind(sel) }, bounceId, keepTop });
     bounceId = null;
-    if (keepTop) gridHolder.scrollTop = keepTop;
     searchField.classList.toggle('has-text', !!searchInput.value.trim());
     renderChip();
     renderSelBar();

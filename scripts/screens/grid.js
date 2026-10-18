@@ -1,5 +1,6 @@
 /* ============ Общий рендер сетки заметок (обычный + режим выбора) ============ */
 import { fmtCardTime, escapeHtml, highlight, htmlToPlain, bindPress, vibrate } from '../core.js';
+import { morphDisabled } from '../morph.js';
 import { openEditor } from './editor.js';
 
 export function renderNotesGrid(container, notes, q = '', opts = {}) {
@@ -9,6 +10,15 @@ export function renderNotesGrid(container, notes, q = '', opts = {}) {
      обновлении списка. */
   const firstPaint = !container.__gridPainted;
   container.__gridPainted = true;
+
+  /* FLIP: запоминаем, где карточки стояли до перерисовки, чтобы смена порядка
+     (например, отредактированная заметка уехала наверх) шла плавно, а не
+     рывком. Прокрутку сохраняем тоже — по ней же считаем смещения. */
+  const keepTop = container.scrollTop;
+  const before = new Map();
+  if (!firstPaint) {
+    container.querySelectorAll('.note-card').forEach(c => before.set(c.dataset.id, c.getBoundingClientRect()));
+  }
 
   container.innerHTML = '';
   container.classList.toggle('selectable', !!(opts && opts.sel && opts.sel.active));
@@ -34,7 +44,33 @@ export function renderNotesGrid(container, notes, q = '', opts = {}) {
     if (h1 <= h2) { col1.appendChild(card); h1 += m.height; }
     else { col2.appendChild(card); h2 += m.height; }
   });
+  /* Прокрутку возвращаем ДО измерения новых позиций: иначе они посчитались бы
+     от «нулевого» скролла, и карточки поехали бы на величину прокрутки. */
+  container.scrollTop = opts.keepTop != null ? opts.keepTop : keepTop;
+  if (before.size) playReorder(container, before);
   bindPress(container);
+}
+
+/* Плавная перестановка (FLIP): карточке, сменившей место, даём стартовать от
+   прежней позиции и уехать на новую. Новым карточкам анимировать нечего. */
+function playReorder(container, before) {
+  if (morphDisabled()) return;
+  const moved = [];
+  container.querySelectorAll('.note-card').forEach(card => {
+    const o = before.get(card.dataset.id);
+    if (!o) return;
+    const r = card.getBoundingClientRect();
+    const dx = o.left - r.left, dy = o.top - r.top;
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+    card.style.transition = 'none';           /* ставим старт без анимации… */
+    card.style.transform = `translate(${dx}px, ${dy}px)`;
+    moved.push(card);
+  });
+  if (!moved.length) return;
+  void container.offsetWidth;
+  requestAnimationFrame(() => {               /* …и отпускаем — едет transition из CSS */
+    moved.forEach(card => { card.style.transition = ''; card.style.transform = ''; });
+  });
 }
 
 /* ---- Правила размеров карточки в общем списке ----

@@ -53,42 +53,41 @@ reduced = false;
 
 /* --- рост из карточки --- */
 {
-  const kid = makeEl();
-  const el = makeEl([kid]);
+  const el = makeEl([makeEl()]);
   const card = makeEl();
   card.__radius = '20px';
   card.__rect = { left: 20, top: 100, right: 190, bottom: 300, width: 170, height: 200 };
 
   morphOpen(el, card);
   assert.ok(el.classList.contains('morphing'), 'класс перехода не поставлен');
-  assert.match(el.style.transform, /^translate\(20px, 100px\) scale\(/, 'стартовая геометрия не от карточки');
-  assert.equal(kid.style.opacity, '0', 'содержимое должно быть скрыто на время роста');
+  assert.ok(el.classList.contains('morph-hide'), 'содержимое не скрыто на старте');
+  assert.ok(el.classList.contains('morph-fade'), 'переход прозрачности не подготовлен');
+  assert.match(el.style.transform, /^translate3d\(20px, 100px, 0\) scale\(/, 'стартовая геометрия не от карточки');
 
+  /* Радиус компенсируется ПО КАЖДОЙ ОСИ: иначе угол на экране вытянулся бы. */
   const sx = 170 / 390, sy = 200 / 844;
-  const expectR = 20 / Math.min(sx, sy);
-  assert.ok(Math.abs(parseFloat(el.style.borderRadius) - expectR) < 1e-6,
-    `стартовый радиус не компенсирован (${el.style.borderRadius})`);
+  assert.equal(el.style.borderRadius, `${(20 / sx).toFixed(1)}px / ${(20 / sy).toFixed(1)}px`,
+    `стартовый радиус не компенсирован по осям (${el.style.borderRadius})`);
 
   flush();  /* кадр: уходим в полный экран */
-  assert.equal(el.style.transform, 'translate(0px, 0px) scale(1, 1)');
+  assert.equal(el.style.transform, 'translate3d(0px, 0px, 0) scale(1, 1)');
   assert.equal(el.style.borderRadius, '0px');
 
-  await sleep(140);
-  assert.equal(kid.style.opacity, '', 'содержимое должно проявиться к концу роста');
+  await sleep(160);
+  assert.equal(el.classList.contains('morph-hide'), false, 'содержимое должно проявиться к концу роста');
+  assert.equal(el.classList.contains('morph-fade'), true, 'класс перехода нужен до конца');
 
   await sleep(240);
   assert.equal(el.classList.contains('morphing'), false, 'класс перехода не снят');
+  assert.equal(el.classList.contains('morph-fade'), false, 'служебный класс прозрачности не снят');
   assert.equal(el.style.transform, '', 'инлайновый transform не очищен');
   assert.equal(el.style.borderRadius, '');
-  assert.equal(kid.style.transition, '', 'служебный transition у содержимого не снят');
-  assert.equal(kid.style.opacity, '');
   console.log('рост: ok');
 }
 
 /* --- сжатие обратно в карточку --- */
 {
-  const kid = makeEl();
-  const el = makeEl([kid]);
+  const el = makeEl([makeEl()]);
   const card = makeEl();
   card.__radius = '20px';
   card.__rect = { left: 10, top: 50, right: 180, bottom: 250, width: 170, height: 200 };
@@ -96,15 +95,17 @@ reduced = false;
   let ended = false;
   morphClose(el, card, () => { ended = true; });
   assert.ok(el.classList.contains('morphing'));
-  assert.equal(el.style.transform, 'translate(0px, 0px) scale(1, 1)', 'сжатие должно стартовать с полного экрана');
+  assert.equal(el.style.transform, undefined, 'сжатие стартует из текущего (полного) состояния');
   assert.equal(ended, false, 'экран убирается только по окончании');
 
   flush();
-  assert.match(el.style.transform, /^translate\(10px, 50px\) scale\(/, 'не сжался к прямоугольнику карточки');
-  assert.equal(kid.style.opacity, '0', 'содержимое должно гаснуть при сжатии');
+  assert.match(el.style.transform, /^translate3d\(10px, 50px, 0\) scale\(/, 'не сжался к прямоугольнику карточки');
+  assert.ok(el.classList.contains('morph-hide'), 'содержимое должно гаснуть при сжатии');
 
-  await sleep(360);
+  await sleep(380);
   assert.equal(ended, true, 'колбэк окончания не вызван');
+  assert.equal(el.classList.contains('morphing'), false);
+  assert.equal(el.style.transform, '');
   console.log('сжатие: ok');
 }
 

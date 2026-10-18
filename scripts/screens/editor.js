@@ -117,6 +117,7 @@ export function openEditor(id, opts = {}) {
     syncCheckboxes();
     updFolderChip(); updMeta(); renderPlayers(); applyTheme();
     history = [snapshot()]; histIndex = 0; updUndoBtns();
+    baseline = signature();
   })();
 
   /* ---------- Тема холста (цвет + автоконтраст текста) ---------- */
@@ -322,15 +323,27 @@ export function openEditor(id, opts = {}) {
     note.title = titleInput.value.trim();
     note.content = content.innerHTML.replace(/<br\s*\/?>/gi, '\n');
   };
+  /* Отпечаток «того, что видим». baseline — состояние сразу после загрузки;
+     если к закрытию отпечаток не изменился, значит правок не было. */
+  let baseline = '';
+  function signature() {
+    return [titleInput.value, content.innerHTML, note.color || '', note.pinned ? '1' : '0', note.folderId || '', note.audio ? '1' : '0'].join('\u0001');
+  }
   const scheduleSave = debounce(async () => {
     saveContent();
     await Store.saveNoteRaw(note);
   }, 450);
   async function finalSave(redrawDelay = 360) {
     saveContent();
+    /* Ничего не правили — не трогаем базу и не перерисовываем главную.
+       Иначе Store.saveNote() каждый раз обновлял updatedAt, и заметка
+       «переставлялась» в списке при обычном открытии без изменений. */
+    const sig = signature();
+    if (sig === baseline) return;
     const empty = !note.title && !(content.textContent || '').trim() && !note.audio && !(note.content || '').includes('<img') && !(note.content || '').includes('data-drawing');
     if (empty && isNew) { await Store.delNote(note.id); }
     else { await Store.saveNote(note); }
+    baseline = sig;
     /* Главную перерисовываем, когда анимация закрытия уже доехала: иначе
        перестройка сетки попадала в кадры анимации и «дёргала» её. */
     setTimeout(() => document.dispatchEvent(new CustomEvent('notes-changed')), redrawDelay);

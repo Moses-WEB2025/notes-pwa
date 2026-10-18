@@ -158,12 +158,19 @@ body {
 .screen.under::after { opacity: .07; }
 
 /* Морфинг: экран растёт из карточки (и сжимается обратно в неё).
-   Ведём только transform — он доводится композитором, поэтому переход
-   плавный и на iOS. top/bottom здесь не участвуют: высоту экран не меняет. */
+   Ведём только transform и border-radius — transform доводится композитором,
+   поэтому переход плавный и на iOS. top/bottom здесь не участвуют: высоту
+   экран не меняет. */
 .screen.morphing {
   transition: transform var(--dur-3) var(--ease-standard), border-radius var(--dur-3) var(--ease-standard);
   will-change: transform;
 }
+/* Содержимое экрана на время морфинга прозрачно (растёт только поверхность
+   заметки, а не растянутый текст). Переход по прозрачности живёт на отдельном
+   классе morph-fade: его снимают позже, и именно он даёт плавное проявление,
+   когда morph-hide убирают. */
+.screen.morph-hide > * { opacity: 0; }
+.screen.morph-fade > * { transition: opacity var(--dur-1) var(--ease-standard); }
 
 .scroll {
   flex: 1;
