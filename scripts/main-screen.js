@@ -314,7 +314,13 @@ export function mainScreen(opts = {}) {
     h1.style.fontSize = '26px';
     const textW = h1.offsetWidth;               /* offsetWidth игнорирует transform */
     h1.style.fontSize = prev;
-    el.style.setProperty('--h1-x', Math.max(0, (h1row.clientWidth - textW) / 2) + 'px');
+    /* Центрируем по ВНУТРЕННЕЙ ширине строки: текст стартует после левого
+       отступа, поэтому из ширины строки его надо вычесть — иначе заголовок
+       уезжает вправо ровно на величину отступа. Отступы слева и справа равны,
+       так что центр внутренней области совпадает с центром экрана. */
+    const cs = getComputedStyle(h1row);
+    const inner = h1row.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    el.style.setProperty('--h1-x', Math.max(0, (inner - textW) / 2) + 'px');
 
     /* Вертикаль: центр заголовка в схлопнутой строке совпадает с центром иконок
        аппбара. Высоту строки после схлопывания берём из кегля и line-height,
