@@ -152,7 +152,7 @@ export function openEditor(id, opts = {}) {
       ? c
       : c.split('\n').map(line => `<div>${line || '<br>'}</div>`).join('');
     await hydrateImages();
-    syncCheckboxes();
+    normalizeChecklist();
     updFolderChip(); updMeta(); renderPlayers(); applyTheme();
     history = [snapshot()]; histIndex = 0; updUndoBtns();
     baseline = signature();
@@ -188,25 +188,78 @@ export function openEditor(id, opts = {}) {
 
   /* ---------- Служебные ---------- */
   function snapshot() { return { title: titleInput.value, html: content.innerHTML }; }
-  /* Бокс чек-листа — не <input>, а обычный <span>: нативный чекбокс внутри
-     contenteditable на мобильных перехватывал фокус (страница прыгала вниз) и
-     сам переключал состояние, споря с нашим обработчиком. Состояние храним
-     классом `checked` на пункте — он же уходит в разметку заметки.
-     Здесь же переносим отметку со старых пунктов, где был <input>. */
-  function syncCheckboxes() {
-    content.querySelectorAll('.check-item input[type="checkbox"]').forEach(cb => {
-      const item = cb.closest('.check-item');
-      const box = document.createElement('span');
-      box.className = 'box';
-      box.setAttribute('contenteditable', 'false');
-      box.setAttribute('role', 'checkbox');
-      if (cb.checked) item.classList.add('checked');
-      cb.replaceWith(box);
+  /* ---------- Канон пункта чек-листа ----------
+     <div class="check-item" [class="checked"]>
+       <span class="box" contenteditable="false" role="checkbox" aria-checked="…"></span>
+       <span class="lbl">…текст пункта…</span>
+     </div>
+     Бокс — не <input>, а <span>: нативный чекбокс внутри contenteditable на
+     мобильных сам перехватывал фокус и «переезжал» по странице предметом
+     тапа. Отметка живёт классом `checked` на пункте — он же уходит в разметку
+     заметки и переживает перезапуск.
+     normalizeChecklist() приводит готовую разметку к канону: переносит отметку
+     со старых пунктов с <input>, заводит метку, собирает «голые» узлы пункта в
+     .lbl (иначе они не зачёркиваются и ломают flex-раскладку) и — главное —
+     распускает пункт, у которого стёрли бокс: он снова обычный абзац, без
+     навсегда застрявшего зачёркивания. */
+  function normalizeChecklist() {
+    const items = content.querySelectorAll('.check-item');
+    if (!items.length) return;
+    /* Правка разметки не должна сбивать каретку: держим её текстовым смещением. */
+    const wasCollapsed = !!window.getSelection()?.isCollapsed;
+    const off = wasCollapsed ? caretTextOffset() : null;
+    let changed = false;
+    items.forEach(item => {
+      if (!item.isConnected) return;
+      /* Старый пункт с <input type="checkbox"> — переводим на наш бокс. */
+      const legacy = item.querySelector('input[type="checkbox"]');
+      if (legacy) {
+        const box = document.createElement('span');
+        box.className = 'box';
+        box.setAttribute('contenteditable', 'false');
+        box.setAttribute('role', 'checkbox');
+        if (legacy.checked || legacy.hasAttribute('checked')) item.classList.add('checked');
+        legacy.replaceWith(box);
+        changed = true;
+      }
+      let box = item.querySelector('.box');
+      if (box && box.parentElement !== item) { item.insertBefore(box, item.firstChild); changed = true; }
+      /* Бокс стёрли — пункт перестал быть чек-листом: распускаем в обычный абзац. */
+      if (!box) {
+        const div = document.createElement('div');
+        const src = item.querySelector('.lbl') || item;
+        while (src.firstChild) div.appendChild(src.firstChild);
+        if (!div.firstChild) div.appendChild(document.createElement('br'));
+        item.replaceWith(div);
+        changed = true;
+        return;
+      }
+      /* Канон — ровно два узла: бокс и метка. Если структура иная (метки нет,
+         рядом «голый» текст, метка вложена) — пересобираем метку из всего, что
+         в пункте кроме бокса, сохраняя порядок узлов. */
+      const kids = Array.from(item.childNodes);
+      const canonical = kids.length === 2 && kids[0] === box
+        && kids[1].nodeType === 1 && kids[1].classList.contains('lbl');
+      if (!canonical) {
+        const lbl = document.createElement('span');
+        lbl.className = 'lbl';
+        kids.forEach(n => {
+          if (n === box) return;
+          if (n.nodeType === 1 && n.classList.contains('lbl')) {
+            while (n.firstChild) lbl.appendChild(n.firstChild);
+            n.remove();
+            return;
+          }
+          lbl.appendChild(n);
+        });
+        box.after(lbl);
+        changed = true;
+      }
+      const on = item.classList.contains('checked');
+      const aria = on ? 'true' : 'false';
+      if (box.getAttribute('aria-checked') !== aria) { box.setAttribute('aria-checked', aria); changed = true; }
     });
-    content.querySelectorAll('.check-item .box').forEach(box => {
-      const on = box.closest('.check-item')?.classList.contains('checked');
-      box.setAttribute('aria-checked', on ? 'true' : 'false');
-    });
+    if (changed && off != null) setCaretTextOffset(off);
   }
   /* Восстанавливаем «фото» из IndexedDB: в сохранённом HTML лежат data-blob ссылки,
      а src (blob:-URL) после перезапуска недействителен. */
@@ -275,7 +328,7 @@ export function openEditor(id, opts = {}) {
     const wasEditing = document.activeElement === content;
     const off = wasEditing ? caretOffset() : null;
     suppress = true; titleInput.value = s.title; content.innerHTML = s.html; suppress = false;
-    syncCheckboxes();
+    normalizeChecklist();
     if (selImg && !content.contains(selImg)) clearImageSelection();
     if (wasEditing) { content.focus({ preventScroll: true }); setCaretOffset(off); }
     updMeta(); scheduleSave();
@@ -305,36 +358,101 @@ export function openEditor(id, opts = {}) {
   /* Пробел, набранный в конце подчёркнутого/зачёркнутого текста, не должен
      оставаться оформленным — чистим пустое место сразу после ввода. */
   content.addEventListener('input', e => { if (!e.isComposing) stripSpaceDecoration(); });
-  content.addEventListener('pointerdown', e => {
-    const box = e.target.closest('.check-item .box');
-    if (!box || !content.contains(box)) return;
-    /* Гасим и перенос каретки, и нативное поведение — страница не должна
-       дёргаться, а состояние переключаем сами. */
-    e.preventDefault();
+  /* После каждой правки возвращаем пункты чек-листа к канону: если бокс стёрли,
+     пункт снова становится обычным абзацем (зачёркивание уходит вместе с ним). */
+  content.addEventListener('input', e => { if (!e.isComposing) normalizeChecklist(); });
+
+  /* ---------- Отметка пункта чек-листа ----------
+     Тап по боксу переключает пункт. Тап НЕ должен ни двигать каретку, ни
+     открывать клавиатуру, ни прокручивать холст. Ключевой момент: на телефоне
+     каретку и клавиатуру вызывает default-действие самого тапа (touchstart),
+     а не pointerdown, поэтому одного e.preventDefault() в pointerdown мало —
+     холст «улетал» в самый низ. Гасим default на всех трёх событиях, а
+     прокрутку дополнительно блокируем на 0.45 с (lastBoxTap). */
+  let lastBoxTap = 0;
+  const boxFromEvent = e => {
+    const t = e.target;
+    if (!t || t.nodeType !== 1) return null;
+    const box = t.closest && t.closest('.check-item .box');
+    return box && content.contains(box) ? box : null;
+  };
+  function toggleCheckItem(box) {
     const item = box.closest('.check-item');
+    if (!item || !content.contains(item)) return;
     item.classList.toggle('checked');
     box.setAttribute('aria-checked', item.classList.contains('checked') ? 'true' : 'false');
-    commit(); scheduleSave();
+    commit(); scheduleSave(); updMeta();
+  }
+  content.addEventListener('touchstart', e => {
+    const box = boxFromEvent(e);
+    if (!box) return;
+    /* Гасим default уже здесь: именно он на iOS двигает каретку и фокусирует
+       холст, из-за чего страница уезжала вниз. Метку времени ставим сразу —
+       все «следящие» обработчики (focusin, selectionchange, автодосдвиг) на
+       время тапа молчат. */
+    e.preventDefault();
+    lastBoxTap = performance.now();
+  }, { passive: false });
+  content.addEventListener('pointerdown', e => {
+    const box = boxFromEvent(e);
+    if (!box) return;
+    e.preventDefault();
+    lastBoxTap = performance.now();
+    toggleCheckItem(box);
   });
+  content.addEventListener('mousedown', e => {
+    if (boxFromEvent(e)) e.preventDefault();
+  });
+
+  /* Enter внутри пункта: «хвост» метки после каретки переезжает в новый пункт.
+     На пустом пункте — выходим из списка обычным абзацем (как в системных
+     заметках), иначе из списка было не выбраться. Пункт ищем по каретке, а не
+     по e.target: у contenteditable-хоста событие клавиши приходит на сам хост,
+     поэтому e.target.closest('.check-item') всегда пусто и разрезание не
+     срабатывало. */
   content.addEventListener('keydown', e => {
-    if (e.key !== 'Enter' || e.isComposing) return;
-    const item = e.target.closest?.('.check-item');
-    if (!item || !content.contains(item)) return;
+    if (e.key !== 'Enter' || e.isComposing || e.shiftKey) return;
+    const sel = window.getSelection();
+    const item = checkItemAt(sel?.anchorNode);
+    if (!item) return;
     const lbl = item.querySelector('.lbl');
     if (!lbl) return;
-    const sel = window.getSelection();
     if (!sel?.rangeCount || !sel.isCollapsed || !lbl.contains(sel.anchorNode)) return;
-    const tail = sel.getRangeAt(0).cloneRange();
-    tail.selectNodeContents(lbl);
-    tail.setStart(sel.anchorNode, sel.anchorOffset);
-    if (tail.toString().length) return;
     e.preventDefault();
-    const next = makeCheckItem();
-    item.after(next);
-    placeCaretIn(next.querySelector('.lbl'));
+    const r = sel.getRangeAt(0);
+    const head = document.createRange();
+    head.selectNodeContents(lbl);
+    head.setEnd(r.startContainer, r.startOffset);
+    const tail = document.createRange();
+    tail.selectNodeContents(lbl);
+    tail.setStart(r.startContainer, r.startOffset);
+    /* Копии содержимого снимаем ДО правки: после неё старые границы ranges
+       недействительны. */
+    const headFrag = head.cloneContents();
+    const tailFrag = tail.cloneContents();
+    const tailText = tail.toString();
+    if (!(lbl.textContent || '').trim() && !lbl.querySelector('img') && !item.classList.contains('checked')) {
+      const p = document.createElement('div');
+      while (lbl.firstChild) p.appendChild(lbl.firstChild);
+      if (!p.firstChild) p.appendChild(document.createElement('br'));
+      item.replaceWith(p);
+      placeCaretIn(p);
+    } else if (!tailText) {
+      const next = makeCheckItem();
+      item.after(next);
+      placeCaretIn(next.querySelector('.lbl'));
+    } else {
+      lbl.textContent = '';
+      lbl.appendChild(headFrag);
+      const next = makeCheckItem();
+      next.querySelector('.lbl').appendChild(tailFrag);
+      item.after(next);
+      placeCaretIn(next.querySelector('.lbl'));
+    }
     saveSelection();
     commit();
     scheduleSave();
+    updMeta();
   });
 
   /* Тулбар и панель форматирования переезжают в body, пока видны: position:
@@ -433,6 +551,9 @@ export function openEditor(id, opts = {}) {
   function ensureCaretClear() {
     /* Тулбар в body = он лежит поверх холста; в заголовке его нет и запас не нужен. */
     if (!el.isConnected || toolbar.parentElement !== document.body) return;
+    /* Тап по боксу чек-листа не двигает каретку — автодосдвиг холста не нужен.
+       Страховка на случай, если браузер всё-таки «увёл» каретку в конец. */
+    if (performance.now() - lastBoxTap < 450) return;
     const r = caretRect();
     if (!r) return;
     /* Панель и меню занимают один слот, поэтому берём высоту видимой полосы. */
@@ -442,6 +563,9 @@ export function openEditor(id, opts = {}) {
     if (delta > 0.5) bodyWrap.scrollTop += delta;
   }
   el.addEventListener('focusin', () => {
+    /* Тап по боксу чек-листа фокусирует холст, но каретку нам не двигал:
+       автодосдвиг молчит, иначе страница «улетает» к каретке (в самый низ). */
+    if (performance.now() - lastBoxTap < 450) return;
     ensureCaretClear();
     /* Строку система двигает уже после начала анимации клавиатуры. */
     setTimeout(ensureCaretClear, 120);
@@ -1026,6 +1150,9 @@ export function openEditor(id, opts = {}) {
   content.addEventListener('mouseup', saveSelection);
   content.addEventListener('focus', saveSelection);
   document.addEventListener('selectionchange', () => {
+    /* Тап по боксу чек-листа не должен ни переписывать сохранённую каретку,
+       ни тянуть за собой холст — на время тапа просто молчим. */
+    if (performance.now() - lastBoxTap < 450) return;
     const sel = window.getSelection();
     if (sel?.anchorNode && content.contains(sel.anchorNode)) {
       saveSelection(); ensureCaretClear();
@@ -1041,9 +1168,9 @@ export function openEditor(id, opts = {}) {
   formatPanel.addEventListener('mousedown', keepFocus);
 
   /* Вставить пункт чек-листа (нужен и в главном меню, и на панели).
-     Превращаем блок(и) под кареткой/выделением в пункты с чекбоксом, СОХРАНЯЯ
-     их текст: бокс ставится перед уже написанным текстом, а не создаёт пустой
-     новый пункт. Пустой абзац даёт пустой пункт. */
+     Блок(и) под кареткой/выделением превращаются в пункты с боксом, СОХРАНЯЯ
+     свой текст: бокс встаёт ПЕРЕД уже написанным текстом, а не создаёт пустой
+     пункт рядом. Пустой абзац даёт пустой пункт. */
   function makeCheckItem() {
     const item = document.createElement('div');
     item.className = 'check-item';
@@ -1051,18 +1178,39 @@ export function openEditor(id, opts = {}) {
     item.innerHTML = '<span class="box" contenteditable="false" role="checkbox" aria-checked="false"></span><span class="lbl"></span>';
     return item;
   }
+  /* Ближайший пункт чек-листа над узлом (или null). */
+  function checkItemAt(node) {
+    let n = node?.nodeType === 3 ? node.parentElement : node;
+    while (n && n !== content) {
+      if (n.nodeType === 1 && n.classList?.contains('check-item')) return n;
+      n = n.parentElement;
+    }
+    return null;
+  }
   function insertChecklist() {
     runFormat(() => {
-      /* Свежий «голый» текст под кареткой сначала собираем в абзац-<div>,
-         иначе блок не найдётся и получится пустой новый пункт. */
-      if (window.getSelection()?.isCollapsed) ensureCaretBlock();
+      const sel = window.getSelection();
+      /* Каретка (или начало выделения) уже в пункте — добавляем новый пункт ПОД
+         текущим. Раньше здесь блочный <div> вставлялся внутрь <span class="lbl">
+         и разметка ломалась. */
+      const cur = checkItemAt(sel?.anchorNode);
+      if (cur) {
+        const next = makeCheckItem();
+        cur.after(next);
+        placeCaretIn(next.querySelector('.lbl'));
+        return;
+      }
+      if (sel?.isCollapsed) {
+        /* Свежий «голый» текст под кареткой сначала собираем в абзац-<div>,
+           иначе блок не найдётся и получится пустой новый пункт. */
+        ensureCaretBlock();
+      }
       const blocks = targetBlocks().filter(b => b.isConnected && !b.classList?.contains('check-item'));
       if (!blocks.length) {
-        /* Каретка вне блока — вставляем новый пустой пункт. */
-        insertAtCursor(makeCheckItem().outerHTML);
-        const items = content.querySelectorAll('.check-item');
-        const lbl = items[items.length - 1]?.querySelector('.lbl');
-        if (lbl) placeCaretIn(lbl);
+        /* Собирать нечего — добавляем пустой пункт в конец заметки. */
+        const item = makeCheckItem();
+        content.appendChild(item);
+        placeCaretIn(item.querySelector('.lbl'));
         return;
       }
       let firstLbl = null;
@@ -1075,8 +1223,8 @@ export function openEditor(id, opts = {}) {
         if (!firstLbl) firstLbl = lbl;
       });
       /* Перенос узлов мог «потерять» каретку — возвращаем её в текст пункта. */
-      const sel = window.getSelection();
-      if (firstLbl && (!sel?.anchorNode || !content.contains(sel.anchorNode))) placeCaretIn(firstLbl);
+      const s = window.getSelection();
+      if (firstLbl && (!s?.anchorNode || !content.contains(s.anchorNode))) placeCaretIn(firstLbl);
     });
   }
 
