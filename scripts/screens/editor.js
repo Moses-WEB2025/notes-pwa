@@ -226,11 +226,7 @@ export function openEditor(id, opts = {}) {
       if (box && box.parentElement !== item) { item.insertBefore(box, item.firstChild); changed = true; }
       /* Бокс стёрли — пункт перестал быть чек-листом: распускаем в обычный абзац. */
       if (!box) {
-        const div = document.createElement('div');
-        const src = item.querySelector('.lbl') || item;
-        while (src.firstChild) div.appendChild(src.firstChild);
-        if (!div.firstChild) div.appendChild(document.createElement('br'));
-        item.replaceWith(div);
+        itemToBlock(item);
         changed = true;
         return;
       }
@@ -432,10 +428,7 @@ export function openEditor(id, opts = {}) {
     const tailFrag = tail.cloneContents();
     const tailText = tail.toString();
     if (!(lbl.textContent || '').trim() && !lbl.querySelector('img') && !item.classList.contains('checked')) {
-      const p = document.createElement('div');
-      while (lbl.firstChild) p.appendChild(lbl.firstChild);
-      if (!p.firstChild) p.appendChild(document.createElement('br'));
-      item.replaceWith(p);
+      const p = itemToBlock(item);
       placeCaretIn(p);
     } else if (!tailText) {
       const next = makeCheckItem();
@@ -449,6 +442,33 @@ export function openEditor(id, opts = {}) {
       item.after(next);
       placeCaretIn(next.querySelector('.lbl'));
     }
+    saveSelection();
+    commit();
+    scheduleSave();
+    updMeta();
+  });
+
+  /* Backspace в начале пункта убирает бокс — пункт снова обычный абзац.
+     Бокс — contenteditable="false", кареткой его не «взять» и сам он нативно
+     не удалялся, поэтому обрабатываем явно: иначе от чекбокса не избавиться. */
+  content.addEventListener('keydown', e => {
+    if (e.key !== 'Backspace' || e.isComposing) return;
+    const sel = window.getSelection();
+    if (!sel?.rangeCount || !sel.isCollapsed) return;
+    const item = checkItemAt(sel.anchorNode);
+    if (!item) return;
+    const lbl = item.querySelector('.lbl');
+    if (!lbl) return;
+    /* Каретка перед всем содержимым пункта? Бокс (contenteditable=false) стоит
+       первым и текста не несёт — проверке он не мешает. */
+    const pre = document.createRange();
+    pre.selectNodeContents(item);
+    pre.setEnd(sel.anchorNode, sel.anchorOffset);
+    const before = pre.cloneContents();
+    if ((before.textContent || '').length || before.querySelector('img')) return;
+    e.preventDefault();
+    const p = itemToBlock(item);
+    placeCaretIn(p);
     saveSelection();
     commit();
     scheduleSave();
@@ -1186,6 +1206,16 @@ export function openEditor(id, opts = {}) {
       n = n.parentElement;
     }
     return null;
+  }
+  /* Распустить пункт в обычный абзац: текст переезжает в <div>, бокс и отметка
+     уходят. Возвращает новый абзац (в него же ставится каретка). */
+  function itemToBlock(item) {
+    const p = document.createElement('div');
+    const src = item.querySelector('.lbl') || item;
+    while (src.firstChild) p.appendChild(src.firstChild);
+    if (!p.firstChild) p.appendChild(document.createElement('br'));
+    item.replaceWith(p);
+    return p;
   }
   function insertChecklist() {
     runFormat(() => {
