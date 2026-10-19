@@ -251,7 +251,11 @@
 .folder-row .f-count { font: 400 14px/1.3 var(--font); color: var(--text-tertiary); }
 /* «Новая папка» — во всю ширину, плюс в кружке над подписью */
 .folder-new {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  /* Кнопка по умолчанию не растягивается по ширине контейнера (в отличие от
+     .folder-row-div) — задаём ширину как у строки папки с учётом отступов. */
+  width: calc(100% - 40px);
+  box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
   background: var(--surface);
   border-radius: 24px;
   padding: 20px 16px;
