@@ -162,7 +162,8 @@ export function mainScreen(opts = {}) {
       if (selFilter === 'nocat') list = list.filter(n => !n.folderId);
     } else {
       if (filterColor) list = list.filter(n => n.color === filterColor);
-      if (filterFolder) list = list.filter(n => n.folderId === filterFolder);
+      if (filterFolder === NO_FOLDER) list = list.filter(n => !n.folderId);
+      else if (filterFolder) list = list.filter(n => n.folderId === filterFolder);
     }
     if (q) list = list.filter(n => (n.title || '').toLowerCase().includes(q) || htmlToPlain(n.content).toLowerCase().includes(q));
     /* Перерисовка сетки не должна «прыгать»: сохраняем позицию прокрутки.
@@ -222,6 +223,8 @@ export function mainScreen(opts = {}) {
   let folders = [];
   /* id скрытых папок: их заметки на главную не попадают */
   const hiddenFolderIds = new Set();
+  /* Спецзначение фильтра: заметки без папки («Без категории»). */
+  const NO_FOLDER = '__none__';
   let filterColor = null, filterFolder = null;
   let chipEl = null;
 
@@ -247,8 +250,10 @@ export function mainScreen(opts = {}) {
       .filter(n => isPrivate ? isPrivateNote(n) : !isPrivateNote(n))
       .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.updatedAt - a.updatedAt);
     /* Папка могла исчезнуть или перестать подходить режиму (её скрыли) —
-       снимаем фильтр, иначе список остался бы пустым без причины. */
-    if (filterFolder && !folders.some(f => f.id === filterFolder && (isPrivate ? f.hidden : !f.hidden))) filterFolder = null;
+       снимаем фильтр, иначе список остался бы пустым без причины.
+       «Без категории» от папок не зависит и остаётся выбранным. */
+    if (filterFolder && filterFolder !== NO_FOLDER
+        && !folders.some(f => f.id === filterFolder && (isPrivate ? f.hidden : !f.hidden))) filterFolder = null;
     refresh();
   }
 
@@ -261,9 +266,11 @@ export function mainScreen(opts = {}) {
     document.dispatchEvent(new CustomEvent('notes-changed', { detail: { source: el } }));
   };
 
-  /* Чипы-папки под строкой поиска. На главной — обычные папки, на «Скрытых» —
-     скрытые: категории не пересекаются, каждая папка видна только в своём
-     разделе. Показываются всегда, выбор чипа фильтрует список. */
+  /* Чипы-категории под строкой поиска: «Все» слева (выбран по умолчанию),
+     затем папки раздела, справа — «Без категории» (заметки без папки).
+     На главной видны обычные папки, на «Скрытых» — скрытые: категории не
+     пересекаются, каждая папка видна только в своём разделе. Если папок нет,
+     весь ряд скрыт — фильтровать нечего. Выбор чипа фильтрует список. */
   function renderFolderTabs() {
     const visible = folders.filter(f => isPrivate ? f.hidden : !f.hidden);
     if (!visible.length) {
@@ -273,18 +280,22 @@ export function mainScreen(opts = {}) {
     }
     folderTabs.classList.remove('hidden');
     folderTabs.replaceChildren();
-    for (const f of visible) {
+
+    const make = (label, value, icon) => {
       const b = document.createElement('button');
-      b.className = 'folder-tab' + (filterFolder === f.id ? ' active' : '');
-      b.innerHTML = `${f.hidden ? '<span class="material-symbols-rounded">lock</span>' : ''}${escapeHtml(f.name)}`;
-      /* Повторный тап по выбранной папке снимает фильтр. */
+      b.className = 'folder-tab' + (filterFolder === value ? ' active' : '');
+      b.innerHTML = `${icon ? `<span class="material-symbols-rounded">${icon}</span>` : ''}${escapeHtml(label)}`;
       b.addEventListener('click', () => {
         filterColor = null;
-        filterFolder = filterFolder === f.id ? null : f.id;
+        filterFolder = value;
         refresh();
       });
-      folderTabs.appendChild(b);
-    }
+      return b;
+    };
+
+    folderTabs.appendChild(make('Все', null));
+    for (const f of visible) folderTabs.appendChild(make(f.name, f.id, f.hidden ? 'lock' : null));
+    folderTabs.appendChild(make('Без категории', NO_FOLDER));
   }
 
   function renderChip() {
@@ -387,7 +398,10 @@ export function mainScreen(opts = {}) {
     const foldersEl = openFolders();
     Nav.pushEl(foldersEl);
   });
-  appbar.querySelector('[data-a=trash]').addEventListener('click', () => Nav.pushEl(openTrashScreen()));
+  /* Корзина знает свой раздел: у «Скрытых» — только их заметки, у главной —
+     только обычные. Иначе удалённые личные заметки всплыли бы на главной. */
+  appbar.querySelector('[data-a=trash]').addEventListener('click', () =>
+    Nav.pushEl(openTrashScreen({ mode: isPrivate ? 'hidden' : 'main' })));
   appbar.querySelector('[data-a=sel-close]').addEventListener('click', exitSelection);
   appbar.querySelector('[data-a=sel-all]').addEventListener('click', () => {
     const list = selectionList();
@@ -397,8 +411,12 @@ export function mainScreen(opts = {}) {
     refresh();
   });
   /* В личной папке новая заметка сразу скрытая — иначе она бы ушла на главную
-     и не появилась бы здесь. */
-  fab.addEventListener('click', () => openEditor(null, { folderId: filterFolder, hidden: isPrivate }));
+     и не появилась бы здесь. «Без категории» — не папка, а фильтр: заметка
+     создаётся без папки. */
+  fab.addEventListener('click', () => openEditor(null, {
+    folderId: filterFolder && filterFolder !== NO_FOLDER ? filterFolder : null,
+    hidden: isPrivate,
+  }));
 
   /* кнопки режима выбора */
   selBar.addEventListener('click', async e => {

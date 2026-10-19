@@ -1,8 +1,12 @@
-/* ============ Корзина ============ */
+/* ============ Корзина ============
+   Корзина у каждого раздела своя: на главной — обычные заметки, на «Скрытых» —
+   личные (скрытые или из скрытой папки). Так удалённые личные заметки не
+   всплывают на главной и наоборот. */
 import { Store, escapeHtml, bindPress, Nav } from '../core.js';
 import { toast, confirmSheet } from '../components/ui.js';
 
-export function openTrashScreen() {
+export function openTrashScreen(opts = {}) {
+  const isPrivate = opts.mode === 'hidden';
   const tEl = document.createElement('div');
   tEl.className = 'screen trash-screen';
 
@@ -16,8 +20,12 @@ export function openTrashScreen() {
 
   const sc = tEl.querySelector('.scroll');
   const fill = async () => {
-    const all = await Store.notes();
-    const del = all.filter(n => n.deleted).sort((a, b) => b.updatedAt - a.updatedAt);
+    const [all, folders] = await Promise.all([Store.notes(), Store.folders()]);
+    const hiddenFolderIds = new Set(folders.filter(f => f.hidden).map(f => f.id));
+    const isPrivateNote = n => !!n.hidden || !!(n.folderId && hiddenFolderIds.has(n.folderId));
+    const del = all
+      .filter(n => n.deleted && (isPrivate ? isPrivateNote(n) : !isPrivateNote(n)))
+      .sort((a, b) => b.updatedAt - a.updatedAt);
     sc.innerHTML = `
       <div class="trash-banner">Заметки, находящиеся в корзине более 30 дней, были безвозвратно удалены</div>
       ${del.length ? '' : `

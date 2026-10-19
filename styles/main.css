@@ -45,7 +45,8 @@
    Цвет фона совпадает с фоном экрана, так что в покое шапка выглядит как прежде. */
 .main-screen .appbar,
 .main-screen .h1-row,
-.main-screen .searchbar {
+.main-screen .searchbar,
+.main-screen .folder-tabs {
   position: relative;
   z-index: 12;
   background: var(--bg);
@@ -54,7 +55,8 @@
    иначе поверх холста проступила бы светлая полоса. */
 .main-screen.searching .appbar,
 .main-screen.searching .h1-row,
-.main-screen.searching .searchbar { background: #ececec; }
+.main-screen.searching .searchbar,
+.main-screen.searching .folder-tabs { background: #ececec; }
 
 /* ===== Сжимающаяся шапка при прокрутке списка =====
    Как только список прокручен вниз, строка с крупным заголовком «схлопывается»
@@ -232,16 +234,19 @@
 }
 .cat-chip .material-symbols-rounded { font-size: 17px; font-variation-settings: 'FILL' 1; color: var(--text-secondary); }
 
-/* ===== Ряд чипов-папок под строкой поиска =====
-   На главной видны обычные папки, на «Скрытых» — скрытые: категории не
-   пересекаются. Ряд показывается всегда, пока в разделе есть папки; выбор
-   чипа фильтрует список заметок (повторный тап — снимает фильтр). */
+/* ===== Ряд чипов-категорий под строкой поиска =====
+   «Все» (выбран по умолчанию), папки раздела и «Без категории» справа.
+   На главной — обычные папки, на «Скрытых» — скрытые: категории не
+   пересекаются. Если папок нет, ряд скрыт целиком. Отступы сверху и снизу
+   совпадают (16px = padding-bottom строки поиска), поэтому зазор до строки
+   поиска и до заметок одинаковый. Ряд непрозрачный и поднят над сеткой —
+   при протяжке за край заметки уходят ПОД чипы, а не наползают на них. */
 .folder-tabs {
   flex: none;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 20px 12px;
+  padding: 0 20px 14px;
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -255,7 +260,8 @@
   border: 0;
   background: var(--surface);
   color: var(--text-secondary);
-  border-radius: 20px;
+  /* Прямоугольник с небольшим скруглением — не «таблетка» */
+  border-radius: 10px;
   padding: 8px 15px;
   font: 500 14px/1.2 var(--font);
   white-space: nowrap;
@@ -266,7 +272,8 @@
               color var(--dur-1) ease;
 }
 .folder-tab:active { transform: scale(.95); }
-.folder-tab.active { background: var(--accent-soft); color: var(--accent-deep); font-weight: 600; }
+/* Выбранный чип подсвечивается мягким серым (не акцентным жёлтым) */
+.folder-tab.active { background: var(--surface2); color: var(--text); font-weight: 600; }
 .folder-tab .material-symbols-rounded { font-size: 16px; font-variation-settings: 'FILL' 1; }
 /* В режиме выбора верх занимает ряд фильтров — категории папок там лишние. */
 .main-screen.selecting .folder-tabs { display: none; }
