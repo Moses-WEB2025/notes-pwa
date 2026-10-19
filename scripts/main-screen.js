@@ -395,7 +395,9 @@ export function mainScreen(opts = {}) {
   searchClear.addEventListener('click', () => { searchInput.value = ''; refresh(); });
 
   appbar.querySelector('[data-a=folders]').addEventListener('click', () => {
-    const foldersEl = openFolders();
+    /* Экран папок открывается в разделе экрана: на главной — обычные папки,
+       на «Скрытых» — только скрытые. Разделы не пересекаются. */
+    const foldersEl = openFolders({ mode: isPrivate ? 'hidden' : 'main' });
     Nav.pushEl(foldersEl);
   });
   /* Корзина знает свой раздел: у «Скрытых» — только их заметки, у главной —
