@@ -852,6 +852,142 @@ export function openEditor(id, opts = {}) {
     if (changed && off != null) setCaretTextOffset(off);
   }
 
+  /* ---- Прогрессивное выделение двойным тапом ---- */
+  /* Слово → предложение → абзац → весь текст. Повторный двойной тап по тому
+     же слову поднимает выделение на ступень выше, тап по другому слову
+     начинает заново. Работает и мышью, и пальцем. */
+  const WORD_CH = /[\p{L}\p{N}_'’\-]/u;
+  const BLOCK_TAGS = /^(DIV|P|H1|H2|H3|LI|BLOCKQUOTE)$/;
+  let tapDownPt = null, tapLastAt = 0, tapLastPt = null;
+  let dtWord = null, dtLevel = 0, dtLastAt = 0;
+
+  function firstText(node) { if (node.nodeType === 3) return node; for (const c of node.childNodes) { const t = firstText(c); if (t) return t; } return null; }
+  function lastText(node) { if (node.nodeType === 3) return node; for (let i = node.childNodes.length - 1; i >= 0; i--) { const t = lastText(node.childNodes[i]); if (t) return t; } return null; }
+  /* Текстовая позиция под точкой касания. */
+  function textPosFromPoint(x, y) {
+    let range = null;
+    if (document.caretRangeFromPoint) range = document.caretRangeFromPoint(x, y);
+    else if (document.caretPositionFromPoint) {
+      const p = document.caretPositionFromPoint(x, y);
+      if (p) { range = document.createRange(); range.setStart(p.offsetNode, p.offset); }
+    }
+    if (!range) return null;
+    let node = range.startContainer, off = range.startOffset;
+    if (node.nodeType !== 3) {
+      if (node.nodeType !== 1) return null;
+      const after = node.childNodes[off] && firstText(node.childNodes[off]);
+      const before = off > 0 && lastText(node.childNodes[off - 1]);
+      if (after) { node = after; off = 0; }
+      else if (before) { node = before; off = before.nodeValue.length; }
+      else return null;
+    }
+    return content.contains(node) ? { node, off } : null;
+  }
+  /* Резерв, если браузер не умеет позицию по точке: берём начало выделения. */
+  function selectionPos() {
+    const sel = window.getSelection();
+    if (!sel?.rangeCount) return null;
+    const r = sel.getRangeAt(0);
+    let node = r.startContainer, off = r.startOffset;
+    if (node.nodeType !== 3) {
+      if (node.nodeType !== 1) return null;
+      const after = node.childNodes[off] && firstText(node.childNodes[off]);
+      const before = off > 0 && lastText(node.childNodes[off - 1]);
+      if (after) { node = after; off = 0; }
+      else if (before) { node = before; off = before.nodeValue.length; }
+      else return null;
+    }
+    return content.contains(node) ? { node, off } : null;
+  }
+  function blockOf(node) {
+    let el = node.nodeType === 3 ? node.parentElement : node;
+    while (el && el !== content) {
+      if (el.nodeType === 1 && BLOCK_TAGS.test(el.tagName)) return el;
+      el = el.parentElement;
+    }
+    return content;
+  }
+  function offsetInRoot(root, node, off) {
+    let acc = 0;
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = w.nextNode())) { if (n === node) return acc + off; acc += n.nodeValue.length; }
+    return acc;
+  }
+  function pointInRoot(root, index) {
+    let left = index, last = null;
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = w.nextNode())) { if (left <= n.nodeValue.length) return { node: n, off: left }; left -= n.nodeValue.length; last = n; }
+    return last ? { node: last, off: last.nodeValue.length } : null;
+  }
+  /* Слово вокруг позиции (буквы, цифры, дефис, апостроф). */
+  function wordRangeAt(pos) {
+    const text = pos.node.nodeValue;
+    let s = pos.off, e = pos.off;
+    while (s > 0 && WORD_CH.test(text[s - 1])) s--;
+    while (e < text.length && WORD_CH.test(text[e])) e++;
+    if (s === e) return null;
+    const r = document.createRange();
+    r.setStart(pos.node, s); r.setEnd(pos.node, e);
+    return r;
+  }
+  /* Предложение вокруг позиции — границы те же, что у expandToSentence. */
+  function sentenceRangeAt(pos) {
+    const block = blockOf(pos.node);
+    const full = block.textContent;
+    const idx = offsetInRoot(block, pos.node, pos.off);
+    let s = idx, e = idx;
+    while (s > 0 && !SENT_STOP.test(full[s - 1])) s--;
+    while (e < full.length && !SENT_STOP.test(full[e])) e++;
+    while (s < e && /\s/.test(full[s])) s++;
+    while (e > s && /\s/.test(full[e - 1])) e--;
+    if (e <= s) return null;
+    const a = pointInRoot(block, s), b = pointInRoot(block, e);
+    if (!a || !b) return null;
+    const r = document.createRange();
+    r.setStart(a.node, a.off); r.setEnd(b.node, b.off);
+    return r;
+  }
+  function applyExpand(level, pos, word) {
+    let r;
+    if (level === 1) r = sentenceRangeAt(pos) || word;
+    else if (level === 2) { r = document.createRange(); r.selectNodeContents(blockOf(pos.node)); }
+    else if (level === 3) { r = document.createRange(); r.selectNodeContents(content); }
+    else r = word;
+    if (!r) return;
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+    savedRange = r.cloneRange();
+    if (fmtOpen) syncFormatState();
+  }
+  function onTapUp(e) {
+    const now = performance.now();
+    const pt = { x: e.clientX, y: e.clientY };
+    const isDouble = now - tapLastAt < 320 && tapLastPt && Math.hypot(pt.x - tapLastPt.x, pt.y - tapLastPt.y) < 32;
+    if (!isDouble) { tapLastAt = now; tapLastPt = pt; return; }
+    tapLastAt = 0; tapLastPt = null;
+    const pos = textPosFromPoint(pt.x, pt.y) || selectionPos();
+    if (!pos) return;
+    const word = wordRangeAt(pos);
+    if (!word) return;
+    const same = dtWord && word.startContainer === dtWord.node && word.startOffset === dtWord.start && word.endOffset === dtWord.end;
+    const recent = now - dtLastAt < 1200;
+    dtLevel = (same && recent) ? (dtLevel >= 3 ? 0 : dtLevel + 1) : 0;
+    dtWord = { node: word.startContainer, start: word.startOffset, end: word.endOffset };
+    dtLastAt = now;
+    applyExpand(dtLevel, pos, word);
+  }
+  content.addEventListener('pointerdown', e => { tapDownPt = { x: e.clientX, y: e.clientY }; });
+  content.addEventListener('pointerup', e => {
+    const moved = tapDownPt ? Math.hypot(e.clientX - tapDownPt.x, e.clientY - tapDownPt.y) : 0;
+    tapDownPt = null;
+    if (moved > 12) { tapLastAt = 0; tapLastPt = null; return; }
+    if (e.target?.closest?.('img.rich-img')) return;
+    onTapUp(e);
+  });
+
   function runFormat(mutate, key) {
     ensureBlock();
     focusEditor();
