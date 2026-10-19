@@ -1149,6 +1149,7 @@ export function openEditor(id, opts = {}) {
     tapDownPt = null;
     if (moved > 12) { tapLastAt = 0; tapLastPt = null; return; }
     if (e.target?.closest?.('img.rich-img')) return;
+    if (e.target?.closest?.('.draw-block')) return;
     /* Тап по боксу чек-листа не должен запускать выделение по двойному тапу. */
     if (e.target?.closest?.('.check-item .box')) return;
     onTapUp(e);
@@ -1258,6 +1259,36 @@ export function openEditor(id, opts = {}) {
     });
   }
 
+  /* ---------- Рисунок: бесконечный холст с продолжением ---------- */
+  function insertDrawing(result) {
+    if (!result || !result.dataUrl) return;
+    runFormat(() => {
+      insertAtCursor(`<div class="draw-block" data-drawing="1" data-draw-id="${result.id}"><img class="rich-img" src="${result.dataUrl}" alt="" draggable="false"></div><div><br></div>`);
+    });
+  }
+
+  function openDrawEditor(block) {
+    if (selImg) clearImageSelection();
+    saveSelection();
+    content.blur();
+    const drawId = block?.getAttribute('data-draw-id') || null;
+    const img = block?.querySelector('img');
+    openDrawing(async (res) => {
+      if (res === null) return;                 // отмена — ничего не меняем
+      if (!res.dataUrl) {                        // всё стёрли — убираем рисунок
+        if (block) { block.remove(); commit(); scheduleSave(); updMeta(); }
+        return;
+      }
+      if (block && img) {
+        img.src = res.dataUrl;
+        if (!block.hasAttribute('data-draw-id')) block.setAttribute('data-draw-id', res.id || '');
+        commit(); scheduleSave(); updMeta();
+      } else {
+        insertDrawing(res);
+      }
+    }, { drawId, imageSrc: (!drawId && img) ? img.src : null });
+  }
+
   /* Главное нижнее меню: «Т» раскрывает панель, остальные — вставка контента. */
   toolbar.querySelectorAll('.tool').forEach(btn => btn.addEventListener('click', () => {
     vibrate(8);
@@ -1278,13 +1309,7 @@ export function openEditor(id, opts = {}) {
     } else if (k === 'image') {
       pickImage();
     } else if (k === 'draw') {
-      saveSelection();
-      content.blur();
-      openDrawing(async (dataUrl) => {
-        runFormat(() => {
-          insertAtCursor(`<div data-drawing="1"><img class="rich-img" src="${dataUrl}" alt=""></div><div><br></div>`);
-        });
-      });
+      openDrawEditor(null);
     } else if (k === 'check') {
       insertChecklist();
     }
@@ -1990,11 +2015,19 @@ export function openEditor(id, opts = {}) {
   /* Жест: обычный тап по фото открывает редактирование; на выделенном — перетаскивание */
   let pressImg = null, pressFrom = null, pressAt = 0, imgTouchAt = 0;
   const cancelPress = () => { pressImg = null; pressFrom = null; };
-  const isImgTarget = t => !!(t && t.closest && t.closest('img.rich-img'));
+  const isImgTarget = t => !!(t && t.closest && t.closest('img.rich-img') && !t.closest('[data-drawing]'));
 
   /* тап по фото не должен ставить каретку и открывать клавиатуру холста */
   content.addEventListener('pointerdown', e => {
     const t = e.target;
+    const drawBlock = t?.closest?.('.draw-block');
+    if (drawBlock) {
+      e.preventDefault(); e.stopPropagation();
+      imgTouchAt = performance.now();
+      if (document.activeElement === content || document.activeElement === titleInput) { content.blur(); titleInput.blur(); }
+      openDrawEditor(drawBlock);
+      return;
+    }
     if (!isImgTarget(t)) {
       if (selImg) clearImageSelection();
       return;

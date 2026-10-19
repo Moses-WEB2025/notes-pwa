@@ -1,0 +1,385 @@
+/* ============ Рисование: холст, инструменты, палитра ============ */
+.draw-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 260;
+  display: block;
+  pointer-events: none;
+  background: #fff;
+  color: #1c1c1c;
+  overflow: hidden;
+  opacity: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  --dw-safe-top: env(safe-area-inset-top, 0px);
+  --dw-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --dw-spring: cubic-bezier(.22, 1, .32, 1.06);
+  --dw-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: opacity .22s ease;
+}
+.draw-overlay.open { opacity: 1; pointer-events: auto; }
+.draw-overlay.closing { opacity: 0; transition: opacity .18s ease; }
+/* пока открыт холст, тулбар заметки (который может быть порталом в body) не показываем,
+   а сами экраны приложения скрываем — холст полностью непрозрачен и модален */
+body.dw-open > .format-toolbar,
+body.dw-open .format-toolbar { display: none !important; }
+body.dw-open #screens-root { visibility: hidden; }
+
+.dw-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #fff;
+  touch-action: none;
+  cursor: crosshair;
+}
+.draw-overlay[data-tool="select"] .dw-canvas { cursor: default; }
+.draw-overlay[data-tool="eraser"] .dw-canvas { cursor: cell; }
+
+.dw-ui-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ---------- Верхняя панель ---------- */
+.dw-top {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  padding: calc(var(--dw-safe-top) + 4px) 12px 0 20px;
+  transition: transform .34s var(--dw-spring), opacity .22s ease;
+  pointer-events: none;
+}
+.dw-ib {
+  flex: none;
+  width: 44px; height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #1b1b1b;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform .16s var(--dw-spring), color .2s ease, opacity .2s ease, background-color .2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.dw-ib svg { width: 27px; height: 27px; display: block; }
+.dw-ib:active { transform: scale(.86); background: rgba(0, 0, 0, .045); }
+.dw-ib[disabled] { color: #b9b9b9; pointer-events: none; }
+.dw-top-spacer { flex: 1; }
+.dw-ib-check { margin-left: 12px; }
+.dw-ib-check svg { width: 30px; height: 30px; }
+.dw-ib-check.busy { animation: dwBusy .8s ease-in-out infinite; }
+@keyframes dwBusy { 50% { opacity: .3; } }
+
+/* ---------- Панель инструментов ---------- */
+.dw-dock {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 156px;
+  z-index: 5;
+  display: flex;
+  align-items: flex-end;
+  transition: transform .42s var(--dw-spring), opacity .24s ease;
+  pointer-events: none;
+}
+.dw-color {
+  position: absolute;
+  left: 19px;
+  bottom: 62px;
+  width: 32px; height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  z-index: 6;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform .24s var(--dw-spring), opacity .2s ease;
+}
+.dw-color-dot {
+  display: block;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: #000;
+  box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(0, 0, 0, .26), 0 6px 14px rgba(0, 0, 0, .12);
+  transition: background-color .2s ease, transform .18s var(--dw-spring);
+}
+.dw-color:active .dw-color-dot { transform: scale(.9); }
+
+.dw-strip {
+  margin-left: 64px;
+  height: 156px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 0 18px 0 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  touch-action: pan-x;
+  pointer-events: auto;
+}
+.dw-strip::-webkit-scrollbar { display: none; }
+
+.dw-tool {
+  flex: none;
+  height: 136px;
+  margin-bottom: -26px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transform-origin: 50% 100%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .46s var(--dw-spring), filter .3s ease;
+}
+.dw-tool svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+  filter: none;
+  transition: filter .3s ease;
+}
+.dw-tool.is-active { transform: translateY(-22px) scale(1.03); }
+.dw-tool.is-active svg { filter: drop-shadow(0 9px 13px rgba(0, 0, 0, .10)); }
+.dw-tool:not(.is-active):active { transform: translateY(-5px) scale(.985); }
+
+.draw-overlay.open .dw-tool {
+  animation: dwToolIn .5s var(--dw-spring) backwards;
+  animation-delay: calc(var(--i, 0) * 32ms + 40ms);
+}
+@keyframes dwToolIn {
+  from { transform: translateY(22px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ---------- Палитра ---------- */
+.dw-palette {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: calc(var(--dw-safe-bottom) + 36px);
+  z-index: 6;
+  padding: 0 19px;
+  opacity: 0;
+  transform: translateY(calc(100% + 70px));
+  transition: transform .46s var(--dw-spring), opacity .26s ease;
+  pointer-events: none;
+}
+.draw-overlay.palette-open .dw-palette {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.draw-overlay.palette-open .dw-dock { transform: translateY(112%); opacity: 0; pointer-events: none; }
+.draw-overlay.palette-open .dw-color { opacity: 0; transform: scale(.75); pointer-events: none; }
+
+.dw-swatch-card {
+  height: 54px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .10), 0 2px 6px rgba(0, 0, 0, .05);
+  display: flex;
+  align-items: center;
+  padding: 0 26px;
+}
+.dw-swatches {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.dw-swatch {
+  width: 27px; height: 27px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #eee;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color .22s ease, box-shadow .22s ease, transform .2s var(--dw-spring);
+}
+.dw-swatch.is-sel {
+  box-shadow: 0 0 0 3.5px #fff, 0 3px 8px rgba(0, 0, 0, .22);
+  transform: scale(1.02);
+}
+.dw-swatch:active { transform: scale(.86); }
+.draw-overlay.palette-open .dw-swatch {
+  animation: dwSwIn .42s var(--dw-spring) backwards;
+  animation-delay: calc(var(--i, 0) * 26ms + 70ms);
+}
+@keyframes dwSwIn {
+  from { transform: scale(.45); opacity: .25; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.dw-hue {
+  position: relative;
+  height: 31px;
+  margin-top: 10px;
+  border-radius: 16px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .06);
+  touch-action: none;
+}
+.dw-knob {
+  position: absolute;
+  top: 50%;
+  left: 25%;
+  width: 44px; height: 44px;
+  margin: -22px 0 0 -22px;
+  border: 6px solid #fff7df;
+  border-radius: 13px;
+  background: #ffbb1a;
+  box-shadow: 0 0 0 4px rgba(255, 246, 216, .55), 0 7px 16px rgba(0, 0, 0, .13);
+  pointer-events: none;
+  transform: scale(.72);
+  transition: left .17s ease, background-color .2s ease, transform .4s var(--dw-spring);
+}
+.draw-overlay.palette-open .dw-knob { transform: scale(1); }
+
+/* ---------- Полноэкранный режим ---------- */
+.dw-focus-exit {
+  position: absolute;
+  right: 12px;
+  top: calc(var(--dw-safe-top) + 8px);
+  width: 44px; height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #1c1c1c;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .12);
+  display: none;
+  place-items: center;
+  z-index: 7;
+  cursor: pointer;
+}
+.dw-focus-exit svg { width: 26px; height: 26px; }
+.draw-overlay.focus .dw-focus-exit { display: grid; animation: dwFadeIn .3s ease; }
+.draw-overlay.focus .dw-top { transform: translateY(-130%); opacity: 0; pointer-events: none; }
+.draw-overlay.focus .dw-dock { transform: translateY(112%); opacity: 0; pointer-events: none; }
+.draw-overlay.focus .dw-palette { opacity: 0; pointer-events: none; }
+@keyframes dwFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- Выделение и объекты ---------- */
+.dw-obj-chrome {
+  position: absolute;
+  z-index: 2;
+  border: 1.5px dashed rgba(0, 0, 0, .38);
+  border-radius: 8px;
+  pointer-events: none;
+}
+.dw-lasso-chrome {
+  position: absolute;
+  z-index: 2;
+  border: 1.5px dashed rgba(0, 0, 0, .42);
+  pointer-events: none;
+}
+.dw-obj-chrome.hidden, .dw-lasso-chrome.hidden { display: none; }
+.dw-chip {
+  position: absolute;
+  width: 34px; height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #1c1c1c;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .16);
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 3;
+}
+.dw-chip svg { width: 19px; height: 19px; }
+.dw-chip:active { transform: scale(.9); }
+.dw-chip-del { right: -17px; top: -17px; color: #d93025; }
+.dw-lasso-chrome .dw-chip-del { left: 50%; right: auto; top: -46px; margin-left: -17px; }
+.dw-handle {
+  position: absolute;
+  right: -8px; bottom: -8px;
+  width: 16px; height: 16px;
+  padding: 0;
+  border: 1.5px solid #cfcfcf;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .14);
+  pointer-events: auto;
+  touch-action: none;
+  cursor: nwse-resize;
+}
+
+/* ---------- Редактор текста/заметки ---------- */
+.dw-editor {
+  position: absolute;
+  z-index: 3;
+  pointer-events: auto;
+}
+.dw-editor.is-text {
+  outline: 1px dashed rgba(0, 0, 0, .22);
+  outline-offset: 4px;
+  border-radius: 2px;
+  min-width: 40px;
+}
+.dw-editor-ta {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  color: #111;
+  font-family: var(--dw-font);
+  font-weight: 500;
+  font-size: 18px;
+  line-height: var(--dw-ed-line, 24px);
+  caret-color: currentColor;
+  -webkit-user-select: text;
+  user-select: text;
+  touch-action: manipulation;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+.dw-editor.is-note .dw-editor-ta { height: 100%; }
+.dw-editor-ta::placeholder { color: rgba(0, 0, 0, .28); }
+.dw-editor-acts {
+  position: absolute;
+  right: 0;
+  top: -46px;
+  display: flex;
+  gap: 8px;
+}
+.dw-act {
+  width: 33px; height: 33px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #fff;
+  color: #1c1c1c;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, .15);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.dw-act svg { width: 18px; height: 18px; }
+.dw-act.del { color: #d93025; }
+.dw-act:active { transform: scale(.9); }
