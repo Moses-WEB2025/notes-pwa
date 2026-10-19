@@ -82,9 +82,9 @@
   margin-bottom: calc(-1 * 26px * 1.12);
 }
 .main-screen.hd-shrink .h1-row h1 { font-size: 26px; letter-spacing: -.2px; }
-/* В режиме выбора заголовок длинный («Выбрано N объектов») — оставляем его слева,
-   чтобы он не наезжал на иконки, но строку всё равно сжимаем. */
-.main-screen.hd-shrink:not(.selecting) .h1-row h1 {
+/* Заголовок съезжает к линии иконок и в обычном режиме, и в режиме выбора —
+   поведение шапки при прокрутке не зависит от долгого тапа. */
+.main-screen.hd-shrink .h1-row h1 {
   transform: translateX(var(--h1-x, 0px)) translateY(var(--h1-y, 0px));
   /* Заголовок «висит» над аппбаром — не перехватываем тапы по иконкам */
   pointer-events: none;
@@ -275,8 +275,8 @@
 /* Выбранный чип подсвечивается мягким серым (не акцентным жёлтым) */
 .folder-tab.active { background: var(--surface2); color: var(--text); font-weight: 600; }
 .folder-tab .material-symbols-rounded { font-size: 16px; font-variation-settings: 'FILL' 1; }
-/* В режиме выбора верх занимает ряд фильтров — категории папок там лишние. */
-.main-screen.selecting .folder-tabs { display: none; }
+/* Ряд чипов-категорий остаётся и в режиме выбора: при долгом тапе чипы не
+   меняют ни форму, ни состав — меняются только иконки аппбара. */
 
 /* ===== Сетка карточек (masonry) ===== */
 .grid-holder { display: flex; gap: 12px; padding: 2px 20px 130px; align-items: flex-start; }

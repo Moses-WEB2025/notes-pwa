@@ -66,14 +66,6 @@ export function mainScreen(opts = {}) {
   const searchCanvas = document.createElement('div');
   searchCanvas.className = 'search-canvas';
 
-  /* чипы фильтров режима выбора */
-  const chipsRow = document.createElement('div');
-  chipsRow.className = 'chips-row hidden';
-  chipsRow.innerHTML = `
-    <button class="chip active" data-c="all">Все</button>
-    <button class="chip" data-c="notes">Заметки</button>
-    <button class="chip" data-c="nocat">Без категории</button>`;
-
   /* Кнопка «плюс» на «Скрытых» — та же голубая, что и замок при протяжке,
      чтобы страницы различались с первого взгляда. */
   const fab = document.createElement('button');
@@ -94,7 +86,7 @@ export function mainScreen(opts = {}) {
     <button data-sel="move"><span class="material-symbols-rounded">drive_file_move</span><span class="lbl">Переместить</span></button>
     <button data-sel="delete"><span class="material-symbols-rounded">delete</span><span class="lbl">Удалить</span></button>`;
 
-  el.append(appbar, h1row, searchWrap, folderTabs, searchCanvas, chipsRow, gridHolder, fab, tabbar, selBar);
+  el.append(appbar, h1row, searchWrap, folderTabs, searchCanvas, gridHolder, fab, tabbar, selBar);
 
   /* Слой протяжки вниз (только на главной): пока список оттянут за верхний
      край, поверх проявляется замок с подсказкой. Живёт в разметке всегда —
@@ -110,7 +102,6 @@ export function mainScreen(opts = {}) {
   }
 
   /* ---------- режим выбора (долгий тап) ---------- */
-  let selFilter = 'all';
   /* id карточки, которую нужно «отскоком» подсветить после текущего тапа */
   let bounceId = null;
   const sel = {
@@ -133,38 +124,24 @@ export function mainScreen(opts = {}) {
     renderSelBar();
   }
 
+  /* Вход и выход из режима выбора НЕ трогают шапку: чипы-папки, строка поиска
+     и заголовок остаются ровно такими же, как в обычном режиме — меняются лишь
+     иконки аппбара и появляются кружки выбора на карточках. */
   function enterSelection() {
     el.classList.add('selecting');
-    chipsRow.classList.remove('hidden');
     vibrate(12);
   }
   function exitSelection() {
-    sel.active = false; sel.set.clear(); selFilter = 'all';
-    chipsRow.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.c === 'all'));
+    sel.active = false; sel.set.clear();
     el.classList.remove('selecting');
-    chipsRow.classList.add('hidden');
     refresh();
   }
 
-  chipsRow.addEventListener('click', e => {
-    const c = e.target.closest('.chip'); if (!c) return;
-    selFilter = c.dataset.c;
-    chipsRow.querySelectorAll('.chip').forEach(x => x.classList.toggle('active', x === c));
-    sel.set.clear();
-    refresh();
-  });
-
   function refresh() {
     const q = searchInput.value.trim().toLowerCase();
-    let list = notes;
-    if (sel.active) {
-      if (selFilter === 'notes') list = list.filter(n => (n.title || '').trim() || htmlToPlain(n.content));
-      if (selFilter === 'nocat') list = list.filter(n => !n.folderId);
-    } else {
-      if (filterColor) list = list.filter(n => n.color === filterColor);
-      if (filterFolder === NO_FOLDER) list = list.filter(n => !n.folderId);
-      else if (filterFolder) list = list.filter(n => n.folderId === filterFolder);
-    }
+    /* Фильтр один и тот же в обоих режимах: выбор чипа-папки (или цвета) не
+       сбрасывается при входе в режим выбора — чипы остаются «как есть». */
+    let list = filterList(notes);
     if (q) list = list.filter(n => (n.title || '').toLowerCase().includes(q) || htmlToPlain(n.content).toLowerCase().includes(q));
     /* Перерисовка сетки не должна «прыгать»: сохраняем позицию прокрутки.
        Исключение — поиск: там результаты логично показать сверху. Прокрутку
@@ -180,12 +157,19 @@ export function mainScreen(opts = {}) {
     syncHeaderShrink();
   }
 
-  /* заметки, попадающие под текущий фильтр режима выбора */
+  /* Заметки, прошедшие фильтр по чипу-папке («Все» / папка / «Без категории»)
+     и по выбранному цвету. Фильтр общий для обычного режима и режима выбора. */
+  function filterList(list) {
+    if (filterColor) list = list.filter(n => n.color === filterColor);
+    if (filterFolder === NO_FOLDER) list = list.filter(n => !n.folderId);
+    else if (filterFolder) list = list.filter(n => n.folderId === filterFolder);
+    return list;
+  }
+
+  /* заметки, попадающие под текущий фильтр (для «Выбрать все») */
   function selectionList() {
     const q = searchInput.value.trim().toLowerCase();
-    let list = notes;
-    if (selFilter === 'notes') list = list.filter(n => (n.title || '').trim() || htmlToPlain(n.content));
-    if (selFilter === 'nocat') list = list.filter(n => !n.folderId);
+    let list = filterList(notes);
     if (q) list = list.filter(n => (n.title || '').toLowerCase().includes(q) || htmlToPlain(n.content).toLowerCase().includes(q));
     return list;
   }
@@ -193,7 +177,14 @@ export function mainScreen(opts = {}) {
   function renderSelBar() {
     selBar.classList.toggle('hidden', !sel.active);
     const n = sel.set.size;
-    h1row.querySelector('h1').textContent = !sel.active ? TITLE : (n ? `Выбрано ${n} объект${n % 10 === 1 && n % 100 !== 11 ? '' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'а' : 'ов')}` : 'Выбрано');
+    const title = !sel.active ? TITLE : (n ? `Выбрано ${n} объект${n % 10 === 1 && n % 100 !== 11 ? '' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'а' : 'ов')}` : 'Выбрано');
+    const h1 = h1row.querySelector('h1');
+    if (h1.textContent !== title) {
+      h1.textContent = title;
+      /* Текст заголовка сменился, а строка уже схлопнута — пересчитываем его
+         смещение к центру линии иконок под новую ширину. */
+      if (hdShrunk) measureShrinkShift();
+    }
     const any = n > 0;
     selBar.querySelectorAll('button').forEach(b => b.disabled = !any);
     if (!sel.active) return;

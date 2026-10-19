@@ -244,30 +244,6 @@ body {
 .main-screen.selecting .icon-btn[data-a=folders],
 .main-screen.selecting .icon-btn[data-a=trash] { display: none; }
 
-.chips-row {
-  flex: none;
-  display: flex;
-  gap: 8px;
-  padding: 0 20px 12px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.chips-row::-webkit-scrollbar { display: none; }
-.chips-row .chip {
-  flex: none;
-  border: 0;
-  background: var(--surface);
-  color: var(--text-secondary);
-  border-radius: 20px;
-  padding: 9px 16px;
-  font: 500 14px/1.2 var(--font);
-  cursor: pointer;
-  box-shadow: var(--shadow-card);
-  transition: transform var(--dur-1) var(--ease-standard), background-color var(--dur-1) ease;
-}
-.chips-row .chip:active { transform: scale(.95); }
-.chips-row .chip.active { background: var(--surface2); color: var(--text); font-weight: 600; }
-
 /* радио-кружок на карточке */
 .note-card .nc-radio {
   display: none;
