@@ -35,14 +35,14 @@ const HUES = [
 ];
 
 const TOOLS = [
-  { id: 'pen',          label: 'Карандаш',         w: 46, ink: '#1c1c1c' },
-  { id: 'markerBlue',   label: 'Голубой маркер',   w: 46, ink: '#5aaef8', marker: true },
-  { id: 'markerYellow', label: 'Жёлтый маркер',    w: 62, ink: '#ffab3f', marker: true },
-  { id: 'fountain',     label: 'Перо',             w: 46, ink: '#69cf36' },
-  { id: 'eraser',       label: 'Ластик',           w: 58 },
-  { id: 'image',        label: 'Изображение',      w: 78 },
-  { id: 'text',         label: 'Текст',            w: 78, ink: '#1c1c1c' },
-  { id: 'note',         label: 'Заметка',          w: 84, ink: '#1c1c1c' },
+  { id: 'pen',          label: 'Карандаш',         w: 40, ink: '#1c1c1c' },
+  { id: 'markerBlue',   label: 'Голубой маркер',   w: 56, ink: '#5aaef8', marker: true },
+  { id: 'markerYellow', label: 'Жёлтый маркер',    w: 52, ink: '#ffab3f', marker: true },
+  { id: 'fountain',     label: 'Перо',             w: 52, ink: '#69cf36' },
+  { id: 'eraser',       label: 'Ластик',           w: 50 },
+  { id: 'image',        label: 'Изображение',      w: 66, ml: 15 },
+  { id: 'text',         label: 'Текст',            w: 65, ml: 12, ink: '#1c1c1c' },
+  { id: 'note',         label: 'Заметка',          w: 73, ml: 12, ink: '#1c1c1c' },
 ];
 const TOOL_META = Object.fromEntries(TOOLS.map(t => [t.id, t]));
 const DEFAULT_INK = Object.fromEntries(TOOLS.filter(t => t.ink).map(t => [t.id, t.ink]));
@@ -97,7 +97,7 @@ export function openDrawing(onDone, opts = {}) {
     <div class="dw-dock">
       <button type="button" class="dw-color" data-a="color" aria-label="Выбрать цвет"><span class="dw-color-dot"></span></button>
       <div class="dw-strip">
-        ${TOOLS.map((t, i) => `<button type="button" class="dw-tool" data-tool="${t.id}" style="width:${t.w}px;--i:${i}" aria-label="${t.label}">${toolSkin(t.id)}</button>`).join('')}
+        ${TOOLS.map((t, i) => `<button type="button" class="dw-tool" data-tool="${t.id}" style="width:${t.w}px;margin-left:${t.ml || 0}px;--i:${i}" aria-label="${t.label}">${toolSkin(t.id)}</button>`).join('')}
       </div>
     </div>
     <div class="dw-palette" aria-hidden="true">

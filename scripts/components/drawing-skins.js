@@ -6,14 +6,14 @@
    плоское пятно. По умолчанию показывается оригинальный рендер. */
 
 const SKINS = {
-  pen:          { w: 46, h: 203.8, top: -1, mode: 'color',    accent: true,  tool: true },
-  markerBlue:   { w: 62, h: 172.1, top: 5,  mode: 'multiply', accent: true,  tool: true },
+  pen:          { w: 43, h: 190.5, top: 0,  mode: 'color',    accent: true,  tool: true },
+  markerBlue:   { w: 64, h: 177.6, top: 4,  mode: 'multiply', accent: true,  tool: true },
   markerYellow: { w: 68, h: 119.2, top: 9,  mode: 'multiply', accent: true,  tool: true },
-  fountain:     { w: 50, h: 158.6, top: 1,  mode: 'multiply', accent: true,  tool: true },
-  eraser:       { w: 64, h: 125.4, top: -1 },
-  image:        { w: 90, h: 126.0, top: 22 },
-  text:         { w: 90, h: 126.0, top: 15, mode: 'color',    accent: true },
-  note:         { w: 96, h: 129.1, top: 23 },
+  fountain:     { w: 54, h: 171.3, top: 0,  mode: 'multiply', accent: true,  tool: true },
+  eraser:       { w: 48, h: 98,    top: 12, card: true },
+  image:        { w: 66, h: 98,    top: 12, card: true },
+  text:         { w: 65, h: 98,    top: 12, card: true, mode: 'color', accent: true },
+  note:         { w: 73, h: 98,    top: 12, card: true },
 };
 
 const DEFAULTS = {
@@ -33,7 +33,8 @@ function asset(name) {
 export function toolSkin(id) {
   const s = SKINS[id];
   if (!s) return '';
-  return `<span class="dw-skin-box" style="width:${s.w}px;height:${s.h}px;top:${s.top}px"><canvas class="dw-skin${s.tool ? ' dw-skin-tool' : ''}" data-skin="${id}" aria-hidden="true"></canvas></span>`;
+  const cls = s.tool ? ' dw-skin-tool' : (s.card ? ' dw-skin-card' : '');
+  return `<span class="dw-skin-box" style="width:${s.w}px;height:${s.h}px;top:${s.top}px"><canvas class="dw-skin${cls}" data-skin="${id}" aria-hidden="true"></canvas></span>`;
 }
 
 function render(rec) {
@@ -51,6 +52,8 @@ function render(rec) {
   t.fillRect(0, 0, cw, ch);
   t.globalCompositeOperation = 'destination-in';
   t.drawImage(rec.mask, 0, 0, cw, ch);
+  t.globalCompositeOperation = 'destination-in';
+  t.drawImage(rec.base, 0, 0, cw, ch);
   ctx.globalCompositeOperation = rec.mode;
   ctx.drawImage(tint, 0, 0);
   ctx.globalCompositeOperation = 'source-over';

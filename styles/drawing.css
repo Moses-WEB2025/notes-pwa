@@ -94,9 +94,9 @@ body.dw-open #screens-root { visibility: hidden; }
 }
 .dw-color {
   position: absolute;
-  left: 19px;
-  bottom: 62px;
-  width: 32px; height: 32px;
+  left: 18px;
+  bottom: 66px;
+  width: 28px; height: 28px;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -108,7 +108,7 @@ body.dw-open #screens-root { visibility: hidden; }
 }
 .dw-color-dot {
   display: block;
-  width: 32px; height: 32px;
+  width: 28px; height: 28px;
   border-radius: 50%;
   background: #000;
   box-shadow: 0 0 0 2.5px #fff, 0 2px 7px rgba(0, 0, 0, .28), 0 7px 15px rgba(0, 0, 0, .13);
@@ -162,9 +162,11 @@ body.dw-open #screens-root { visibility: hidden; }
   height: 100%;
   pointer-events: none;
 }
-.dw-skin-tool { filter: drop-shadow(0 4px 5px rgba(0, 0, 0, .13)); }
+.dw-skin-tool { filter: none; }
+.dw-skin-card { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .06)); }
 .dw-tool.is-active { transform: translateY(-22px) scale(1.03); }
-.dw-tool.is-active .dw-skin-tool { filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .15)); }
+.dw-tool.is-active .dw-skin-tool { filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .10)); }
+.dw-tool.is-active .dw-skin-card { filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .10)); }
 .dw-tool:not(.is-active):active { transform: translateY(-5px) scale(.985); }
 
 .draw-overlay.open .dw-tool {
