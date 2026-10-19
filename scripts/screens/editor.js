@@ -14,8 +14,8 @@ import { icon } from '../icons.js';
    (общую для всех страниц), поэтому в страницы его не добавляем. */
 const FMT_PAGES = {
   1: [['p', 'case-sensitive', 'Обычный текст'], ['h1', 'heading-1', 'Заголовок 1'], ['h2', 'heading-2', 'Заголовок 2'], ['h3', 'heading-3', 'Заголовок 3'], ['bold', 'bold', 'Жирный'], ['ul', 'list', 'Список']],
-  2: [['italic', 'italic', 'Курсив'], ['underline', 'underline', 'Подчёркнутый'], ['strike', 'strikethrough', 'Зачёркнутый'], ['ul', 'list', 'Список с маркерами'], ['ol', 'list-ordered', 'Нумерованный список'], ['check', 'list-checks', 'Чек-лист']],
-  3: [['indent', 'indent-increase', 'Отступ'], ['quote', 'quote', 'Цитата'], ['align-left', 'align-left', 'По левому краю'], ['align-center', 'align-center', 'По центру'], ['align-right', 'align-right', 'По правому краю'], ['align-justify', 'align-justify', 'По ширине']],
+  2: [['italic', 'italic', 'Курсив'], ['underline', 'underline', 'Подчёркнутый'], ['strike', 'strikethrough', 'Зачёркнутый'], ['ol', 'list-ordered', 'Нумерованный список'], ['check', 'list-checks', 'Чек-лист']],
+  3: [['outdent', 'indent-decrease', 'Уменьшить отступ'], ['indent', 'indent-increase', 'Увеличить отступ'], ['quote', 'quote', 'Цитата'], ['align-left', 'align-left', 'По левому краю'], ['align-center', 'align-center', 'По центру'], ['align-right', 'align-right', 'По правому краю'], ['align-justify', 'align-justify', 'По ширине']],
 };
 function fmtButton(tool, ic, label) {
   return `<button type="button" class="fmt-tool" data-fmt="${tool}" aria-label="${label}">${icon(ic)}</button>`;
@@ -747,6 +747,36 @@ export function openEditor(id, opts = {}) {
     document.execCommand('styleWithCSS', false, true);
     document.execCommand(cmd);
   }
+  /* ---------- Отступ блока ----------
+     Отступ делаем сами, а не через execCommand('indent'): нужен шаг и сторона.
+     У абзаца, выровненного вправо, отступ уходит от правого края — «отводы»
+     работают наоборот. «Уменьшить отступ» серая, пока отступа нет. */
+  const INDENT_STEP = 28;
+  function caretBlock() {
+    let node = window.getSelection()?.anchorNode;
+    if (node?.nodeType === 3) node = node.parentElement;
+    while (node && node !== content) {
+      if (node.nodeType === 1 && /^(DIV|P|H1|H2|H3|BLOCKQUOTE|LI)$/.test(node.tagName)) return node;
+      node = node.parentElement;
+    }
+    return null;
+  }
+  function indentSide(block) {
+    if (!block) return 'left';
+    const ta = block.style.textAlign || getComputedStyle(block).textAlign || '';
+    return /right/i.test(ta) ? 'right' : 'left';
+  }
+  function indentOf(block) {
+    if (!block) return 0;
+    const v = indentSide(block) === 'right' ? block.style.paddingRight : block.style.paddingLeft;
+    return Math.max(0, parseFloat(v) || 0);
+  }
+  function changeIndent(dir) {
+    const block = caretBlock();
+    if (!block) return;
+    const next = Math.max(0, indentOf(block) + dir * INDENT_STEP);
+    block.style[indentSide(block) === 'right' ? 'paddingRight' : 'paddingLeft'] = next ? next + 'px' : '';
+  }
   const FMT_ACTIONS = {
     p: () => document.execCommand('formatBlock', false, 'div'),
     h1: () => toggleBlock('h1'),
@@ -758,7 +788,8 @@ export function openEditor(id, opts = {}) {
     strike: () => { document.execCommand('styleWithCSS', false, true); document.execCommand('strikeThrough'); },
     ul: () => document.execCommand('insertUnorderedList'),
     ol: () => document.execCommand('insertOrderedList'),
-    indent: () => document.execCommand('indent'),
+    indent: () => changeIndent(1),
+    outdent: () => changeIndent(-1),
     quote: () => toggleBlock('blockquote'),
     'align-left': () => alignCmd('justifyLeft'),
     'align-center': () => alignCmd('justifyCenter'),
@@ -780,6 +811,9 @@ export function openEditor(id, opts = {}) {
       'align-right': q('justifyRight'), 'align-justify': q('justifyFull'),
     };
     formatPanel.querySelectorAll('[data-fmt]').forEach(b => b.classList.toggle('active', !!on[b.dataset.fmt]));
+    /* «Уменьшить отступ» неактивна, пока у блока нет отступа — нечего убирать. */
+    const out = formatPanel.querySelector('[data-fmt="outdent"]');
+    if (out) out.disabled = indentOf(caretBlock()) <= 0;
   }
   /* Применение инструментов панели форматирования к тексту заметки. */
   formatPanel.addEventListener('click', e => {

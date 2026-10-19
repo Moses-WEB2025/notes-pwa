@@ -262,6 +262,7 @@ body.fmt-open > .format-panel { opacity: 1; transform: none; pointer-events: aut
 }
 .format-panel .fmt-tool:active { background: var(--surface2); transform: scale(.96); }
 .format-panel .fmt-tool.active { color: var(--accent-deep, #c98b17); background: var(--accent-soft); }
+.format-panel .fmt-tool:disabled { color: var(--text-tertiary); opacity: .4; }
 
 /* Закреплённый «крестик» справа: не скроллится и отделён тонкой линией. */
 .format-panel .fmt-close {
