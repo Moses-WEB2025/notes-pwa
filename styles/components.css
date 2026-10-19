@@ -321,9 +321,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- Выбор фигуры (появляется только для инструмента «Фигуры») ---- */
+/* ---- Выбор фигуры и типа пера (появляются под нужный инструмент) ---- */
 .dr-chips { display: none; gap: 8px; height: auto; padding: 4px 0 2px; }
-.dr-options.shapes .dr-chips { display: flex; animation: drChipsIn var(--dur-2) var(--ease-standard); }
+.dr-options.shapes .dr-chips[data-row="shape"],
+.dr-options.ink .dr-chips[data-row="ink"] { display: flex; animation: drChipsIn var(--dur-2) var(--ease-standard); }
 @keyframes drChipsIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
 .dr-chip {
   flex: 1;

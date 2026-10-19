@@ -4,7 +4,9 @@
    те же радиусы, тени и тайминги анимаций.
 
    Возможности:
-   · кисть и ластик с гладкими линиями (квадратичное сглаживание);
+   · рисование четырьмя инструментами — ручка, карандаш, кисть и маркер
+     (у каждого своя форма кончика, толщина, прозрачность, мягкость края
+     и зернистость), а также ластик; гладкие линии (квадратичное сглаживание);
    · заливка (ведро) и пипетка;
    · фигуры: линия, прямоугольник, круг (контур/заливка);
    · палитра HSV (поле «насыщенность/яркость» + ползунок тона) и пресеты;
@@ -39,6 +41,19 @@ const PRESETS = [
   '#d93025', '#e05555', '#f0616f', '#e05a9b', '#c2418f', '#9b51e0', '#6b4df5', '#4d6ef5',
   '#1a4a76', '#2f9cd6', '#31c9c0', '#2bb673', '#1d9152', '#7cb342', '#f7e04b', '#f2a824',
 ];
+
+/* Инструменты пера. Отличаются формой кончика, толщиной, прозрачностью,
+   «мягкостью» края (размытие через тень) и зернистостью (графит).
+     width — множитель толщины относительно ползунка размера;
+     alpha — множитель прозрачности (маркер полупрозрачный, как текстовыделитель);
+     soft  — доля размера, уходящая в размытый край (0 — резкий край);
+     grain — сила «прогрызания» штриха для эффекта карандаша. */
+const INKS = {
+  pen:    { cap: 'round',  join: 'round', width: 1,    alpha: 1,    soft: 0,   grain: 0 },
+  pencil: { cap: 'round',  join: 'round', width: 0.75, alpha: 0.85, soft: 0,   grain: 0.55 },
+  brush:  { cap: 'round',  join: 'round', width: 1,    alpha: 1,    soft: 0.9, grain: 0 },
+  marker: { cap: 'square', join: 'round', width: 1.35, alpha: 0.6,  soft: 0,   grain: 0 },
+};
 
 /* ---- Цветовые утилиты ---- */
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -115,6 +130,12 @@ export function openDrawing(onDone) {
         </div>
         <span class="dr-val" data-val="opacity">100%</span>
       </div>
+      <div class="dr-opt dr-chips" data-row="ink">
+        <button class="dr-chip active" data-ink="pen">${icon('pen-tool')}<span>Ручка</span></button>
+        <button class="dr-chip" data-ink="pencil">${icon('pencil')}<span>Карандаш</span></button>
+        <button class="dr-chip" data-ink="brush">${icon('paintbrush')}<span>Кисть</span></button>
+        <button class="dr-chip" data-ink="marker">${icon('highlighter')}<span>Маркер</span></button>
+      </div>
       <div class="dr-opt dr-chips" data-row="shape">
         <button class="dr-chip" data-shape="line">${icon('minus')}<span>Линия</span></button>
         <button class="dr-chip" data-shape="rect">${icon('square')}<span>Прямоугольник</span></button>
@@ -124,7 +145,7 @@ export function openDrawing(onDone) {
     </div>
 
     <div class="dr-dock">
-      <button class="dr-tool active" data-tool="brush" aria-label="Кисть">${icon('paintbrush')}</button>
+      <button class="dr-tool active" data-tool="brush" aria-label="Рисование">${icon('paintbrush')}</button>
       <button class="dr-tool" data-tool="eraser" aria-label="Ластик">${icon('eraser')}</button>
       <button class="dr-tool" data-tool="fill" aria-label="Заливка">${icon('paint-bucket')}</button>
       <button class="dr-tool" data-tool="shape" aria-label="Фигуры">${icon('shapes')}</button>
@@ -202,6 +223,7 @@ export function openDrawing(onDone) {
   let size = 14;
   let alpha = 1;
   let tool = 'brush';
+  let ink = 'pen';
   let shape = 'line';
   let shapeFill = false;
   let hue = 0, sat = 0, val = 0.12;
@@ -305,8 +327,16 @@ export function openDrawing(onDone) {
   };
 
   /* ---------- Инструменты рисования ---------- */
+  const inkSpec = () => (tool === 'eraser' ? INKS.pen : (INKS[ink] || INKS.pen));
   const inkColor = () => (tool === 'eraser' ? PAPER : color);
-  const inkAlpha = () => (tool === 'eraser' ? 1 : alpha);
+  const inkAlpha = () => (tool === 'eraser' ? 1 : clamp(alpha * inkSpec().alpha, 0, 1));
+  /* Насколько штрих выходит за «осевую» линию: полуширина с учётом
+     множителя инструмента плюс размытие мягкого края. По этому запасу
+     считаются прямоугольники перерисовки, чтобы края не срезались. */
+  const strokeExtent = (w) => {
+    const s = inkSpec();
+    return w * s.width / 2 + (s.soft ? w * s.soft * 2 : 0) + 2;
+  };
 
   const configCtx = (ctx, w, c) => {
     ctx.lineCap = 'round';
@@ -315,13 +345,30 @@ export function openDrawing(onDone) {
     ctx.strokeStyle = c;
     ctx.fillStyle = c;
   };
+  /* Контур под выбранный инструмент: форма кончика, толщина и, для
+     «мягких» инструментов (кисть), размытый край — он рисуется тенью
+     того же цвета, поэтому линия тает к краям, как настоящая кисть. */
+  const applyInk = (ctx, w, c) => {
+    const s = inkSpec();
+    const lw = w * s.width;
+    ctx.lineCap = s.cap;
+    ctx.lineJoin = s.join;
+    ctx.lineWidth = lw;
+    ctx.strokeStyle = c;
+    ctx.fillStyle = c;
+    ctx.shadowColor = s.soft ? c : 'rgba(0,0,0,0)';
+    ctx.shadowBlur = s.soft ? w * s.soft : 0;
+  };
   /* Сглаживание: каждый новый отрезок — квадратичная кривая, проходящая
      через середины соседних точек. Так линия остаётся мягкой на любом
      числе точек и не «ломается» при быстром движении пальца. */
   const strokeBegin = (ctx, p, w, c) => {
-    configCtx(ctx, w, c);
+    const s = inkSpec();
+    applyInk(ctx, w, c);
+    const lw = w * s.width;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, Math.max(0.5, w / 2), 0, Math.PI * 2);
+    if (s.cap === 'square') ctx.rect(p.x - lw / 2, p.y - lw / 2, lw, lw);
+    else ctx.arc(p.x, p.y, Math.max(0.5, lw / 2), 0, Math.PI * 2);
     ctx.fill();
     return { prev: p, mid: p };
   };
@@ -340,6 +387,29 @@ export function openDrawing(onDone) {
     ctx.moveTo(st.mid.x, st.mid.y);
     ctx.lineTo(st.prev.x, st.prev.y);
     ctx.stroke();
+  };
+  /* Карандаш: «прогрызаем» в уже нарисованном штрихе мелкие светлые
+     пятна, чтобы линия получилась зернистой, как графит по бумаге.
+     Работаем в буфере штриха (destination-out), на холст это не влияет. */
+  const grainPass = (ctx, pts, w) => {
+    if (pts.length < 2) return;
+    const r = Math.max(0.6, w * 0.2);
+    const n = clamp(Math.round(pts.length * 1.2), 24, 700);
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-out';
+    for (let i = 0; i < n; i++) {
+      const p = pts[(Math.random() * pts.length) | 0];
+      ctx.globalAlpha = 0.08 + Math.random() * 0.45;
+      ctx.beginPath();
+      ctx.arc(
+        p.x + (Math.random() - 0.5) * w,
+        p.y + (Math.random() - 0.5) * w,
+        r * (0.35 + Math.random() * 0.9),
+        0, Math.PI * 2
+      );
+      ctx.fill();
+    }
+    ctx.restore();
   };
 
   const shapePath = (ctx, a, b, type, filled, w, c) => {
@@ -386,14 +456,15 @@ export function openDrawing(onDone) {
 
   const beginStroke = (p) => {
     const w = size, c = inkColor(), a = inkAlpha();
-    const dot = { x: p.x - w, y: p.y - w, w: w * 2, h: w * 2 };
+    const ext = strokeExtent(w);
+    const dot = { x: p.x - ext, y: p.y - ext, w: ext * 2, h: ext * 2 };
     fctx.clearRect(0, 0, docW, docH);
-    sess = { kind: 'stroke', pts: [p], w, c, alpha: a, st: null, painted: dot };
+    sess = { kind: 'stroke', pts: [p], w, c, alpha: a, spec: inkSpec(), st: null, painted: dot };
     sess.st = strokeBegin(fctx, p, w, c);
     paintStrokeRegion(normBox(dot));
   };
   const moveStroke = (p) => {
-    const segBox = normBox(boxOfPoints([sess.st.prev, p], sess.w / 2 + 2));
+    const segBox = normBox(boxOfPoints([sess.st.prev, p], strokeExtent(sess.w)));
     strokeStep(fctx, sess.st, p);
     sess.pts.push(p);
     /* Перерисовываем только область нового отрезка: она накрывает и
@@ -407,7 +478,8 @@ export function openDrawing(onDone) {
     sess = null;
     if (!s) return;
     strokeEnd(fctx, s.st);
-    const box = boxOfPoints(s.pts, s.w / 2 + 2);
+    if (s.spec.grain) grainPass(fctx, s.pts, s.w);
+    const box = boxOfPoints(s.pts, strokeExtent(s.w));
     clearLive(s.painted);
     commit(box, () => {
       bctx.save();
@@ -743,15 +815,23 @@ export function openDrawing(onDone) {
   bindSlider(sliderSize, (t) => { size = sizeFromT(t); syncSizeUI(); });
   bindSlider(sliderOpacity, (t) => { alpha = Math.round((0.1 + t * 0.9) * 100) / 100; syncOpacityUI(); });
 
-  /* ---------- Инструменты / фигуры ---------- */
+  /* ---------- Инструменты / тип пера / фигуры ---------- */
   const toolBtns = $$('.dr-tool[data-tool]');
-  const shapeChips = $$('.dr-chip');
+  const inkChips = $$('.dr-chip[data-ink]');
+  const shapeChips = $$('.dr-chip[data-shape]');
   const setTool = (t) => {
     tool = t;
     toolBtns.forEach((b) => b.classList.toggle('active', b.dataset.tool === t));
-    $('.dr-options').classList.toggle('shapes', t === 'shape');
+    const opts = $('.dr-options');
+    opts.classList.toggle('shapes', t === 'shape');
+    opts.classList.toggle('ink', t === 'brush');
+  };
+  const setInk = (v) => {
+    ink = INKS[v] ? v : 'pen';
+    inkChips.forEach((b) => b.classList.toggle('active', b.dataset.ink === ink));
   };
   toolBtns.forEach((b) => b.addEventListener('click', () => { setTool(b.dataset.tool); vibrate(6); }));
+  inkChips.forEach((b) => b.addEventListener('click', () => { setInk(b.dataset.ink); vibrate(6); }));
 
   shapeChips.forEach((b) => b.addEventListener('click', () => {
     if (b.dataset.shape === 'fillmode') {
@@ -1004,6 +1084,7 @@ export function openDrawing(onDone) {
   syncSizeUI();
   syncOpacityUI();
   setTool('brush');
+  setInk('pen');
   shapeChips.forEach((x) => { if (x.dataset.shape === 'line') x.classList.add('active'); });
   setColor('#1c1d21');
   syncHist();
