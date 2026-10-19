@@ -57,12 +57,19 @@ document.addEventListener('app-back', () => {
   /* 6. режим выбора на главном экране */
   const selecting = document.querySelector('.main-screen.selecting');
   if (selecting) { selecting.dispatchEvent(new CustomEvent('app-exit-selection')); return; }
-  /* 7. редактор — сохранить и закрыть как по кнопке «назад» */
+  /* 7. в редакторе раскрыта панель форматирования — «назад» убирает сначала
+     её (это и есть её «отмена»), и только следующий «назад» закрывает заметку:
+     тот же порядок, что и у остальных слоёв выше. */
+  if (document.body.classList.contains('fmt-open')) {
+    document.dispatchEvent(new CustomEvent('fmt-close'));
+    return;
+  }
+  /* 8. редактор — сохранить и закрыть как по кнопке «назад» */
   const top = Nav.top();
   if (top?.classList.contains('editor-screen')) {
     const back = top.querySelector('[data-a=back]');
     if (back) { back.click(); return; }
   }
-  /* 8. обычный экран */
+  /* 9. обычный экран */
   if (!Nav.pop()) { /* уже первый экран — ничего не делаем, приложение остаётся открытым */ }
 });

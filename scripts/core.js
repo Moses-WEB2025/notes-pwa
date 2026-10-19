@@ -275,9 +275,14 @@ document.addEventListener('touchstart', e => {
   if (searchMode && dir !== 1) return;
   const top = screens[screens.length - 1];
   const prev = screens[screens.length - 2] || null;
+  /* Раскрыта панель форматирования в редакторе: тот же жест «назад» убирает
+     панель, а не закрывает заметку (app-back разруливает это первым делом).
+     Экран при этом не тянем: закрытие панели не возвращает его на место, и он
+     застрял бы сдвинутым вбок. */
+  const fmtOpen = document.body.classList.contains('fmt-open');
   gesture = {
     sx: t.clientX, sy: t.clientY, dir,
-    top, prev, search: searchMode,
+    top, prev, search: searchMode, format: fmtOpen,
     started: false, dx: 0,
     lastP: 0, lastT: performance.now(), vx: 0,
   };
@@ -298,7 +303,9 @@ document.addEventListener('touchmove', e => {
 
   if (!gesture.started && dx > 14 && dy < 32 && dx > dy * 0.6) {
     gesture.started = true;
-    gesture.top.classList.add(gesture.search ? 'search-drag' : 'swipe-back');
+    /* «Отмена» панели форматирования ничего не двигает по экрану — ни сам
+       экран, ни поисковую строку; сработает она уже на отпускании. */
+    if (!gesture.format) gesture.top.classList.add(gesture.search ? 'search-drag' : 'swipe-back');
   }
   if (!gesture.started) return;
 
@@ -306,7 +313,7 @@ document.addEventListener('touchmove', e => {
   if (gesture.search) {
     /* Поиск не сдвигает экран — строка просто тянется за пальцем. */
     gesture.top.style.setProperty('--search-dx', Math.max(0, dx) + 'px');
-  } else {
+  } else if (!gesture.format) {
     applyBackGestureDrag(gesture, dx);
   }
   e.preventDefault();
@@ -325,12 +332,14 @@ document.addEventListener('touchend', () => {
 
   if (commit) {
     /* Не сбрасываем позицию вручную: эстафету принимает app-back → Nav.pop()
-       (или закрытие поиска), и всё доезжает до места с той точки, где отпустили. */
+       (или закрытие поиска / панели форматирования), и всё доезжает до места
+       с той точки, где отпустили. */
     document.dispatchEvent(new CustomEvent('app-back'));
     return;
   }
-  /* Отмена жеста — мягкий возврат, а не мгновенный скачок */
-  if (!g.search) settleBackGesture(g);
+  /* Отмена жеста — мягкий возврат, а не мгновенный скачок. Экран, который не
+     двигали (поиск и панель форматирования), возвращать не нужно. */
+  if (!g.search && !g.format) settleBackGesture(g);
 }, { passive: true });
 
 document.addEventListener('touchcancel', () => {
@@ -340,6 +349,7 @@ document.addEventListener('touchcancel', () => {
   if (!g.started) return;
   g.top.classList.remove('swipe-back', 'search-drag');
   if (g.search) { g.top.style.setProperty('--search-dx', '0px'); return; }
+  if (g.format) return;
   settleBackGesture(g);
 });
 

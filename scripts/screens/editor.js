@@ -320,8 +320,17 @@ export function openEditor(id, opts = {}) {
     syncFormatBar();
     if (fmtOpen) { syncFormatState(); ensureCaretClear(); }
   }
+  /* «Отмена» панели жестом или системной кнопкой «назад»: app-back при
+     раскрытой панели присылает fmt-close (см. scripts/app.js), и панель
+     убирается так же, как по «крестику» — главное меню встаёт на её место. */
+  function onFmtClose() {
+    if (!el.isConnected) { document.removeEventListener('fmt-close', onFmtClose); return; }
+    if (fmtOpen) setFormatOpen(false);
+  }
+  document.addEventListener('fmt-close', onFmtClose);
   function teardownKb() {
     document.removeEventListener('kb-change', onKb);
+    document.removeEventListener('fmt-close', onFmtClose);
     document.body.classList.remove('toolbar-on', 'fmt-open');
     dock(toolbar, false); dock(formatPanel, false);
   }
