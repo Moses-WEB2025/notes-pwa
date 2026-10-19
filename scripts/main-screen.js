@@ -323,10 +323,16 @@ export function mainScreen(opts = {}) {
      вычислить — измеряем её, временно применив кегль (кадр не рисуется). */
   function measureShrinkShift() {
     const h1 = h1row.querySelector('h1');
-    const prev = h1.style.fontSize;
+    /* Замер идёт ДО включения .hd-shrink, когда кегль ещё крупный. Ставим кегль
+       вручную, но гасим переход: у h1 есть transition по font-size, поэтому без
+       этого шрифт «доезжает» анимацией, offsetWidth отдаёт ширину старого кегля
+       и центр считается смещённым (заголовок уезжает вправо). */
+    const prevSize = h1.style.fontSize, prevTrans = h1.style.transition;
+    h1.style.transition = 'none';
     h1.style.fontSize = '26px';
     const textW = h1.offsetWidth;               /* offsetWidth игнорирует transform */
-    h1.style.fontSize = prev;
+    h1.style.fontSize = prevSize;
+    h1.style.transition = prevTrans;
     /* Центрируем по ВНУТРЕННЕЙ ширине строки: текст стартует после левого
        отступа, поэтому из ширины строки его надо вычесть — иначе заголовок
        уезжает вправо ровно на величину отступа. Отступы слева и справа равны,
