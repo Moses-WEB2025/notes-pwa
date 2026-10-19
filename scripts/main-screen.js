@@ -172,6 +172,7 @@ export function mainScreen(opts = {}) {
     renderNotesGrid(gridHolder, list, q, { sel: { active: sel.active, selected: sel.set, onEnter: sel.onEnter.bind(sel), onToggle: sel.onToggle.bind(sel) }, bounceId, keepTop });
     bounceId = null;
     searchField.classList.toggle('has-text', !!searchInput.value.trim());
+    renderFolderTabs();
     renderChip();
     renderSelBar();
     /* Прокрутка восстановлена — приводим шапку в соответствие */
@@ -245,29 +246,55 @@ export function mainScreen(opts = {}) {
     notes = allNotes.filter(n => !n.deleted)
       .filter(n => isPrivate ? isPrivateNote(n) : !isPrivateNote(n))
       .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.updatedAt - a.updatedAt);
-    /* Папка могла исчезнуть (удалена или больше не подходит режиму) —
+    /* Папка могла исчезнуть или перестать подходить режиму (её скрыли) —
        снимаем фильтр, иначе список остался бы пустым без причины. */
-    if (filterFolder && !folders.some(f => f.id === filterFolder)) filterFolder = null;
+    if (filterFolder && !folders.some(f => f.id === filterFolder && (isPrivate ? f.hidden : !f.hidden))) filterFolder = null;
     refresh();
   }
 
-  /* Перечитать себя и попросить другие экраны (главную под «Скрытыми»)
-     обновиться — чтобы снятие «скрыто» показывалось на главной сразу,
-     без перехода между экранами. */
+  /* Перечитать себя и попросить соседний экран (главную под «Скрытыми» или
+     наоборот) обновиться — чтобы снятие/установка «скрыто» показывались сразу,
+     без перехода между экранами. Событие помечаем источником, чтобы экран не
+     перечитывал себя дважды. */
   const reload = () => {
     load();
     document.dispatchEvent(new CustomEvent('notes-changed', { detail: { source: el } }));
-    document.dispatchEvent(new CustomEvent('folders-changed', { detail: { source: el } }));
   };
+
+  /* Чипы-папки под строкой поиска. На главной — обычные папки, на «Скрытых» —
+     скрытые: категории не пересекаются, каждая папка видна только в своём
+     разделе. Показываются всегда, выбор чипа фильтрует список. */
+  function renderFolderTabs() {
+    const visible = folders.filter(f => isPrivate ? f.hidden : !f.hidden);
+    if (!visible.length) {
+      folderTabs.classList.add('hidden');
+      folderTabs.replaceChildren();
+      return;
+    }
+    folderTabs.classList.remove('hidden');
+    folderTabs.replaceChildren();
+    for (const f of visible) {
+      const b = document.createElement('button');
+      b.className = 'folder-tab' + (filterFolder === f.id ? ' active' : '');
+      b.innerHTML = `${f.hidden ? '<span class="material-symbols-rounded">lock</span>' : ''}${escapeHtml(f.name)}`;
+      /* Повторный тап по выбранной папке снимает фильтр. */
+      b.addEventListener('click', () => {
+        filterColor = null;
+        filterFolder = filterFolder === f.id ? null : f.id;
+        refresh();
+      });
+      folderTabs.appendChild(b);
+    }
+  }
 
   function renderChip() {
     if (chipEl) { chipEl.remove(); chipEl = null; }
-    if (filterColor || filterFolder) {
+    if (filterColor) {
       const c = COLORS.find(c => c.key === filterColor);
       chipEl = document.createElement('button');
       chipEl.className = 'cat-chip';
-      chipEl.innerHTML = `<span class="material-symbols-rounded">${c ? 'palette' : 'folder_open'}</span>${c ? c.label : 'Папка'}<span class="material-symbols-rounded" style="font-size:16px">close</span>`;
-      chipEl.addEventListener('click', () => { filterColor = null; filterFolder = null; refresh(); });
+      chipEl.innerHTML = `<span class="material-symbols-rounded">palette</span>${c ? c.label : 'Цвет'}<span class="material-symbols-rounded" style="font-size:16px">close</span>`;
+      chipEl.addEventListener('click', () => { filterColor = null; refresh(); });
       searchWrap.after(chipEl);
     }
   }
@@ -383,7 +410,7 @@ export function mainScreen(opts = {}) {
       /* если всё выбранное уже закреплено — снимаем закрепление со всех */
       const target = !(picked.length > 0 && picked.every(x => x.pinned));
       for (const nn of picked) { nn.pinned = target; await Store.saveNote(nn); }
-      toast(target ? 'Закреплено' : 'Откреплено'); exitSelection(); load();
+      toast(target ? 'Закреплено' : 'Откреплено'); exitSelection(); reload();
     } else if (act === 'move') {
       const folders = await Store.folders();
       sheetSections({ title: 'В папку', sections: [api => {
@@ -393,21 +420,21 @@ export function mainScreen(opts = {}) {
         box.addEventListener('click', async ev => {
           const btn = ev.target.closest('[data-f]'); if (!btn) return;
           for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.folderId = btn.dataset.f || null; await Store.saveNote(nn); } }
-          toast('Перемещено'); api.close(); exitSelection(); load();
+          toast('Перемещено'); api.close(); exitSelection(); reload();
         });
         return box;
       }]});
     } else if (act === 'delete') {
       if (await confirmSheet({ title: 'Удалите заметки', text: ids.length === 1 ? 'Удалить эту заметку?' : `Удалить ${ids.length} заметок?` })) {
         for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.deleted = true; await Store.saveNoteRaw(nn); } }
-        toast('Заметки удалены'); exitSelection(); load();
+        toast('Заметки удалены'); exitSelection(); reload();
       }
     } else if (act === 'hide') {
       const picked = ids.map(id => notes.find(x => x.id === id)).filter(Boolean);
       /* скрытые заметки можно вернуть: если всё выбранное уже скрыто — показываем */
       const target = !(picked.length > 0 && picked.every(x => x.hidden));
       for (const nn of picked) { nn.hidden = target; await Store.saveNoteRaw(nn); }
-      toast(target ? 'Скрыто' : 'Показано'); exitSelection(); load();
+      toast(target ? 'Скрыто' : 'Показано'); exitSelection(); reload();
     }
   });
 
@@ -415,11 +442,11 @@ export function mainScreen(opts = {}) {
     attachMenu(card, [
       { icon: 'palette', label: 'Цвет', onClick: () => colorSheetFor(n) },
       { icon: 'folder',  label: 'В папку', onClick: () => folderSheetFor(n) },
-      { icon: 'push_pin', label: n.pinned ? 'Открепить' : 'Закрепить', checked: !!n.pinned, onClick: async () => { n.pinned = !n.pinned; await Store.saveNote(n); toast(n.pinned ? 'Закреплено' : 'Откреплено'); load(); } },
-      { icon: 'content_copy', label: 'Копировать', onClick: async () => { const c = { ...n, id: uid(), createdAt: Date.now(), updatedAt: Date.now() }; await Store.saveNote(c); toast('Скопировано'); load(); } },
+      { icon: 'push_pin', label: n.pinned ? 'Открепить' : 'Закрепить', checked: !!n.pinned, onClick: async () => { n.pinned = !n.pinned; await Store.saveNote(n); toast(n.pinned ? 'Закреплено' : 'Откреплено'); reload(); } },
+      { icon: 'content_copy', label: 'Копировать', onClick: async () => { const c = { ...n, id: uid(), createdAt: Date.now(), updatedAt: Date.now() }; await Store.saveNote(c); toast('Скопировано'); reload(); } },
       { divider: true },
       { icon: 'delete', label: 'Удалить', onClick: async () => {
-        if (await confirmSheet({ title: 'Удалите заметки', text: 'Удалить эту заметку?' })) { await Store.delNote(n.id); toast('Заметка удалена'); load(); }
+        if (await confirmSheet({ title: 'Удалите заметки', text: 'Удалить эту заметку?' })) { await Store.delNote(n.id); toast('Заметка удалена'); reload(); }
       } },
     ]);
   }
@@ -434,7 +461,7 @@ export function mainScreen(opts = {}) {
       }).join('')}</div>`;
       row.querySelectorAll('.swatch').forEach(sw => sw.addEventListener('click', async () => {
         n.color = sw.dataset.k === 'none' ? null : sw.dataset.k;
-        await Store.saveNote(n); api.close(); load();
+        await Store.saveNote(n); api.close(); reload();
       }));
       return row;
     }]});
@@ -452,7 +479,7 @@ export function mainScreen(opts = {}) {
       box.addEventListener('click', async e => {
         const b = e.target.closest('[data-f]'); if (!b) return;
         n.folderId = b.dataset.f || null;
-        await Store.saveNote(n); toast('Перемещено'); api.close(); load();
+        await Store.saveNote(n); toast('Перемещено'); api.close(); reload();
       });
       return box;
     }]});
@@ -536,7 +563,15 @@ export function mainScreen(opts = {}) {
   /* закрытие поиска тем же свайпом «назад» */
   el.addEventListener('app-exit-search', closeSearch);
 
-  document.addEventListener('notes-changed', () => { if (document.body.contains(el)) load(); });
+  /* Соседний экран (главная/«Скрытые»/редактор/папки) изменил заметки или
+     папки — перечитываем себя сразу, без перехода. События от самого себя
+     пропускаем: свой список мы уже обновили в reload(). */
+  const onExternalChange = e => {
+    if (e && e.detail && e.detail.source === el) return;
+    if (document.body.contains(el)) load();
+  };
+  document.addEventListener('notes-changed', onExternalChange);
+  document.addEventListener('folders-changed', onExternalChange);
   load();
 
   return { el, load };

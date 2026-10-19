@@ -232,6 +232,45 @@
 }
 .cat-chip .material-symbols-rounded { font-size: 17px; font-variation-settings: 'FILL' 1; color: var(--text-secondary); }
 
+/* ===== Ряд чипов-папок под строкой поиска =====
+   На главной видны обычные папки, на «Скрытых» — скрытые: категории не
+   пересекаются. Ряд показывается всегда, пока в разделе есть папки; выбор
+   чипа фильтрует список заметок (повторный тап — снимает фильтр). */
+.folder-tabs {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.folder-tabs::-webkit-scrollbar { display: none; }
+.folder-tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: var(--surface);
+  color: var(--text-secondary);
+  border-radius: 20px;
+  padding: 8px 15px;
+  font: 500 14px/1.2 var(--font);
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: transform var(--dur-1) var(--ease-standard),
+              background-color var(--dur-1) ease,
+              color var(--dur-1) ease;
+}
+.folder-tab:active { transform: scale(.95); }
+.folder-tab.active { background: var(--accent-soft); color: var(--accent-deep); font-weight: 600; }
+.folder-tab .material-symbols-rounded { font-size: 16px; font-variation-settings: 'FILL' 1; }
+/* В режиме выбора верх занимает ряд фильтров — категории папок там лишние. */
+.main-screen.selecting .folder-tabs { display: none; }
+
 /* ===== Сетка карточек (masonry) ===== */
 .grid-holder { display: flex; gap: 12px; padding: 2px 20px 130px; align-items: flex-start; }
 .grid-col { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 12px; max-width: 50%; }
@@ -353,6 +392,9 @@ mark.hm { background: transparent; color: #e0473a; font-weight: 700; }
 }
 .fab:active { transform: scale(.92); box-shadow: 0 1px 3px rgba(0,0,0,.15); }
 .fab .material-symbols-rounded { font-size: 26px; font-variation-settings: 'FILL' 1, 'wght' 500; }
+/* «Плюс» на экране «Скрытые» — тот же системный синий, что и замок личной
+   папки, чтобы разделы различались с первого взгляда. */
+.fab-private { background: var(--private-blue); }
 
 /* ===== Таббар ===== */
 .tabbar {

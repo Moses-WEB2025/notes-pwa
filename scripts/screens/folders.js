@@ -22,11 +22,17 @@ export function openFolders() {
 
   el.append(appbar, scroll);
 
+  /* Сообщаем главному экрану и «Скрытым», что папки изменились: они перечитают
+     себя и учтут скрытые папки сразу, без перехода между экранами. */
+  const notify = () => document.dispatchEvent(new CustomEvent('folders-changed'));
+
   async function load() {
     const [folders, allNotes] = await Promise.all([Store.folders(), Store.notes()]);
     /* Скрытые (личная папка) заметки не показываем и не считаем: они доступны
-       только за системной проверкой на экране «Скрытые». */
-    const active = allNotes.filter(n => !n.deleted && !n.hidden);
+       только за системной проверкой на экране «Скрытые». Заметки из скрытых
+       папок тоже личные — на главной их нет. */
+    const hiddenFolderIds = new Set(folders.filter(f => f.hidden).map(f => f.id));
+    const active = allNotes.filter(n => !n.deleted && !n.hidden && !(n.folderId && hiddenFolderIds.has(n.folderId)));
     scroll.innerHTML = '';
 
     /* «Все» — с галочкой (выбрано) */
@@ -37,13 +43,14 @@ export function openFolders() {
     all.addEventListener('click', () => Nav.pop());
     scroll.appendChild(all);
 
-    /* папки */
+    /* папки: скрытые тоже в списке, но с замком — чтобы их можно было вернуть.
+       Их заметки видны только на экране «Скрытые». */
     folders.filter(f => !f.deleted).forEach(f => {
       const row = document.createElement('div');
-      row.className = 'folder-row';
+      row.className = 'folder-row' + (f.hidden ? ' f-hidden' : '');
       row.setAttribute('data-press', '');
-      const cnt = active.filter(n => n.folderId === f.id).length;
-      row.innerHTML = `<span class="material-symbols-rounded f-fold" style="color:var(--accent)">folder</span><span class="f-name">${escapeHtml(f.name)}</span><span class="f-count">${cnt}</span>`;
+      const cnt = allNotes.filter(n => !n.deleted && !n.hidden && n.folderId === f.id).length;
+      row.innerHTML = `<span class="material-symbols-rounded f-fold" style="color:${f.hidden ? 'var(--private-blue)' : 'var(--accent)'}">${f.hidden ? 'lock' : 'folder'}</span><span class="f-name">${escapeHtml(f.name)}</span><span class="f-count">${cnt}</span>`;
       let lp = null, fired = false;
       row.addEventListener('touchstart', () => { fired = false; lp = setTimeout(() => { fired = true; vibrate(20); folderMenu(f); }, 480); }, { passive: true });
       ['touchmove', 'touchend', 'touchcancel'].forEach(ev => row.addEventListener(ev, () => clearTimeout(lp), { passive: true }));
@@ -62,6 +69,7 @@ export function openFolders() {
       if (!name) return;
       await Store.saveFolder({ id: uid(), name, createdAt: Date.now() });
       toast('Папка создана');
+      notify();
       load();
     });
     scroll.appendChild(add);
@@ -98,7 +106,16 @@ export function openFolders() {
     attachMenu(f, [
       { icon: 'edit', label: 'Переименовать', onClick: async () => {
         const name = await promptSheet({ title: 'Переименовать папку', value: f.name });
-        if (name) { f.name = name; await Store.saveFolder(f); load(); }
+        if (name) { f.name = name; await Store.saveFolder(f); notify(); load(); }
+      } },
+      /* Скрытая папка не появляется на главной — её заметки видны только на
+         экране «Скрытые» (там же и сама папка, отдельным чипом). */
+      { icon: f.hidden ? 'visibility' : 'visibility_off', label: f.hidden ? 'Показать папку' : 'Скрыть папку', onClick: async () => {
+        f.hidden = !f.hidden;
+        await Store.saveFolder(f);
+        toast(f.hidden ? 'Папка скрыта' : 'Папка показана');
+        notify();
+        load();
       } },
       { icon: 'delete', label: 'Удалить папку', onClick: async () => {
         if (await confirmSheet({ title: 'Удалите папку', text: `Удалить папку «${f.name}»? Заметки останутся, но потеряют папку.` })) {
@@ -106,6 +123,7 @@ export function openFolders() {
           for (const n of notes.filter(n => n.folderId === f.id)) { n.folderId = null; await Store.saveNoteRaw(n); }
           await Store.delFolder(f.id);
           toast('Папка удалена');
+          notify();
           load();
         }
       } },
