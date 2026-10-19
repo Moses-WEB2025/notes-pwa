@@ -281,6 +281,9 @@ export function openEditor(id, opts = {}) {
   const typed = debounce(() => { commit(); updMeta(); scheduleSave(); }, 350);
   titleInput.addEventListener('input', typed);
   content.addEventListener('input', typed);
+  /* Пробел, набранный в конце подчёркнутого/зачёркнутого текста, не должен
+     оставаться оформленным — чистим пустое место сразу после ввода. */
+  content.addEventListener('input', e => { if (!e.isComposing) stripSpaceDecoration(); });
   content.addEventListener('pointerdown', e => {
     const cb = e.target.closest('.check-item input[type="checkbox"]');
     if (!cb) return;
@@ -614,6 +617,42 @@ export function openEditor(id, opts = {}) {
     savedRange = r.cloneRange();
   }
 
+  /* Каретка как смещение по тексту: переживает перестановку узлов, которую
+     делают очистка пробелов и снятие оформления (узлы не пересоздаются,
+     меняется только их порядок и границы текстовых узлов). */
+  function caretTextOffset() {
+    const sel = window.getSelection();
+    if (!sel?.rangeCount) return null;
+    const r = sel.getRangeAt(0);
+    if (r.startContainer !== content && !content.contains(r.startContainer)) return null;
+    let off = 0;
+    const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = walker.nextNode())) {
+      if (n === r.startContainer) return off + r.startOffset;
+      off += n.nodeValue.length;
+    }
+    return off;
+  }
+  function setCaretTextOffset(offset) {
+    let left = offset;
+    let target = null, tOff = 0;
+    const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = walker.nextNode())) {
+      if (left <= n.nodeValue.length) { target = n; tOff = left; break; }
+      left -= n.nodeValue.length;
+    }
+    const sel = window.getSelection();
+    const r = document.createRange();
+    if (target) r.setStart(target, tOff);
+    else { r.selectNodeContents(content); r.collapse(false); }
+    r.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    savedRange = r.cloneRange();
+  }
+
   function focusEditor() {
     content.focus({ preventScroll: true });
     if (!restoreSelection()) {
@@ -705,11 +744,120 @@ export function openEditor(id, opts = {}) {
     sel.removeAllRanges();
     sel.addRange(r);
   }
+
+  /* ---- Оформление фрагмента: надёжное снятие и запрет на пробелы ---- */
+
+  /* Как хранится каждое оформление. Подчёркивание и зачёркивание делят одно
+     свойство text-decoration, поэтому снимаем только своё значение, не трогая
+     соседнее. */
+  const DECOR = {
+    underline: { kind: 'decoration', value: 'underline' },
+    strikeThrough: { kind: 'decoration', value: 'line-through' },
+    italic: { kind: 'style', prop: 'fontStyle', value: 'italic' },
+  };
+  const INLINE_SELECTOR = 'span, u, s, strike, i, em, font';
+  function decorText(el) {
+    return (el.style?.textDecorationLine || el.style?.textDecoration || '').toLowerCase();
+  }
+  function hasDecor(el, cmd) {
+    if (cmd === 'italic') return (el.style?.fontStyle || '').toLowerCase() === 'italic' || /^(I|EM)$/.test(el.tagName);
+    const dec = decorText(el);
+    if (cmd === 'underline') return dec.includes('underline') || el.tagName === 'U';
+    if (cmd === 'strikeThrough') return /line-through/.test(dec) || /^(S|STRIKE)$/.test(el.tagName);
+    return false;
+  }
+  /* Элементы оформления, задетые выделением (или под кареткой). */
+  function decoratedAtSelection() {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return [];
+    const r = sel.getRangeAt(0);
+    const caretEl = r.collapsed && r.startContainer.nodeType === 3 ? r.startContainer.parentElement : r.startContainer;
+    const out = [];
+    content.querySelectorAll(INLINE_SELECTOR).forEach(el => {
+      if (r.collapsed ? (el === caretEl || el.contains(caretEl)) : r.intersectsNode(el)) out.push(el);
+    });
+    return out;
+  }
+  /* Развернуть элемент, оставив внутри только текст (без оформления). */
+  function unwrapEl(el) {
+    const frag = document.createDocumentFragment();
+    while (el.firstChild) frag.appendChild(el.firstChild);
+    el.replaceWith(frag);
+  }
+  /* Снять конкретное оформление с текста, задетого выделением. */
+  function clearDecor(cmd) {
+    const d = DECOR[cmd];
+    if (!d) return;
+    decoratedAtSelection().forEach(el => {
+      if (!el.isConnected) return;
+      if (d.kind === 'decoration') {
+        const parts = decorText(el).split(/\s+/).filter(x => x && x !== d.value && x !== 'none');
+        el.style.textDecorationLine = parts.length ? parts.join(' ') : '';
+      } else if ((el.style[d.prop] || '').toLowerCase() === d.value) {
+        el.style[d.prop] = '';
+      }
+      const tagHit = (cmd === 'underline' && el.tagName === 'U')
+        || (cmd === 'strikeThrough' && /^(S|STRIKE)$/.test(el.tagName))
+        || (cmd === 'italic' && /^(I|EM)$/.test(el.tagName));
+      /* Оформление снято, обёртка больше не нужна — распускаем её. */
+      if (tagHit || (el.tagName === 'SPAN' && !el.getAttribute('style') && !el.className)) unwrapEl(el);
+    });
+  }
+  /* Переключатель оформления: если оно уже есть — надёжно снимаем (даже при
+     частичном выделении или каретке на границе), иначе применяем. */
+  function toggleInline(cmd) {
+    document.execCommand('styleWithCSS', false, true);
+    let active = false;
+    try { active = document.queryCommandState(cmd); } catch (e) {}
+    if (!active) active = decoratedAtSelection().some(el => hasDecor(el, cmd));
+    const wasCollapsed = !!window.getSelection()?.isCollapsed;
+    if (active) {
+      const off = wasCollapsed ? caretTextOffset() : null;
+      clearDecor(cmd);
+      if (off != null) setCaretTextOffset(off);
+    } else {
+      document.execCommand(cmd);
+    }
+  }
+  /* Пробелы не должны быть подчёркнуты/зачёркнуты — на пустом месте декорация
+     видна как лишняя линия. Вынимаем краевые пробелы из оформленных элементов
+     и снимаем оформление с тех, что состоят только из пробелов. */
+  function stripSpaceDecoration() {
+    const wasCollapsed = !!window.getSelection()?.isCollapsed;
+    const off = wasCollapsed ? caretTextOffset() : null;
+    let changed = false;
+    Array.from(content.querySelectorAll(INLINE_SELECTOR)).forEach(el => {
+      if (!el.isConnected) return;
+      if (!/underline|line-through/.test(decorText(el)) && !/^(U|S|STRIKE)$/.test(el.tagName)) return;
+      changed = true;
+      const first = el.firstChild;
+      if (first?.nodeType === 3) {
+        const m = first.nodeValue.match(/^\s+/);
+        if (m) {
+          if (m[0].length === first.nodeValue.length) el.parentNode.insertBefore(first, el);
+          else { first.nodeValue = first.nodeValue.slice(m[0].length); el.parentNode.insertBefore(document.createTextNode(m[0]), el); }
+        }
+      }
+      const last = el.lastChild;
+      if (last?.nodeType === 3 && last.isConnected) {
+        const m = last.nodeValue.match(/\s+$/);
+        if (m) {
+          if (m[0].length === last.nodeValue.length) el.parentNode.insertBefore(last, el.nextSibling);
+          else { last.nodeValue = last.nodeValue.slice(0, last.nodeValue.length - m[0].length); el.parentNode.insertBefore(document.createTextNode(m[0]), el.nextSibling); }
+        }
+      }
+      /* Остались только пробелы (или пусто) — обёртка не нужна. */
+      if (el.isConnected && !/[^\s]/.test(el.textContent) && !el.querySelector('img')) unwrapEl(el);
+    });
+    if (changed && off != null) setCaretTextOffset(off);
+  }
+
   function runFormat(mutate, key) {
     ensureBlock();
     focusEditor();
     if (INLINE_TOOLS.has(key)) { expandToSentence(); trimSelection(); }
     mutate();
+    if (INLINE_TOOLS.has(key)) stripSpaceDecoration();
     saveSelection();
     commit();
     scheduleSave();
@@ -922,9 +1070,9 @@ export function openEditor(id, opts = {}) {
     h2: () => toggleBlock('h2'),
     h3: () => toggleBlock('h3'),
     bold: () => { document.execCommand('styleWithCSS', false, true); document.execCommand('bold'); },
-    italic: () => { document.execCommand('styleWithCSS', false, true); document.execCommand('italic'); },
-    underline: () => { document.execCommand('styleWithCSS', false, true); document.execCommand('underline'); },
-    strike: () => { document.execCommand('styleWithCSS', false, true); document.execCommand('strikeThrough'); },
+    italic: () => toggleInline('italic'),
+    underline: () => toggleInline('underline'),
+    strike: () => toggleInline('strikeThrough'),
     ul: () => document.execCommand('insertUnorderedList'),
     ol: () => document.execCommand('insertOrderedList'),
     indent: () => changeIndent(1),
