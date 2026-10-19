@@ -41,10 +41,28 @@
 
   <script type="module" src="scripts/app.js"></script>
   <script>
-    // Service Worker — полный офлайн
+    // Service Worker — полный офлайн + авто-обновление.
+    // Без этого залипал старый прекэш: устройство показывало прежнюю версию
+    // даже после деплоя, пока пользователь вручную не очистит данные сайта.
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
+      // Перезагружаемся только если страницей уже управлял воркер
+      // (при первой установке перезагрузка не нужна).
+      const hadController = !!navigator.serviceWorker.controller;
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!hadController || refreshing) return;
+        refreshing = true;
+        location.reload();
+      });
+      window.addEventListener('load', async () => {
+        try {
+          const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+          reg.update();
+          // Вернулись в приложение — проверяем, не вышла ли новая версия
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') reg.update();
+          });
+        } catch (e) {}
       });
     }
 

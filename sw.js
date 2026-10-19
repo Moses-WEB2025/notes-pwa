@@ -1,5 +1,5 @@
 /* Заметки — Service Worker: полный офлайн (прекэш всех ресурсов, fallback навигации) */
-const VERSION = 'notes-v2.4.18';
+const VERSION = 'notes-v2.4.19';
 const PRECACHE = `precache-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 
@@ -47,8 +47,16 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
+      // Обновление это или первая установка: были ли кэши прежних версий
+      const hadOld = keys.some((k) => k !== PRECACHE && k !== RUNTIME);
       await Promise.all(keys.filter((k) => ![PRECACHE, RUNTIME].includes(k)).map((k) => caches.delete(k)));
       await self.clients.claim();
+      // Если вышла новая версия — разово перезагружаем уже открытые окна,
+      // иначе они остаются на старом прекэше до ручной очистки данных сайта.
+      if (hadOld) {
+        const clients = await self.clients.matchAll({ type: 'window' });
+        clients.forEach((c) => c.navigate(c.url));
+      }
     })()
   );
 });
