@@ -1,5 +1,5 @@
 /* ============ Точка входа ============ */
-import { initKeyboard, bindPress, Store, Nav } from './core.js';
+import { initKeyboard, bindPress, Store, Nav, purgeTrash } from './core.js';
 import { refreshEdgeColor } from './edge.js';
 import { mainScreen } from './main-screen.js';
 import { seedDemo } from './seed.js';
@@ -9,10 +9,17 @@ initKeyboard();
 initScrollFx();
 
 (async () => {
-  const notes = await Store.notes();
-  if (!notes.length) {
-    await seedDemo();   // демо-заметки как на скриншоте (только при первом запуске)
+  /* Корзина: безвозвратно убираем всё, что пролежало там дольше 30 дней
+     (вместе с вложениями) — до построения главного экрана. */
+  await purgeTrash();
+
+  /* Демо-заметки — только при самом первом запуске. Отдельная отметка нужна,
+     чтобы они не вернулись, когда корзина полностью очищена и заметок нет. */
+  if (!(await Store.getSet('seeded'))) {
+    if (!(await Store.notes()).length) await seedDemo();
+    await Store.setSet('seeded', true);
   }
+
   const ms = mainScreen();
   document.getElementById('screens-root').appendChild(ms.el);
   /* Системные зоны подкрашиваем под стартовый экран сразу при запуске. */

@@ -66,6 +66,53 @@ export const Store={
     t.oncomplete=res;t.onerror=()=>rej(t.error);});}
 };
 
+/* ---------- Корзина ---------- */
+/* Заметка лежит в корзине ровно TRASH_DAYS дней, затем удаляется безвозвратно
+   вместе со своими вложениями (запись, картинки). Момент попадания в корзину
+   храним отдельным полем deletedAt: updatedAt для этого не годится — там время
+   последней правки, а не удаления (иначе давно не тронутая заметка стёрлась бы
+   сразу же после удаления). */
+export const TRASH_DAYS = 30;
+const TRASH_MS = TRASH_DAYS * 24 * 60 * 60 * 1000;
+
+/* id вложений заметки: аудиозапись и картинки (в разметке — data-blob). */
+export function noteBlobIds(n){
+  const ids=[];
+  if(n&&n.audio&&n.audio.id)ids.push(n.audio.id);
+  const re=/data-blob="([^"]+)"/g;const html=(n&&n.content)||'';let m;
+  while((m=re.exec(html)))ids.push(m[1]);
+  return ids;
+}
+
+/* Перенести заметку в корзину (это и есть «удалить» в приложении). */
+export async function trashNote(n){
+  n.deleted=true;
+  n.deletedAt=Date.now();
+  return Store.saveNoteRaw(n);
+}
+
+/* Безвозвратно удаляет заметки, пролежавшие в корзине дольше TRASH_DAYS,
+   вместе с их вложениями. Возвращает число удалённых — вызывающий код по нему
+   понимает, нужно ли перерисовать список. */
+export async function purgeTrash(){
+  const all=await Store.notes();
+  const now=Date.now();
+  const dead=[];
+  for(const n of all){
+    if(!n.deleted)continue;
+    /* Записи, удалённые до появления отметки времени: не удаляем наугад
+       (мы не знаем, когда они попали в корзину) — просто ставим отметку,
+       и с этого момента у них честные 30 дней. */
+    if(!n.deletedAt){n.deletedAt=now;await Store.saveNoteRaw(n);continue;}
+    if(now-n.deletedAt>TRASH_MS)dead.push(n);
+  }
+  for(const n of dead){
+    for(const id of noteBlobIds(n)){try{await Store.delBlob(id);}catch(e){}}
+    await Store.delNote(n.id);
+  }
+  return dead.length;
+}
+
 /* ---------- Навигация (стек по DOM — никогда не рассинхронизируется) ---------- */
 export const Nav={
   get screens(){ return document.querySelectorAll('#screens-root > .screen'); },

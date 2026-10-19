@@ -1,5 +1,5 @@
 /* ============ Редактор заметки ============ */
-import { Store, Nav, fmtEditorDate, escapeHtml, uid, debounce, vibrate } from '../core.js';
+import { Store, Nav, fmtEditorDate, escapeHtml, uid, debounce, vibrate, trashNote } from '../core.js';
 import { refreshEdgeColor } from '../edge.js';
 import { morphOpen, morphClose, morphDisabled, cardOnScreen, morphPhase } from '../morph.js';
 import { toast, attachMenu, sheetSections, openSheet, confirmSheet, folderPickSheet } from '../components/ui.js';
@@ -435,8 +435,9 @@ export function openEditor(id, opts = {}) {
 
   async function deleteNote() {
     if (await confirmSheet({ title: 'Удалите заметки', text: 'Удалить эту заметку?' })) {
-      await Store.delNote(note.id);
-      toast('Заметка удалена');
+      /* как и везде в приложении: заметка уходит в корзину и лежит там 30 дней */
+      await trashNote(note);
+      toast('Перемещено в корзину');
       document.dispatchEvent(new CustomEvent('notes-changed'));
       teardownKb();
       Nav.pop();

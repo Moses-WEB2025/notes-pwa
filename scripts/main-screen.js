@@ -1,5 +1,5 @@
 /* ============ Главный экран «Заметки» ============ */
-import { Store, escapeHtml, htmlToPlain, debounce, uid, bindPress, Nav, vibrate } from './core.js';
+import { Store, escapeHtml, htmlToPlain, debounce, uid, bindPress, Nav, vibrate, trashNote } from './core.js';
 import { setEdgeColor, refreshEdgeColor } from './edge.js';
 import { toast, confirmSheet, attachMenu, sheetSections, folderPickSheet } from './components/ui.js';
 import { openEditor } from './screens/editor.js';
@@ -442,8 +442,8 @@ export function mainScreen(opts = {}) {
       });
     } else if (act === 'delete') {
       if (await confirmSheet({ title: 'Удалите заметки', text: ids.length === 1 ? 'Удалить эту заметку?' : `Удалить ${ids.length} заметок?` })) {
-        for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.deleted = true; await Store.saveNoteRaw(nn); } }
-        toast('Заметки удалены'); exitSelection(); reload();
+        for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) await trashNote(nn); }
+        toast('Перемещено в корзину'); exitSelection(); reload();
       }
     } else if (act === 'hide') {
       const picked = ids.map(id => notes.find(x => x.id === id)).filter(Boolean);
@@ -462,7 +462,7 @@ export function mainScreen(opts = {}) {
       { icon: 'content_copy', label: 'Копировать', onClick: async () => { const c = { ...n, id: uid(), createdAt: Date.now(), updatedAt: Date.now() }; await Store.saveNote(c); toast('Скопировано'); reload(); } },
       { divider: true },
       { icon: 'delete', label: 'Удалить', onClick: async () => {
-        if (await confirmSheet({ title: 'Удалите заметки', text: 'Удалить эту заметку?' })) { await Store.delNote(n.id); toast('Заметка удалена'); reload(); }
+        if (await confirmSheet({ title: 'Удалите заметки', text: 'Удалить эту заметку?' })) { await trashNote(n); toast('Перемещено в корзину'); reload(); }
       } },
     ]);
   }
