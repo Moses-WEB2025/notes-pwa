@@ -215,10 +215,45 @@ export function openEditor(id, opts = {}) {
     undoBtn.disabled = histIndex <= 0;
     redoBtn.disabled = histIndex >= history.length - 1;
   }
+  /* Место каретки как смещение в тексте — чтобы оно пережило замену innerHTML. */
+  function caretOffset() {
+    const sel = window.getSelection();
+    if (!sel?.rangeCount) return null;
+    const r = sel.getRangeAt(0);
+    if (!content.contains(r.startContainer)) return null;
+    const pre = r.cloneRange();
+    pre.selectNodeContents(content);
+    pre.setEnd(r.startContainer, r.startOffset);
+    return pre.toString().length;
+  }
+  function setCaretOffset(off) {
+    if (off == null) return;
+    const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+    let acc = 0, node;
+    while ((node = walker.nextNode())) {
+      const len = node.nodeValue.length;
+      if (acc + len >= off) {
+        const r = document.createRange();
+        r.setStart(node, off - acc);
+        r.collapse(true);
+        const sel = window.getSelection();
+        sel.removeAllRanges(); sel.addRange(r);
+        savedRange = r.cloneRange();
+        return;
+      }
+      acc += len;
+    }
+  }
   function applyState(s) {
+    /* html заменяется целиком, поэтому каретка «сгорает» вместе со старыми
+       узлами, а фокус может уехать. Возвращаем и фокус, и место каретки —
+       иначе отмена/возврат роняют клавиатуру и нижнее меню. */
+    const wasEditing = document.activeElement === content;
+    const off = wasEditing ? caretOffset() : null;
     suppress = true; titleInput.value = s.title; content.innerHTML = s.html; suppress = false;
     syncCheckboxes();
     if (selImg && !content.contains(selImg)) clearImageSelection();
+    if (wasEditing) { content.focus({ preventScroll: true }); setCaretOffset(off); }
     updMeta(); scheduleSave();
   }
   function doUndo() {
@@ -229,6 +264,13 @@ export function openEditor(id, opts = {}) {
     if (histIndex >= history.length - 1) return;
     histIndex++; applyState(history[histIndex]); updUndoBtns();
   }
+  /* Стрелки отмены/возврата не должны забирать фокус у текста: иначе клавиатура
+     и нижнее меню схлопываются после первого же нажатия. */
+  const keepKb = e => e.preventDefault();
+  [undoBtn, redoBtn].forEach(b => {
+    b.addEventListener('pointerdown', keepKb);
+    b.addEventListener('mousedown', keepKb);
+  });
   undoBtn.addEventListener('click', doUndo);
   redoBtn.addEventListener('click', doRedo);
 
