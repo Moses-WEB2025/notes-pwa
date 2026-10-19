@@ -188,9 +188,24 @@ export function openEditor(id, opts = {}) {
 
   /* ---------- Служебные ---------- */
   function snapshot() { return { title: titleInput.value, html: content.innerHTML }; }
+  /* Бокс чек-листа — не <input>, а обычный <span>: нативный чекбокс внутри
+     contenteditable на мобильных перехватывал фокус (страница прыгала вниз) и
+     сам переключал состояние, споря с нашим обработчиком. Состояние храним
+     классом `checked` на пункте — он же уходит в разметку заметки.
+     Здесь же переносим отметку со старых пунктов, где был <input>. */
   function syncCheckboxes() {
     content.querySelectorAll('.check-item input[type="checkbox"]').forEach(cb => {
-      cb.closest('.check-item')?.classList.toggle('checked', cb.checked);
+      const item = cb.closest('.check-item');
+      const box = document.createElement('span');
+      box.className = 'box';
+      box.setAttribute('contenteditable', 'false');
+      box.setAttribute('role', 'checkbox');
+      if (cb.checked) item.classList.add('checked');
+      cb.replaceWith(box);
+    });
+    content.querySelectorAll('.check-item .box').forEach(box => {
+      const on = box.closest('.check-item')?.classList.contains('checked');
+      box.setAttribute('aria-checked', on ? 'true' : 'false');
     });
   }
   /* Восстанавливаем «фото» из IndexedDB: в сохранённом HTML лежат data-blob ссылки,
@@ -291,14 +306,14 @@ export function openEditor(id, opts = {}) {
      оставаться оформленным — чистим пустое место сразу после ввода. */
   content.addEventListener('input', e => { if (!e.isComposing) stripSpaceDecoration(); });
   content.addEventListener('pointerdown', e => {
-    const cb = e.target.closest('.check-item input[type="checkbox"]');
-    if (!cb) return;
+    const box = e.target.closest('.check-item .box');
+    if (!box || !content.contains(box)) return;
+    /* Гасим и перенос каретки, и нативное поведение — страница не должна
+       дёргаться, а состояние переключаем сами. */
     e.preventDefault();
-    cb.checked = !cb.checked;
-    /* Атрибут (а не только свойство) — чтобы отметка сохранилась в разметке
-       заметки и восстановилась после перезагрузки. */
-    cb.toggleAttribute('checked', cb.checked);
-    cb.closest('.check-item')?.classList.toggle('checked', cb.checked);
+    const item = box.closest('.check-item');
+    item.classList.toggle('checked');
+    box.setAttribute('aria-checked', item.classList.contains('checked') ? 'true' : 'false');
     commit(); scheduleSave();
   });
   content.addEventListener('keydown', e => {
@@ -314,13 +329,9 @@ export function openEditor(id, opts = {}) {
     tail.setStart(sel.anchorNode, sel.anchorOffset);
     if (tail.toString().length) return;
     e.preventDefault();
-    const next = document.createElement('div');
-    next.className = 'check-item';
-    next.dataset.check = '1';
-    next.innerHTML = '<input type="checkbox"><span class="lbl"></span>';
+    const next = makeCheckItem();
     item.after(next);
-    const nl = next.querySelector('.lbl');
-    placeCaretIn(nl);
+    placeCaretIn(next.querySelector('.lbl'));
     saveSelection();
     commit();
     scheduleSave();
@@ -995,7 +1006,7 @@ export function openEditor(id, opts = {}) {
     if (moved > 12) { tapLastAt = 0; tapLastPt = null; return; }
     if (e.target?.closest?.('img.rich-img')) return;
     /* Тап по боксу чек-листа не должен запускать выделение по двойному тапу. */
-    if (e.target?.closest?.('.check-item input[type="checkbox"]')) return;
+    if (e.target?.closest?.('.check-item .box')) return;
     onTapUp(e);
   });
 
@@ -1037,7 +1048,7 @@ export function openEditor(id, opts = {}) {
     const item = document.createElement('div');
     item.className = 'check-item';
     item.dataset.check = '1';
-    item.innerHTML = '<input type="checkbox"><span class="lbl"></span>';
+    item.innerHTML = '<span class="box" contenteditable="false" role="checkbox" aria-checked="false"></span><span class="lbl"></span>';
     return item;
   }
   function insertChecklist() {
