@@ -1,7 +1,7 @@
 /* ============ Главный экран «Заметки» ============ */
 import { Store, escapeHtml, htmlToPlain, debounce, uid, bindPress, Nav, vibrate } from './core.js';
 import { setEdgeColor, refreshEdgeColor } from './edge.js';
-import { toast, confirmSheet, attachMenu, sheetSections } from './components/ui.js';
+import { toast, confirmSheet, attachMenu, sheetSections, folderPickSheet } from './components/ui.js';
 import { openEditor } from './screens/editor.js';
 import { openFolders } from './screens/folders.js';
 import { renderNotesGrid } from './screens/grid.js';
@@ -432,18 +432,16 @@ export function mainScreen(opts = {}) {
       for (const nn of picked) { nn.pinned = target; await Store.saveNote(nn); }
       toast(target ? 'Закреплено' : 'Откреплено'); exitSelection(); reload();
     } else if (act === 'move') {
-      const folders = await Store.folders();
-      sheetSections({ title: 'В папку', sections: [api => {
-        const box = document.createElement('div'); box.className = 'sheet-actions';
-        box.innerHTML = [`<button class="sheet-action" data-f=""><span class="material-symbols-rounded">block</span>Без папки</button>`,
-          ...folders.map(f => `<button class="sheet-action" data-f="${f.id}"><span class="material-symbols-rounded">folder</span>${escapeHtml(f.name)}</button>`)].join('');
-        box.addEventListener('click', async ev => {
-          const btn = ev.target.closest('[data-f]'); if (!btn) return;
-          for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.folderId = btn.dataset.f || null; await Store.saveNote(nn); } }
-          toast('Перемещено'); api.close(); exitSelection(); reload();
-        });
-        return box;
-      }]});
+      /* Тот же выбор папки, что и в меню заметки: «Новая папка» сверху и
+         только папки своего раздела. */
+      folderPickSheet({
+        title: 'В папку',
+        isPrivate,
+        onPick: async fid => {
+          for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.folderId = fid; await Store.saveNote(nn); } }
+          toast('Перемещено'); exitSelection(); reload();
+        },
+      });
     } else if (act === 'delete') {
       if (await confirmSheet({ title: 'Удалите заметки', text: ids.length === 1 ? 'Удалить эту заметку?' : `Удалить ${ids.length} заметок?` })) {
         for (const id of ids) { const nn = notes.find(x => x.id === id); if (nn) { nn.deleted = true; await Store.saveNoteRaw(nn); } }
@@ -487,22 +485,17 @@ export function mainScreen(opts = {}) {
     }]});
   }
 
-  async function folderSheetFor(n) {
-    const folders = await Store.folders();
-    sheetSections({ title: 'В папку', sections: [api => {
-      const box = document.createElement('div');
-      box.className = 'sheet-actions';
-      box.innerHTML = [
-        `<button class="sheet-action" data-f=""><span class="material-symbols-rounded">block</span>Без папки</button>`,
-        ...folders.map(f => `<button class="sheet-action" data-f="${f.id}"><span class="material-symbols-rounded">folder</span>${escapeHtml(f.name)}</button>`)
-      ].join('');
-      box.addEventListener('click', async e => {
-        const b = e.target.closest('[data-f]'); if (!b) return;
-        n.folderId = b.dataset.f || null;
-        await Store.saveNote(n); toast('Перемещено'); api.close(); reload();
-      });
-      return box;
-    }]});
+  /* Перенос заметки в папку: список папок — только своего раздела, сверху
+     «Новая папка». На «Скрытых» это скрытые папки, на главной — обычные. */
+  function folderSheetFor(n) {
+    folderPickSheet({
+      title: 'В папку',
+      isPrivate,
+      onPick: async fid => {
+        n.folderId = fid;
+        await Store.saveNote(n); toast('Перемещено'); reload();
+      },
+    });
   }
 
   /* ---------- протяжка вниз → личная папка (только на главной) ----------

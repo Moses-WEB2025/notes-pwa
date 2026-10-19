@@ -2,7 +2,7 @@
 import { Store, Nav, fmtEditorDate, escapeHtml, uid, debounce, vibrate } from '../core.js';
 import { refreshEdgeColor } from '../edge.js';
 import { morphOpen, morphClose, morphDisabled, cardOnScreen, morphPhase } from '../morph.js';
-import { toast, attachMenu, sheetSections, openSheet, confirmSheet } from '../components/ui.js';
+import { toast, attachMenu, sheetSections, openSheet, confirmSheet, folderPickSheet } from '../components/ui.js';
 import { openRecorder } from '../components/recorder.js';
 import { openDrawing } from '../components/drawing.js';
 import { openImageEditor } from '../components/image-editor.js';
@@ -443,21 +443,21 @@ export function openEditor(id, opts = {}) {
     }
   }
 
+  /* Меню «Папка» в редакторе: сверху «Новая папка», далее папки того же
+     раздела, что и заметка — у личной только скрытые, у обычной только
+     обычные. Разделы не пересекаются. */
   function folderSheet() {
-    sheetSections({ title: 'Папка', sections: [api => {
-      const box = document.createElement('div');
-      box.className = 'sheet-actions';
-      box.innerHTML = [
-        `<button class="sheet-action" data-f=""><span class="material-symbols-rounded">block</span>Без категории</button>`,
-        ...foldersList.map(f => `<button class="sheet-action" data-f="${f.id}"><span class="material-symbols-rounded">folder</span>${escapeHtml(f.name)}</button>`)
-      ].join('');
-      box.addEventListener('click', async e => {
-        const b = e.target.closest('[data-f]'); if (!b) return;
-        note.folderId = b.dataset.f || null;
-        await Store.saveNote(note); updFolderChip(); api.close();
-      });
-      return box;
-    }]});
+    const isPrivate = !!note.hidden || foldersList.some(f => f.hidden && f.id === note.folderId);
+    folderPickSheet({
+      title: 'Папка',
+      isPrivate,
+      onPick: async fid => {
+        note.folderId = fid;
+        foldersList = await Store.folders();
+        await Store.saveNote(note);
+        updFolderChip();
+      },
+    });
   }
 
   function colorSheet() {
