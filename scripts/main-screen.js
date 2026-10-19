@@ -102,12 +102,14 @@ export function mainScreen(opts = {}) {
   }
 
   /* ---------- режим выбора (долгий тап) ---------- */
-  /* id карточки, которую нужно «отскоком» подсветить после текущего тапа */
-  let bounceId = null;
   const sel = {
     active: false,
     set: new Set(),
-    onEnter(id) { this.active = true; this.set.add(id); bounceId = id; enterSelection(); refresh(); },
+    /* Вход в режим выбора НЕ перерисовывает сетку: перерисовка заменила бы
+       карточку под пальцем, и «хвостовой» click по отпусканию (у новой
+       карточки флаги сброшены) сразу снял бы выбор — с первого раза заметка
+       не зажималась. Отмечаем только одну карточку, как при обычном тапе. */
+    onEnter(id) { this.active = true; this.set.add(id); enterSelection(); paintCard(id); },
     onToggle(id) { if (this.set.has(id)) this.set.delete(id); else this.set.add(id); paintCard(id); },
   };
 
@@ -147,8 +149,7 @@ export function mainScreen(opts = {}) {
        Исключение — поиск: там результаты логично показать сверху. Прокрутку
        восстанавливает сам рендер (до расчёта FLIP-перестановки). */
     const keepTop = el.classList.contains('searching') ? 0 : gridHolder.scrollTop;
-    renderNotesGrid(gridHolder, list, q, { sel: { active: sel.active, selected: sel.set, onEnter: sel.onEnter.bind(sel), onToggle: sel.onToggle.bind(sel) }, bounceId, keepTop });
-    bounceId = null;
+    renderNotesGrid(gridHolder, list, q, { sel: { active: sel.active, selected: sel.set, onEnter: sel.onEnter.bind(sel), onToggle: sel.onToggle.bind(sel) }, keepTop });
     searchField.classList.toggle('has-text', !!searchInput.value.trim());
     renderFolderTabs();
     renderChip();
