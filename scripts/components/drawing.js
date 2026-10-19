@@ -8,6 +8,7 @@
 import { Store, uid, vibrate } from '../core.js';
 import { toast } from './ui.js';
 import { setEdgeColor, refreshEdgeColor } from '../edge.js';
+import { toolSkin, initToolSkins, setToolSkinColor } from './drawing-skins.js';
 
 const TAU = Math.PI * 2;
 const GRID = 21.33;                 // шаг точек в world-координатах (как на скриншоте)
@@ -34,14 +35,14 @@ const HUES = [
 ];
 
 const TOOLS = [
-  { id: 'pen',          label: 'Карандаш',         w: 44, ink: '#1c1c1c', top: -12, accent: 'mask', shape: true },
-  { id: 'markerBlue',   label: 'Голубой маркер',   w: 48, ink: '#5aaef8', marker: true, top: -7, accent: 'mask', shape: true },
-  { id: 'markerYellow', label: 'Жёлтый маркер',    w: 74, ink: '#ffab3f', marker: true, top: -9, accent: 'mask', shape: true },
-  { id: 'fountain',     label: 'Перо',             w: 44, ink: '#69cf36', top: -9, accent: 'mask', shape: true },
-  { id: 'eraser',       label: 'Ластик',           w: 62, top: 19 },
-  { id: 'image',        label: 'Изображение',      w: 90, top: 4 },
-  { id: 'text',         label: 'Текст',            w: 88, ink: '#1c1c1c', top: 19, accent: 'mask' },
-  { id: 'note',         label: 'Заметка',          w: 88, ink: '#1c1c1c', top: 19 },
+  { id: 'pen',          label: 'Карандаш',         w: 46, ink: '#1c1c1c' },
+  { id: 'markerBlue',   label: 'Голубой маркер',   w: 46, ink: '#5aaef8', marker: true },
+  { id: 'markerYellow', label: 'Жёлтый маркер',    w: 62, ink: '#ffab3f', marker: true },
+  { id: 'fountain',     label: 'Перо',             w: 46, ink: '#69cf36' },
+  { id: 'eraser',       label: 'Ластик',           w: 58 },
+  { id: 'image',        label: 'Изображение',      w: 78 },
+  { id: 'text',         label: 'Текст',            w: 78, ink: '#1c1c1c' },
+  { id: 'note',         label: 'Заметка',          w: 84, ink: '#1c1c1c' },
 ];
 const TOOL_META = Object.fromEntries(TOOLS.map(t => [t.id, t]));
 const DEFAULT_INK = Object.fromEntries(TOOLS.filter(t => t.ink).map(t => [t.id, t.ink]));
@@ -66,22 +67,6 @@ function rgbOf(hex) {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
   const n = m ? parseInt(m[1], 16) : 0;
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-function hexToHsl(hex) {
-  const [r0, g0, b0] = rgbOf(hex);
-  const r = r0 / 255, g = g0 / 255, b = b0 / 255;
-  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
-  const l = (mx + mn) / 2;
-  const d = mx - mn;
-  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
-  let h = 0;
-  if (d) {
-    if (mx === r) h = ((g - b) / d) % 6;
-    else if (mx === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
-    h = (h * 60 + 360) % 360;
-  }
-  return [h, s, l];
 }
 function mixHex(a, b, t) {
   const A = rgbOf(a), B = rgbOf(b);
@@ -112,7 +97,7 @@ export function openDrawing(onDone, opts = {}) {
     <div class="dw-dock">
       <button type="button" class="dw-color" data-a="color" aria-label="Выбрать цвет"><span class="dw-color-dot"></span></button>
       <div class="dw-strip">
-        ${TOOLS.map((t, i) => `<button type="button" class="dw-tool" data-tool="${t.id}" style="width:${t.w}px;--i:${i}" aria-label="${t.label}"><span class="dw-sprite-box" style="top:${t.top}px;width:${t.w}px"><img class="dw-sprite" src="assets/draw/${t.id}.png" alt="" draggable="false"${t.shape ? ` style="--shape:url('${new URL('assets/draw/' + t.id + '-shape.png', document.baseURI).href}')"` : ''}>${t.accent === 'mask' ? `<span class="dw-accent" style="--mask:url('${new URL('assets/draw/' + t.id + '-accent.png', document.baseURI).href}')"></span><span class="dw-accent-dark" style="--mask:url('${new URL('assets/draw/' + t.id + '-accent.png', document.baseURI).href}')"></span>` : ''}</span></button>`).join('')}
+        ${TOOLS.map((t, i) => `<button type="button" class="dw-tool" data-tool="${t.id}" style="width:${t.w}px;--i:${i}" aria-label="${t.label}">${toolSkin(t.id)}</button>`).join('')}
       </div>
     </div>
     <div class="dw-palette" aria-hidden="true">
@@ -159,27 +144,11 @@ export function openDrawing(onDone, opts = {}) {
 
   function applyToolAccent(el, id) {
     const c = toolInk[id];
-    const meta = TOOL_META[id];
-    const img = el.querySelector('.dw-sprite');
-    if (!c) {
-      el.classList.remove('is-custom');
-      if (img) img.style.filter = '';
-      return;
-    }
+    if (!c) return;
     el.style.setProperty('--ink', c);
     el.style.setProperty('--ink-soft', tint(c, .55));
     el.style.setProperty('--ink-deep', shade(c, .18));
-    if (!img) return;
-    if (meta.accent === 'mask') {
-      const custom = c !== DEFAULT_INK[id];
-      el.classList.toggle('is-custom', custom);
-      img.style.filter = custom ? 'grayscale(1) contrast(1.02)' : '';
-      const l = hexToHsl(c)[2];
-      el.style.setProperty('--accent-dark', custom ? clamp(.62 - l * 1.25, 0, .5).toFixed(2) : '0');
-    } else {
-      el.classList.remove('is-custom');
-      img.style.filter = '';
-    }
+    setToolSkinColor(id, c);
   }
   function applyAllToolAccents() {
     toolEls.forEach(el => applyToolAccent(el, el.dataset.tool));
@@ -899,6 +868,7 @@ export function openDrawing(onDone, opts = {}) {
     el.addEventListener('click', () => setTool(el.dataset.tool));
   });
   // стартовое положение
+  initToolSkins(toolInk, ov);
   toolEls[0].classList.add('is-active');
   applyAllToolAccents();
   updateColorUI();
