@@ -149,7 +149,19 @@ export function mainScreen(opts = {}) {
        Исключение — поиск: там результаты логично показать сверху. Прокрутку
        восстанавливает сам рендер (до расчёта FLIP-перестановки). */
     const keepTop = el.classList.contains('searching') ? 0 : gridHolder.scrollTop;
-    renderNotesGrid(gridHolder, list, q, { sel: { active: sel.active, selected: sel.set, onEnter: sel.onEnter.bind(sel), onToggle: sel.onToggle.bind(sel) }, keepTop });
+    /* Режим выбора задаём «живым»: вход по зажиму НЕ перерисовывает сетку, а
+       снимок active на момент рендера остался бы false — и тап по карточке
+       вместо отметки открывал бы заметку. Геттер всегда читает текущее
+       состояние sel.active. */
+    renderNotesGrid(gridHolder, list, q, {
+      sel: {
+        get active() { return sel.active; },
+        selected: sel.set,
+        onEnter: id => sel.onEnter(id),
+        onToggle: id => sel.onToggle(id),
+      },
+      keepTop,
+    });
     searchField.classList.toggle('has-text', !!searchInput.value.trim());
     renderFolderTabs();
     renderChip();

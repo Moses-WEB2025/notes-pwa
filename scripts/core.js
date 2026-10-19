@@ -280,9 +280,14 @@ document.addEventListener('touchstart', e => {
      Экран при этом не тянем: закрытие панели не возвращает его на место, и он
      застрял бы сдвинутым вбок. */
   const fmtOpen = document.body.classList.contains('fmt-open');
+  /* В режиме выбора заметок свайп «назад» не тянет экран: app-back просто
+     выключает выбор (см. scripts/app.js), как системная кнопка «назад».
+     Иначе экран уезжал вбок, а вернуть его было некому — это и выглядело так,
+     будто приложение закрылось. */
+  const selecting = !!document.querySelector('.main-screen.selecting');
   gesture = {
     sx: t.clientX, sy: t.clientY, dir,
-    top, prev, search: searchMode, format: fmtOpen,
+    top, prev, search: searchMode, nodrag: fmtOpen || selecting,
     started: false, dx: 0,
     lastP: 0, lastT: performance.now(), vx: 0,
   };
@@ -303,9 +308,9 @@ document.addEventListener('touchmove', e => {
 
   if (!gesture.started && dx > 14 && dy < 32 && dx > dy * 0.6) {
     gesture.started = true;
-    /* «Отмена» панели форматирования ничего не двигает по экрану — ни сам
-       экран, ни поисковую строку; сработает она уже на отпускании. */
-    if (!gesture.format) gesture.top.classList.add(gesture.search ? 'search-drag' : 'swipe-back');
+    /* «Отмена» панели форматирования и режим выбора ничего не двигают по
+       экрану: сработают они уже на отпускании (app-back). */
+    if (!gesture.nodrag) gesture.top.classList.add(gesture.search ? 'search-drag' : 'swipe-back');
   }
   if (!gesture.started) return;
 
@@ -313,7 +318,7 @@ document.addEventListener('touchmove', e => {
   if (gesture.search) {
     /* Поиск не сдвигает экран — строка просто тянется за пальцем. */
     gesture.top.style.setProperty('--search-dx', Math.max(0, dx) + 'px');
-  } else if (!gesture.format) {
+  } else if (!gesture.nodrag) {
     applyBackGestureDrag(gesture, dx);
   }
   e.preventDefault();
@@ -338,8 +343,8 @@ document.addEventListener('touchend', () => {
     return;
   }
   /* Отмена жеста — мягкий возврат, а не мгновенный скачок. Экран, который не
-     двигали (поиск и панель форматирования), возвращать не нужно. */
-  if (!g.search && !g.format) settleBackGesture(g);
+     двигали (поиск, панель форматирования, режим выбора), возвращать не нужно. */
+  if (!g.search && !g.nodrag) settleBackGesture(g);
 }, { passive: true });
 
 document.addEventListener('touchcancel', () => {
@@ -349,7 +354,7 @@ document.addEventListener('touchcancel', () => {
   if (!g.started) return;
   g.top.classList.remove('swipe-back', 'search-drag');
   if (g.search) { g.top.style.setProperty('--search-dx', '0px'); return; }
-  if (g.format) return;
+  if (g.nodrag) return;
   settleBackGesture(g);
 });
 

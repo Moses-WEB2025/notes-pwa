@@ -150,7 +150,7 @@ function buildCard(n, q, opts, m) {
   card.addEventListener('touchstart', e => {
     const t = e.touches[0];
     startX = t.clientX; startY = t.clientY;
-    moved = false; lpFired = false;
+    moved = false; lpFired = false; tapHandled = false;
     lpTimer = setTimeout(() => {
       lpFired = true;
       vibrate(18);
