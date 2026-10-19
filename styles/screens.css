@@ -80,6 +80,8 @@ body.kb-open .screen.under { visibility: hidden; }
 }
 body.kb-open .editor-screen .editor-body,
 body.toolbar-on .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px); }
+/* Открыта панель форматирования — холсту нужно место и под ней тоже. */
+body.fmt-open .editor-screen .editor-body { padding-bottom: calc(var(--toolbar-h, 54px) + var(--fmt-h, 52px)); }
 .editor-body::-webkit-scrollbar { display: none; }
 
 .note-title-input {
@@ -186,10 +188,80 @@ body.toolbar-on > .format-toolbar {
   transition: background-color var(--dur-1) ease, transform var(--dur-1) var(--ease-out);
 }
 .format-toolbar .tool:active { background: var(--surface2); transform: scale(.96); }
-.format-toolbar .tool .material-symbols-rounded {
-  font-size: 24px;
-  font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+/* Кнопка «Т» в главном меню подсвечена, пока панель форматирования открыта */
+.format-toolbar .tool.active { color: var(--accent-deep, #c98b17); background: var(--accent-soft); }
+
+/* ---- Панель форматирования: три страницы со снапом, горизонтальный скролл ----
+   Стоит вплотную над главным меню. Позицию ведём от тех же величин, что и
+   меню, поэтому панель не перекрывается клавиатурой ни на iOS (--kb-h), ни
+   на Android (там окно сжимается само и --kb-h = 0). */
+.format-panel {
+  display: none;
+  height: var(--fmt-h, 52px);
+  background: var(--surface);
+  border-top: 1px solid var(--divider);
+  padding: 0 6px;
+  z-index: 200;
 }
+body.fmt-open > .format-panel {
+  display: block;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--kb-h, 0px) + var(--toolbar-h, 54px));
+  box-shadow: 0 -1px 0 var(--divider);
+  animation: toolbarIn var(--dur-3) var(--ease-standard) both;
+}
+/* Клавиатура скрыта (фокус есть): меню и панель поднимаем над home-indicator. */
+body.toolbar-on > .format-toolbar { bottom: calc(var(--kb-h, 0px) + var(--safe-bottom)); }
+body.toolbar-on > .format-panel { bottom: calc(var(--kb-h, 0px) + var(--safe-bottom) + var(--toolbar-h, 54px)); }
+
+.format-panel .fmt-scroll {
+  display: flex;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  scrollbar-width: none;
+}
+.format-panel .fmt-scroll::-webkit-scrollbar { display: none; }
+.format-panel .fmt-page {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  display: flex;
+  align-items: stretch;
+}
+.format-panel .fmt-tool {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text);
+  border-radius: 12px;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--dur-1) ease, transform var(--dur-1) var(--ease-out);
+}
+.format-panel .fmt-tool:active { background: var(--surface2); transform: scale(.96); }
+.format-panel .fmt-tool.active { color: var(--accent-deep, #c98b17); background: var(--accent-soft); }
+
+/* ---- Иконки: официальный контурный Lucide, без заливки, цвет — от текста ---- */
+.format-toolbar .tool svg.lucide,
+.format-panel .fmt-tool svg.lucide {
+  display: block;
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.75;
+  fill: none;
+}
+.format-panel .fmt-tool svg.lucide { width: 23px; height: 23px; }
 
 /* Инерция и блокировка pull-to-refresh */
 .scroll { overscroll-behavior-y: contain; }

@@ -6,6 +6,23 @@ import { toast, attachMenu, sheetSections, openSheet, confirmSheet, folderPickSh
 import { openRecorder } from '../components/recorder.js';
 import { openDrawing } from '../components/drawing.js';
 import { openImageEditor } from '../components/image-editor.js';
+import { icon } from '../icons.js';
+
+/* ---------- Страницы панели форматирования ----------
+   Три страницы инструментов ровно как в системных заметках: каждая
+   заканчивается «крестиком», листаются горизонтальным свайпом. */
+const FMT_PAGES = {
+  1: [['p', 'case-sensitive', 'Обычный текст'], ['h1', 'heading-1', 'Заголовок 1'], ['h2', 'heading-2', 'Заголовок 2'], ['h3', 'heading-3', 'Заголовок 3'], ['bold', 'bold', 'Жирный'], ['ul', 'list', 'Список']],
+  2: [['italic', 'italic', 'Курсив'], ['underline', 'underline', 'Подчёркнутый'], ['strike', 'strikethrough', 'Зачёркнутый'], ['ul', 'list', 'Список с маркерами'], ['ol', 'list-ordered', 'Нумерованный список'], ['check', 'list-checks', 'Чек-лист']],
+  3: [['indent', 'indent-increase', 'Отступ'], ['quote', 'quote', 'Цитата'], ['align-left', 'align-left', 'По левому краю'], ['align-center', 'align-center', 'По центру'], ['align-right', 'align-right', 'По правому краю'], ['align-justify', 'align-justify', 'По ширине']],
+};
+function fmtButton(tool, ic, label) {
+  return `<button type="button" class="fmt-tool" data-fmt="${tool}" aria-label="${label}">${icon(ic)}</button>`;
+}
+function fmtPage(n) {
+  const items = FMT_PAGES[n].map(([t, i, l]) => fmtButton(t, i, l)).join('');
+  return `<div class="fmt-page" data-page="${n}">${items}${fmtButton('close', 'x', 'Закрыть')}</div>`;
+}
 
 /* Цветовые темы холста */
 const COLORS = [
@@ -82,20 +99,23 @@ export function openEditor(id, opts = {}) {
 
   bodyWrap.append(folderChip, titleInput, meta, content);
 
-  /* ===== нижний тулбар: набор и порядок иконок как на скриншоте 6 ===== */
+  /* ===== Главное нижнее меню (над клавиатурой) + панель форматирования =====
+     «Т» (Lucide type) раскрывает .format-panel — три страницы инструментов
+     с горизонтальным скроллом. Медиа-инструменты вставки остаются в меню. */
   const toolbar = document.createElement('div');
   toolbar.className = 'format-toolbar';
   toolbar.innerHTML = `
-    <button type="button" class="tool" data-tool="audio" aria-label="Аудио"><span class="material-symbols-rounded">graphic_eq</span></button>
-    <button type="button" class="tool" data-tool="image" aria-label="Фото"><span class="material-symbols-rounded">image</span></button>
-    <button type="button" class="tool" data-tool="draw" aria-label="Рисунок"><span class="material-symbols-rounded">gesture</span></button>
-    <button type="button" class="tool" data-tool="check" aria-label="Чек-лист"><span class="material-symbols-rounded">check_box_outline_blank</span></button>
-    <button type="button" class="tool" data-tool="heading" aria-label="Заголовок"><span class="material-symbols-rounded">title</span></button>
-    <button type="button" class="tool" data-tool="bold" aria-label="Жирный"><span class="material-symbols-rounded">format_bold</span></button>
-    <button type="button" class="tool" data-tool="italic" aria-label="Курсив"><span class="material-symbols-rounded">format_italic</span></button>
-    <button type="button" class="tool" data-tool="list" aria-label="Список"><span class="material-symbols-rounded">format_list_bulleted</span></button>`;
+    <button type="button" class="tool" data-tool="format" aria-label="Форматирование" aria-expanded="false">${icon('type')}</button>
+    <button type="button" class="tool" data-tool="audio" aria-label="Аудио">${icon('audio-lines')}</button>
+    <button type="button" class="tool" data-tool="image" aria-label="Фото">${icon('image')}</button>
+    <button type="button" class="tool" data-tool="draw" aria-label="Рисунок">${icon('pen-tool')}</button>
+    <button type="button" class="tool" data-tool="check" aria-label="Чек-лист">${icon('square-check')}</button>`;
 
-  el.append(topbar, topbarKb, bodyWrap, toolbar);
+  const formatPanel = document.createElement('div');
+  formatPanel.className = 'format-panel';
+  formatPanel.innerHTML = `<div class="fmt-scroll" role="toolbar" aria-label="Форматирование текста">${fmtPage(1)}${fmtPage(2)}${fmtPage(3)}</div>`;
+
+  el.append(topbar, topbarKb, bodyWrap, toolbar, formatPanel);
 
   /* ---------- Состояние ---------- */
   let note = null;
@@ -246,10 +266,11 @@ export function openEditor(id, opts = {}) {
     scheduleSave();
   });
 
-  /* переключение панелей по клавиатуре; тулбар — в body, чтобы fixed был над клавиатурой */
-  function dockToolbar(show) {
-    if (show && toolbar.parentElement !== document.body) document.body.appendChild(toolbar);
-    else if (!show && toolbar.parentElement === document.body) el.appendChild(toolbar);
+  /* Тулбар и панель форматирования переезжают в body, пока видны: position:
+     fixed поверх холста должен отсчитываться от окна, а не от экрана заметки. */
+  function dock(node, show) {
+    if (show && node.parentElement !== document.body) document.body.appendChild(node);
+    else if (!show && node.parentElement === document.body) el.appendChild(node);
   }
   /* Тулбар форматирования должен быть виден, пока идёт редактирование текста.
      Опираться только на состояние клавиатуры нельзя: после системного диалога
@@ -257,23 +278,41 @@ export function openEditor(id, opts = {}) {
      заново сама, kb-change больше не присылает open:true — и тулбар пропадал
      навсегда. Поэтому дополнительно учитываем фокус в холсте заметки. */
   let kbOpen = false;
+  /* Раскрыта ли панель форматирования (кнопка «Т» в нижнем меню). */
+  let fmtOpen = false;
   /* Панель форматирования относится к тексту заметки, а не к заголовку: пока
      курсор в заголовке — прячем её, даже если клавиатура открыта. */
   function editingTitle() { return document.activeElement === titleInput; }
   function editorActive() {
     const a = document.activeElement;
-    return !!a && (a === content || content.contains(a) || toolbar.contains(a));
+    return !!a && (a === content || content.contains(a) || toolbar.contains(a) || formatPanel.contains(a));
   }
   function syncFormatBar() {
-    if (!el.isConnected) { document.body.classList.remove('toolbar-on'); dockToolbar(false); return; }
+    if (!el.isConnected) {
+      document.body.classList.remove('toolbar-on', 'fmt-open');
+      dock(toolbar, false); dock(formatPanel, false);
+      return;
+    }
     const show = !editingTitle() && (kbOpen || editorActive());
-    dockToolbar(show);
+    const panelOn = show && fmtOpen;
+    dock(toolbar, show);
+    dock(formatPanel, panelOn);
     document.body.classList.toggle('toolbar-on', show && !kbOpen);
+    document.body.classList.toggle('fmt-open', panelOn);
+  }
+  /* Открыть/закрыть панель форматирования кнопкой «Т». */
+  function setFormatOpen(on) {
+    fmtOpen = !!on;
+    const btn = toolbar.querySelector('[data-tool="format"]');
+    btn?.classList.toggle('active', fmtOpen);
+    btn?.setAttribute('aria-expanded', fmtOpen ? 'true' : 'false');
+    syncFormatBar();
+    if (fmtOpen) { syncFormatState(); ensureCaretClear(); }
   }
   function teardownKb() {
     document.removeEventListener('kb-change', onKb);
-    document.body.classList.remove('toolbar-on');
-    dockToolbar(false);
+    document.body.classList.remove('toolbar-on', 'fmt-open');
+    dock(toolbar, false); dock(formatPanel, false);
   }
   document.addEventListener('kb-change', onKb);
   function onKb(e) {
@@ -312,8 +351,9 @@ export function openEditor(id, opts = {}) {
     if (!el.isConnected || toolbar.parentElement !== document.body) return;
     const r = caretRect();
     if (!r) return;
-    const safeBottom = bodyWrap.getBoundingClientRect().bottom
-      - (toolbar.offsetHeight || 0) - CARET_GAP;
+    /* Открытая панель форматирования добавляет высоту над нижним меню. */
+    const barH = (toolbar.offsetHeight || 0) + (fmtOpen ? (formatPanel.offsetHeight || 0) : 0);
+    const safeBottom = bodyWrap.getBoundingClientRect().bottom - barH - CARET_GAP;
     const delta = r.bottom - safeBottom;
     if (delta > 0.5) bodyWrap.scrollTop += delta;
   }
@@ -575,17 +615,42 @@ export function openEditor(id, opts = {}) {
   content.addEventListener('focus', saveSelection);
   document.addEventListener('selectionchange', () => {
     const sel = window.getSelection();
-    if (sel?.anchorNode && content.contains(sel.anchorNode)) { saveSelection(); ensureCaretClear(); }
+    if (sel?.anchorNode && content.contains(sel.anchorNode)) {
+      saveSelection(); ensureCaretClear();
+      if (fmtOpen) syncFormatState();
+    }
   });
 
+  /* Тап по кнопкам меню и панели не должен уводить каретку из текста. */
   const keepFocus = e => { e.preventDefault(); saveSelection(); };
   toolbar.addEventListener('pointerdown', keepFocus);
   toolbar.addEventListener('mousedown', keepFocus);
+  formatPanel.addEventListener('pointerdown', keepFocus);
+  formatPanel.addEventListener('mousedown', keepFocus);
 
+  /* Вставить пункт чек-листа (нужен и в главном меню, и на панели). */
+  function insertChecklist() {
+    runFormat(() => {
+      insertAtCursor('<div class="check-item" data-check="1"><input type="checkbox"><span class="lbl">Пункт</span></div><div><br></div>');
+      const items = content.querySelectorAll('.check-item');
+      const lbl = items[items.length - 1]?.querySelector('.lbl');
+      if (lbl) {
+        const r = document.createRange();
+        r.selectNodeContents(lbl);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(r);
+        savedRange = r.cloneRange();
+      }
+    });
+  }
+
+  /* Главное нижнее меню: «Т» раскрывает панель, остальные — вставка контента. */
   toolbar.querySelectorAll('.tool').forEach(btn => btn.addEventListener('click', () => {
     vibrate(8);
-    saveSelection();
     const k = btn.dataset.tool;
+    if (k === 'format') { setFormatOpen(!fmtOpen); return; }
+    saveSelection();
     if (k === 'audio') {
       saveSelection();
       content.blur();
@@ -608,40 +673,68 @@ export function openEditor(id, opts = {}) {
         });
       });
     } else if (k === 'check') {
-      runFormat(() => {
-        insertAtCursor('<div class="check-item" data-check="1"><input type="checkbox"><span class="lbl">Пункт</span></div><div><br></div>');
-        const items = content.querySelectorAll('.check-item');
-        const lbl = items[items.length - 1]?.querySelector('.lbl');
-        if (lbl) {
-          const r = document.createRange();
-          r.selectNodeContents(lbl);
-          const sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(r);
-          savedRange = r.cloneRange();
-        }
-      });
-    } else if (k === 'heading') {
-      runFormat(() => {
-        let node = window.getSelection()?.anchorNode;
-        if (node?.nodeType === 3) node = node.parentElement;
-        const inH1 = !!(node?.closest?.('h1'));
-        document.execCommand('formatBlock', false, inH1 ? 'div' : 'h1');
-      });
-    } else if (k === 'bold') {
-      runFormat(() => {
-        document.execCommand('styleWithCSS', false, true);
-        document.execCommand('bold');
-      });
-    } else if (k === 'italic') {
-      runFormat(() => {
-        document.execCommand('styleWithCSS', false, true);
-        document.execCommand('italic');
-      });
-    } else if (k === 'list') {
-      runFormat(() => { document.execCommand('insertUnorderedList'); });
+      insertChecklist();
     }
   }));
+
+  /* Блочный стиль абзаца (H1/H2/H3, цитата) — переключателем: повторный тап
+     возвращает обычный текст, как в системных заметках. */
+  function toggleBlock(tag) {
+    let node = window.getSelection()?.anchorNode;
+    if (node?.nodeType === 3) node = node.parentElement;
+    const inside = !!node?.closest?.(tag);
+    document.execCommand('formatBlock', false, inside ? 'div' : tag);
+  }
+  function alignCmd(cmd) {
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand(cmd);
+  }
+  const FMT_ACTIONS = {
+    p: () => document.execCommand('formatBlock', false, 'div'),
+    h1: () => toggleBlock('h1'),
+    h2: () => toggleBlock('h2'),
+    h3: () => toggleBlock('h3'),
+    bold: () => { document.execCommand('styleWithCSS', false, true); document.execCommand('bold'); },
+    italic: () => { document.execCommand('styleWithCSS', false, true); document.execCommand('italic'); },
+    underline: () => { document.execCommand('styleWithCSS', false, true); document.execCommand('underline'); },
+    strike: () => { document.execCommand('styleWithCSS', false, true); document.execCommand('strikeThrough'); },
+    ul: () => document.execCommand('insertUnorderedList'),
+    ol: () => document.execCommand('insertOrderedList'),
+    indent: () => document.execCommand('indent'),
+    quote: () => toggleBlock('blockquote'),
+    'align-left': () => alignCmd('justifyLeft'),
+    'align-center': () => alignCmd('justifyCenter'),
+    'align-right': () => alignCmd('justifyRight'),
+    'align-justify': () => alignCmd('justifyFull'),
+  };
+  /* Подсветка инструментов по стилю под кареткой. */
+  function syncFormatState() {
+    if (!fmtOpen || !formatPanel.isConnected) return;
+    const q = c => { try { return document.queryCommandState(c); } catch (e) { return false; } };
+    let block = '';
+    try { block = (document.queryCommandValue('formatBlock') || '').toLowerCase(); } catch (e) {}
+    const on = {
+      bold: q('bold'), italic: q('italic'), underline: q('underline'), strike: q('strikeThrough'),
+      ul: q('insertUnorderedList'), ol: q('insertOrderedList'),
+      h1: block === 'h1', h2: block === 'h2', h3: block === 'h3',
+      p: !block || block === 'div' || block === 'p', quote: block === 'blockquote',
+      'align-left': q('justifyLeft'), 'align-center': q('justifyCenter'),
+      'align-right': q('justifyRight'), 'align-justify': q('justifyFull'),
+    };
+    formatPanel.querySelectorAll('[data-fmt]').forEach(b => b.classList.toggle('active', !!on[b.dataset.fmt]));
+  }
+  /* Применение инструментов панели форматирования к тексту заметки. */
+  formatPanel.addEventListener('click', e => {
+    const btn = e.target.closest('[data-fmt]');
+    if (!btn || !fmtOpen) return;
+    vibrate(8);
+    const k = btn.dataset.fmt;
+    if (k === 'close') { setFormatOpen(false); return; }
+    saveSelection();
+    if (k === 'check') insertChecklist();
+    else if (FMT_ACTIONS[k]) runFormat(FMT_ACTIONS[k]);
+    syncFormatState();
+  });
 
   function pickImage() {
     saveSelection();
