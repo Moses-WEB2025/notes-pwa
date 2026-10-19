@@ -1067,27 +1067,54 @@ export function openEditor(id, opts = {}) {
     e.preventDefault();
     const unit = movableBlock(img);
     const sx = e.clientX, sy = e.clientY;
-    let active = false, ref = null;
+    let active = false, ref = null, vy = 0, raf = 0;
+    let lastY = e.clientY;
     const line = document.createElement('div');
     line.className = 'img-drop-line';
-    const move = ev => {
-      if (!active && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 8) return;
-      if (!active) { active = true; img.classList.add('img-dragging'); document.body.appendChild(line); }
+    /* Куда встанет фото: до первого блока, чья середина ниже пальца. */
+    const place = () => {
       const kids = [...content.children].filter(k => k !== unit);
       const cr = content.getBoundingClientRect();
       let y = cr.bottom; ref = null;
       for (const k of kids) {
         const kr = k.getBoundingClientRect();
-        if (ev.clientY < kr.top + kr.height / 2) { y = kr.top; ref = k; break; }
+        if (lastY < kr.top + kr.height / 2) { y = kr.top; ref = k; break; }
       }
       line.style.left = (cr.left + 12) + 'px';
       line.style.width = Math.max(0, cr.width - 24) + 'px';
       line.style.top = y + 'px';
     };
+    /* Автоскролл у кромок: палец у самой верхней/нижней кромки холста подтягивает
+       его за собой. Без этого фото нельзя было дотащить туда, что выше или ниже
+       видимой области, — в длинной заметке «на самый верх» не получалось. */
+    const tick = () => {
+      raf = 0;
+      if (!vy) return;
+      const before = bodyWrap.scrollTop;
+      bodyWrap.scrollTop += vy;
+      if (bodyWrap.scrollTop === before) return;   // дошли до края — дальше некуда
+      place();
+      raf = requestAnimationFrame(tick);
+    };
+    const move = ev => {
+      if (!active && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 8) return;
+      if (!active) { active = true; img.classList.add('img-dragging'); document.body.appendChild(line); }
+      lastY = ev.clientY;
+      place();
+      const r = bodyWrap.getBoundingClientRect();
+      const EDGE = 72, MAXV = 16;
+      const topGap = ev.clientY - r.top, botGap = r.bottom - ev.clientY;
+      if (topGap < EDGE) vy = -Math.ceil(MAXV * Math.min(1, (EDGE - topGap) / EDGE));
+      else if (botGap < EDGE) vy = Math.ceil(MAXV * Math.min(1, (EDGE - botGap) / EDGE));
+      else vy = 0;
+      if (vy && !raf) raf = requestAnimationFrame(tick);
+    };
     const up = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
+      if (raf) { cancelAnimationFrame(raf); raf = 0; }
+      vy = 0;
       if (!active) return;
       img.classList.remove('img-dragging');
       line.remove();
