@@ -10,7 +10,8 @@
    · палитра HSV (поле «насыщенность/яркость» + ползунок тона) и пресеты;
    · история команд (отмена/возврат) — по стеку операций, без снимков,
      поэтому память тратится мало даже при долгом рисовании;
-   · жесты: один палец — рисовать, два — масштаб и сдвиг холста,
+   · жесты: один палец — рисовать; два — масштаб, поворот и сдвиг холста
+     (поворот свободный, у сетки 0/90/180/270 — лёгкая микрофиксация);
      двойной тап двумя пальцами — отмена.
 
    Производительность: во время рисования пиксели трогает только верхний
@@ -22,10 +23,13 @@ import { vibrate } from '../core.js';
 import { icon } from '../icons.js';
 
 const PAPER = '#ffffff';          /* цвет «бумаги» и ластика */
-const MAXDIM = 1280;              /* макс. сторона холста (логические px) */
-const MIN_K = 1, MAX_K = 5;       /* пределы масштаба */
+const MAXDIM = 2560;              /* макс. сторона холста (логические px) */
+const MIN_K = 0.2, MAX_K = 10;    /* пределы масштаба: сильное отдаление и приближение */
 const SIZE_MIN = 1, SIZE_MAX = 160;
-const TOLERANCE = 32;             /* допуск заливки */
+const TOLERANCE = 32;             /* допуск заливки (строгое совпадение) */
+const TOLERANCE_SOFT = 110;       /* мягкий допуск: дотягивает заливку до края линии */
+const SNAP_STEP = Math.PI / 2;    /* «сетка» поворота: 0 / 90 / 180 / 270 */
+const SNAP_TOL = 4 * Math.PI / 180; /* магнитная микрофиксация у сетки (градусы) */
 const HIST_MAX = 40;              /* предел числа операций в истории */
 const HIST_BYTES = 48 * 1024 * 1024; /* и суммарной памяти под снимки */
 
@@ -93,7 +97,7 @@ export function openDrawing(onDone) {
         <canvas class="dr-base"></canvas>
         <canvas class="dr-live"></canvas>
       </div>
-      <div class="dr-hint">Один палец — рисовать · Два — масштаб и сдвиг</div>
+      <div class="dr-hint">Один палец — рисовать · Два — масштаб, поворот и сдвиг</div>
     </div>
 
     <div class="dr-options">
@@ -174,7 +178,10 @@ export function openDrawing(onDone) {
   /* ---------- Размер документа ---------- */
   const availW = Math.max(140, stage.clientWidth - 24);
   const availH = Math.max(140, stage.clientHeight - 24);
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  /* Супердискретизация ×2: у холста вчетверо больше пикселей, чем на
+     экране в масштабе 1:1, поэтому рисунок остаётся резким и при
+     приближении, а не расплывается в «квадратики». */
+  const dpr = Math.min(window.devicePixelRatio || 1, 2) * 2;
   let docW = Math.round(availW * dpr);
   let docH = Math.round(availH * dpr);
   const longest = Math.max(docW, docH);
@@ -198,16 +205,25 @@ export function openDrawing(onDone) {
   let shape = 'line';
   let shapeFill = false;
   let hue = 0, sat = 0, val = 0.12;
-  let k = 1, tx = 0, ty = 0;
+  let k = 1, tx = 0, ty = 0, rot = 0;
   let sheetOpen = false;
   let confirmOpen = false;
   let contentBox = null;      /* охват всего нарисованного — для обрезки при сохранении */
 
   /* ---------- Геометрия ---------- */
-  const applyT = () => { board.style.transform = 'translate3d(' + tx + 'px,' + ty + 'px,0) scale(' + k + ')'; };
-  const toDoc = (cx, cy, r) => {
-    const b = r || board.getBoundingClientRect();
-    return { x: (cx - b.left) * docW / b.width, y: (cy - b.top) * docH / b.height };
+  const applyT = () => {
+    board.style.transform = 'translate3d(' + tx + 'px,' + ty + 'px,0) rotate(' + rot + 'rad) scale(' + k + ')';
+  };
+  /* Экран → документ. Порядок обратный к CSS-трансформации
+     (translate → rotate → scale): сдвигаем на tx/ty, отменяем поворот
+     вокруг начала доски и делим на масштаб. */
+  const toDoc = (cx, cy, o) => {
+    const org = o || originXY();
+    const dx = cx - org.x - tx, dy = cy - org.y - ty;
+    const ct = Math.cos(rot), st = Math.sin(rot);
+    const rx = (dx * ct + dy * st) / k;
+    const ry = (-dx * st + dy * ct) / k;
+    return { x: rx * docW / board.clientWidth, y: ry * docH / board.clientHeight };
   };
   const originXY = () => {
     const r = stage.getBoundingClientRect();
@@ -470,10 +486,12 @@ export function openDrawing(onDone) {
     if (a >= 0.999 && tr === fr[0] && tg === fr[1] && tb === fr[2]) return;
 
     const seen = new Uint8Array(W * H);
-    const match = (i) => {
+    /* Наибольшее расхождение пикселя с цветом-образцом (0..255). */
+    const diff = (i) => {
       const o = i * 4;
-      return Math.abs(d[o] - tr) <= TOLERANCE && Math.abs(d[o + 1] - tg) <= TOLERANCE && Math.abs(d[o + 2] - tb) <= TOLERANCE;
+      return Math.max(Math.abs(d[o] - tr), Math.abs(d[o + 1] - tg), Math.abs(d[o + 2] - tb));
     };
+    const match = (i) => diff(i) <= TOLERANCE;
     const stack = [sx, sy];
     let minX = sx, maxX = sx, minY = sy, maxY = sy;
 
@@ -513,7 +531,33 @@ export function openDrawing(onDone) {
       }
     }
 
-    const box = { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+    /* Край линии сглажен (антиалиасинг), поэтому пиксели у самой
+       границы — смесь линии и фона. Дотягиваем заливку до них:
+       подмешиваем цвет тем сильнее, чем ближе пиксель к образцу.
+       Иначе по краю остаётся тонкая светлая рамка. */
+    const y0 = Math.max(0, minY - 1), y1 = Math.min(H - 1, maxY + 1);
+    const x0 = Math.max(0, minX - 1), x1 = Math.min(W - 1, maxX + 1);
+    for (let y = y0; y <= y1; y++) {
+      for (let x = x0; x <= x1; x++) {
+        const i = y * W + x;
+        if (seen[i]) continue;
+        const near =
+          (x > 0 && seen[i - 1]) || (x < W - 1 && seen[i + 1]) ||
+          (y > 0 && seen[i - W]) || (y < H - 1 && seen[i + W]);
+        if (!near) continue;
+        const dd = diff(i);
+        if (dd > TOLERANCE_SOFT) continue;
+        const w = a * clamp((TOLERANCE_SOFT - dd) / (TOLERANCE_SOFT - TOLERANCE), 0, 1);
+        if (w <= 0) continue;
+        const o = i * 4;
+        d[o] = Math.round(d[o] * (1 - w) + fr[0] * w);
+        d[o + 1] = Math.round(d[o + 1] * (1 - w) + fr[1] * w);
+        d[o + 2] = Math.round(d[o + 2] * (1 - w) + fr[2] * w);
+        d[o + 3] = 255;
+      }
+    }
+
+    const box = normBox({ x: minX - 1, y: minY - 1, w: (maxX - minX) + 3, h: (maxY - minY) + 3 });
     commit(box, () => {
       bctx.putImageData(img, 0, 0, box.x, box.y, box.w, box.h);
     });
@@ -544,21 +588,30 @@ export function openDrawing(onDone) {
   const gestureMove = () => {
     const arr = Array.from(pointers.values());
     const p1 = arr[0], p2 = arr[1];
-    if (!p1 || !p2) return;
-    const g = gesture || null;
-    if (!g) return;
+    if (!p1 || !p2 || !gesture) return;
+    const g = gesture;
     const c = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
     const dist = Math.max(10, Math.hypot(p2.x - p1.x, p2.y - p1.y));
+    const ang = Math.atan2(p2.y - p1.y, p2.x - p1.x);
     const nk = clamp(g.k0 * (dist / g.d0), MIN_K, MAX_K);
-    /* Точка под стартовым центроидом должна остаться под текущим:
-       экран = origin + translate + scale · (doc / ratio). */
-    const dx = (g.c0.x - g.ox - g.tx0) / g.k0;
-    const dy = (g.c0.y - g.oy - g.ty0) / g.k0;
-    tx = g.tx0 + (g.k0 - nk) * dx + (c.x - g.c0.x);
-    ty = g.ty0 + (g.k0 - nk) * dy + (c.y - g.c0.y);
+    /* Поворот полностью свободный, но рядом с «сеткой» (0/90/180/270)
+       холст мягко примагничивается — отойти можно в любой момент. */
+    let nr = g.rot0 + (ang - g.a0);
+    const grid = Math.round(nr / SNAP_STEP) * SNAP_STEP;
+    const onGrid = Math.abs(nr - grid) <= SNAP_TOL;
+    if (onGrid) nr = grid;
+    if (onGrid && !g.onGrid) vibrate(6);
+    g.onGrid = onGrid;
+    /* Точка холста под стартовым центроидом остаётся под текущим:
+       экран = origin + translate + rotate · (scale · layout). */
+    const nk0 = g.ux * nk, nk1 = g.uy * nk;
+    const cr = Math.cos(nr), sr = Math.sin(nr);
+    tx = c.x - g.ox - (nk0 * cr - nk1 * sr);
+    ty = c.y - g.oy - (nk0 * sr + nk1 * cr);
     k = nk;
+    rot = nr;
     applyT();
-    const moved = Math.hypot(c.x - g.c0.x, c.y - g.c0.y) + Math.abs(dist - g.d0);
+    const moved = Math.hypot(c.x - g.c0.x, c.y - g.c0.y) + Math.abs(dist - g.d0) + Math.abs(ang - g.a0) * 120;
     if (moved > g.moved) g.moved = moved;
   };
   const beginGesture = () => {
@@ -566,11 +619,19 @@ export function openDrawing(onDone) {
     const p1 = arr[0], p2 = arr[1];
     if (!p1 || !p2) return;
     const o = originXY();
+    const c0 = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    /* Layout-координата точки под центроидом: отменяем сдвиг и поворот. */
+    const dx = c0.x - o.x - tx, dy = c0.y - o.y - ty;
+    const ct = Math.cos(rot), st = Math.sin(rot);
     gesture = {
       t0: performance.now(),
-      c0: { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 },
+      c0,
       d0: Math.max(10, Math.hypot(p2.x - p1.x, p2.y - p1.y)),
-      k0: k, tx0: tx, ty0: ty, ox: o.x, oy: o.y, moved: 0,
+      a0: Math.atan2(p2.y - p1.y, p2.x - p1.x),
+      k0: k, rot0: rot, ox: o.x, oy: o.y,
+      ux: (dx * ct + dy * st) / k,
+      uy: (-dx * st + dy * ct) / k,
+      moved: 0, onGrid: false,
     };
   };
   const endGesture = () => {
@@ -591,7 +652,9 @@ export function openDrawing(onDone) {
     } else {
       multi = true;
       cancelPaint();
-      beginGesture();
+      /* Жест начинаем ровно на втором пальце: третий и далее лишь
+         продолжают уже начатый поворот/зум, не сбрасывая его. */
+      if (pointers.size === 2) beginGesture();
     }
     e.preventDefault();
   };
@@ -606,8 +669,8 @@ export function openDrawing(onDone) {
        одним кадром — линия получается заметно ровнее. */
     const coalesced = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
     if (coalesced && coalesced.length) {
-      const r = board.getBoundingClientRect();
-      for (const ce of coalesced) extendPaint(toDoc(ce.clientX, ce.clientY, r));
+      const o = originXY();
+      for (const ce of coalesced) extendPaint(toDoc(ce.clientX, ce.clientY, o));
     } else {
       extendPaint(toDoc(e.clientX, e.clientY));
     }
@@ -716,6 +779,8 @@ export function openDrawing(onDone) {
     $('.dr-dot').style.background = color;
     $('.dr-color-prev').style.background = color;
     $('.dr-color-hex').textContent = color.toUpperCase();
+    /* Точка у ползунка размера красится текущим цветом кисти. */
+    sizeDot.style.background = color;
     $$('.dr-preset').forEach((el) => el.classList.toggle('active', el.dataset.c.toLowerCase() === color.toLowerCase()));
   };
   const updateHueKnob = () => { hueKnob.style.left = (hue / 360 * 100) + '%'; };
@@ -832,7 +897,7 @@ export function openDrawing(onDone) {
 
   $('[data-a=fit]').addEventListener('click', () => {
     board.classList.add('glide');
-    k = 1; tx = 0; ty = 0;
+    k = 1; tx = 0; ty = 0; rot = 0;
     applyT();
     setTimeout(() => board.classList.remove('glide'), 340);
     vibrate(6);

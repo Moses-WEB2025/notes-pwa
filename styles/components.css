@@ -291,7 +291,7 @@
   width: 12px; height: 12px;
   border-radius: 50%;
   background: var(--text);
-  transition: width var(--dur-1) ease, height var(--dur-1) ease;
+  transition: width var(--dur-1) ease, height var(--dur-1) ease, background-color var(--dur-1) ease;
 }
 .dr-slider {
   flex: 1;
@@ -341,7 +341,9 @@
 .dr-chip svg { flex: none; width: 17px; height: 17px; }
 .dr-chip span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .dr-chip:active { transform: scale(.96); }
-.dr-chip.active { background: var(--accent-soft); color: var(--accent-deep); }
+/* Активный элемент — как в тулбаре над клавиатурой: без подложки,
+   просто «загорается» основным жёлтым цветом. */
+.dr-chip.active { color: var(--accent-deep); }
 
 /* ---- Нижняя панель инструментов ---- */
 .dr-dock {
@@ -363,8 +365,8 @@
   transition: background-color var(--dur-1) ease, color var(--dur-1) ease, transform var(--dur-1) var(--ease-standard);
 }
 .dr-tool svg { width: 23px; height: 23px; }
-.dr-tool:active { transform: scale(.92); }
-.dr-tool.active { background: var(--accent-soft); color: var(--accent-deep); }
+.dr-tool:active { background: var(--surface2); transform: scale(.92); }
+.dr-tool.active { color: var(--accent-deep); }
 .dr-tool:disabled { opacity: .3; pointer-events: none; }
 .dr-color {
   position: relative;
