@@ -109,9 +109,9 @@ body.kb-open .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px
 }
 .note-content-input:empty::before { content: 'Начните ввод'; color: #c9c9cd; pointer-events: none; }
 .note-content-input[data-placeholder]:empty::before { content: attr(data-placeholder); }
-.note-content-input h1 { font: 700 22px/1.3 var(--font); margin: 12px 0 4px; }
-.note-content-input h2 { font: 700 19px/1.3 var(--font); margin: 10px 0 4px; }
-.note-content-input h3 { font: 700 17px/1.3 var(--font); margin: 9px 0 4px; }
+.note-content-input h1 { font: 700 28px/1.3 var(--font); margin: 14px 0 5px; }
+.note-content-input h2 { font: 700 24px/1.3 var(--font); margin: 12px 0 4px; }
+.note-content-input h3 { font: 700 20px/1.3 var(--font); margin: 10px 0 4px; }
 .note-content-input ul, .note-content-input ol { padding-left: 26px; }
 .note-content-input li { margin: 3px 0; }
 .note-content-input blockquote { border-left: 3px solid var(--accent); padding-left: 12px; margin: 8px 0; color: #6b5510; }

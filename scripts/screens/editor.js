@@ -683,10 +683,32 @@ export function openEditor(id, opts = {}) {
     while (e > s && /\s/.test(text[e - 1])) e--;
     if (e > s) { r.setStart(node, s); r.setEnd(node, e); sel.removeAllRanges(); sel.addRange(r); }
   }
+  /* Пробелы по краям выделения не форматируем: иначе подчёркивание и
+     зачёркивание «закрывают» пустое место за последним словом. */
+  function trimSelection() {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const r = sel.getRangeAt(0);
+    if (r.collapsed) return;
+    const a = r.startContainer, b = r.endContainer;
+    if (a.nodeType === 3) {
+      let o = r.startOffset;
+      while (o < a.nodeValue.length && /\s/.test(a.nodeValue[o])) o++;
+      if (o !== r.startOffset) r.setStart(a, o);
+    }
+    if (b.nodeType === 3) {
+      let o = r.endOffset;
+      while (o > 0 && /\s/.test(b.nodeValue[o - 1])) o--;
+      if (o !== r.endOffset) r.setEnd(b, o);
+    }
+    if (r.collapsed) return;
+    sel.removeAllRanges();
+    sel.addRange(r);
+  }
   function runFormat(mutate, key) {
     ensureBlock();
     focusEditor();
-    if (INLINE_TOOLS.has(key)) expandToSentence();
+    if (INLINE_TOOLS.has(key)) { expandToSentence(); trimSelection(); }
     mutate();
     saveSelection();
     commit();
@@ -762,12 +784,57 @@ export function openEditor(id, opts = {}) {
   }));
 
   /* Блочный стиль абзаца (H1/H2/H3, цитата) — переключателем: повторный тап
-     возвращает обычный текст, как в системных заметках. */
+     возвращает обычный текст, как в системных заметках. Текущий блок берём у
+     самого редактора (queryCommandValue), а не у anchorNode: при выделении
+     всего текста anchorNode — это контейнер, и проверка «через closest» не
+     находила заголовок/цитату, поэтому снять их было нельзя. */
+  function currentBlockTag() {
+    let cur = '';
+    try { cur = (document.queryCommandValue('formatBlock') || '').toLowerCase(); } catch (e) {}
+    return cur;
+  }
   function toggleBlock(tag) {
-    let node = window.getSelection()?.anchorNode;
-    if (node?.nodeType === 3) node = node.parentElement;
-    const inside = !!node?.closest?.(tag);
+    const inside = currentBlockTag() === tag.toLowerCase();
     document.execCommand('formatBlock', false, inside ? 'div' : tag);
+  }
+  /* Снять цитату: убрать тег blockquote, сохранив абзацы внутри него. */
+  function unwrapQuote(bq) {
+    const kids = Array.from(bq.childNodes);
+    const hasBlocks = kids.some(n => n.nodeType === 1 && /^(DIV|P|H1|H2|H3|UL|OL|BLOCKQUOTE)$/.test(n.tagName));
+    if (hasBlocks) {
+      const frag = document.createDocumentFragment();
+      kids.forEach(n => frag.appendChild(n));
+      bq.replaceWith(frag);
+      return kids[0] || null;
+    }
+    const div = document.createElement('div');
+    kids.forEach(n => div.appendChild(n));
+    bq.replaceWith(div);
+    return div;
+  }
+  /* Цитата — переключатель: повторный тап снимает её. */
+  function toggleQuote() {
+    if (currentBlockTag() !== 'blockquote') {
+      document.execCommand('formatBlock', false, 'blockquote');
+      return;
+    }
+    const bqs = new Set();
+    targetBlocks().forEach(b => { const q = b.closest('blockquote'); if (q) bqs.add(q); });
+    if (!bqs.size) { const q = content.querySelector('blockquote'); if (q) bqs.add(q); }
+    if (!bqs.size) return;
+    let first = null;
+    /* Копия набора: replaceWith во время обхода Set безопасна, но порядок важен. */
+    Array.from(bqs).forEach(q => { const n = unwrapQuote(q); if (!first) first = n; });
+    if (first) placeCaretAtEnd(first);
+  }
+  function placeCaretAtEnd(node) {
+    const r = document.createRange();
+    r.selectNodeContents(node);
+    r.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+    savedRange = r.cloneRange();
   }
   /* Повторный тап по активному выравниванию возвращает абзац к левому краю —
      так инструмент снимается повторным нажатием. */
@@ -836,7 +903,7 @@ export function openEditor(id, opts = {}) {
     ol: () => document.execCommand('insertOrderedList'),
     indent: () => changeIndent(1),
     outdent: () => changeIndent(-1),
-    quote: () => toggleBlock('blockquote'),
+    quote: () => toggleQuote(),
     'align-left': () => alignCmd('justifyLeft'),
     'align-center': () => alignCmd('justifyCenter'),
     'align-right': () => alignCmd('justifyRight'),
@@ -848,11 +915,10 @@ export function openEditor(id, opts = {}) {
     const q = c => { try { return document.queryCommandState(c); } catch (e) { return false; } };
     let block = '';
     try { block = (document.queryCommandValue('formatBlock') || '').toLowerCase(); } catch (e) {}
-    /* Заголовки набраны полужирным, поэтому браузер сообщает bold = true.
-       Это не «жирный текст», а сам заголовок, — кнопку «Жирный» не подсвечиваем. */
-    const isHeading = /^h[123]$/.test(block);
     const on = {
-      bold: q('bold') && !isHeading, italic: q('italic'), underline: q('underline'), strike: q('strikeThrough'),
+      /* Реальное состояние текста: у заголовка он полужирный, поэтому кнопка
+         «Жирный» подсвечена и снимается/возвращается повторным тапом. */
+      bold: q('bold'), italic: q('italic'), underline: q('underline'), strike: q('strikeThrough'),
       ul: q('insertUnorderedList'), ol: q('insertOrderedList'),
       h1: block === 'h1', h2: block === 'h2', h3: block === 'h3',
       p: !block || block === 'div' || block === 'p', quote: block === 'blockquote',
