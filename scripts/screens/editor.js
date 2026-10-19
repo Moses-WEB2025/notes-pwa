@@ -13,9 +13,12 @@ import { icon } from '../icons.js';
    горизонтальным скроллом. «Крестик» вынесен в закреплённую секцию справа
    (общую для всех страниц), поэтому в страницы его не добавляем. */
 const FMT_PAGES = {
-  1: [['p', 'case-sensitive', 'Обычный текст'], ['h1', 'heading-1', 'Заголовок 1'], ['h2', 'heading-2', 'Заголовок 2'], ['h3', 'heading-3', 'Заголовок 3'], ['bold', 'bold', 'Жирный'], ['ul', 'list', 'Список']],
-  2: [['italic', 'italic', 'Курсив'], ['underline', 'underline', 'Подчёркнутый'], ['strike', 'strikethrough', 'Зачёркнутый'], ['ol', 'list-ordered', 'Нумерованный список'], ['check', 'list-checks', 'Чек-лист']],
-  3: [['outdent', 'indent-decrease', 'Уменьшить отступ'], ['indent', 'indent-increase', 'Увеличить отступ'], ['quote', 'quote', 'Цитата'], ['align-left', 'align-left', 'По левому краю'], ['align-center', 'align-center', 'По центру'], ['align-right', 'align-right', 'По правому краю'], ['align-justify', 'align-justify', 'По ширине']],
+  1: [['p', 'case-sensitive', 'Обычный текст'], ['h1', 'heading-1', 'Заголовок 1'], ['h2', 'heading-2', 'Заголовок 2'], ['h3', 'heading-3', 'Заголовок 3'], ['bold', 'bold', 'Жирный'], ['italic', 'italic', 'Курсив']],
+  /* Списки идут парой: маркированный сразу перед нумерованным. */
+  2: [['underline', 'underline', 'Подчёркнутый'], ['strike', 'strikethrough', 'Зачёркнутый'], ['ul', 'list', 'Маркированный список'], ['ol', 'list-ordered', 'Нумерованный список'], ['check', 'list-checks', 'Чек-лист']],
+  /* «Увеличить отступ» (сдвиг вправо) стоит левее «уменьшить» — как в
+     системных редакторах. */
+  3: [['indent', 'indent-increase', 'Увеличить отступ'], ['outdent', 'indent-decrease', 'Уменьшить отступ'], ['quote', 'quote', 'Цитата'], ['align-left', 'align-left', 'По левому краю'], ['align-center', 'align-center', 'По центру'], ['align-right', 'align-right', 'По правому краю'], ['align-justify', 'align-justify', 'По ширине']],
 };
 function fmtButton(tool, ic, label) {
   return `<button type="button" class="fmt-tool" data-fmt="${tool}" aria-label="${label}">${icon(ic)}</button>`;
@@ -658,9 +661,32 @@ export function openEditor(id, opts = {}) {
     saveSelection();
   }
 
-  function runFormat(mutate) {
+  /* Инструменты, работающие с фрагментом текста, а не с целым блоком. */
+  const INLINE_TOOLS = new Set(['bold', 'italic', 'underline', 'strike']);
+  /* Знаки конца фразы: точка, !, ?, ;, : и перенос строки. Запятая границей
+     не считается — как в современных редакторах. */
+  const SENT_STOP = /[.!?;:\n]/;
+  /* Без выделения растягиваем каретку до границ текущей фразы, чтобы инструмент
+     применялся ко всей фразе, а не к одному слову под кареткой. */
+  function expandToSentence() {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const r = sel.getRangeAt(0);
+    if (!r.collapsed) return;
+    const node = r.startContainer;
+    if (node.nodeType !== 3) return;
+    const text = node.nodeValue;
+    let s = r.startOffset, e = r.startOffset;
+    while (s > 0 && !SENT_STOP.test(text[s - 1])) s--;
+    while (e < text.length && !SENT_STOP.test(text[e])) e++;
+    while (s < e && /\s/.test(text[s])) s++;
+    while (e > s && /\s/.test(text[e - 1])) e--;
+    if (e > s) { r.setStart(node, s); r.setEnd(node, e); sel.removeAllRanges(); sel.addRange(r); }
+  }
+  function runFormat(mutate, key) {
     ensureBlock();
     focusEditor();
+    if (INLINE_TOOLS.has(key)) expandToSentence();
     mutate();
     saveSelection();
     commit();
@@ -743,9 +769,13 @@ export function openEditor(id, opts = {}) {
     const inside = !!node?.closest?.(tag);
     document.execCommand('formatBlock', false, inside ? 'div' : tag);
   }
+  /* Повторный тап по активному выравниванию возвращает абзац к левому краю —
+     так инструмент снимается повторным нажатием. */
   function alignCmd(cmd) {
+    let active = false;
+    try { active = document.queryCommandState(cmd); } catch (e) {}
     document.execCommand('styleWithCSS', false, true);
-    document.execCommand(cmd);
+    document.execCommand(active && cmd !== 'justifyLeft' ? 'justifyLeft' : cmd);
   }
   /* ---------- Отступ блока ----------
      Отступ делаем сами, а не через execCommand('indent'): нужен шаг и сторона.
@@ -771,11 +801,27 @@ export function openEditor(id, opts = {}) {
     const v = indentSide(block) === 'right' ? block.style.paddingRight : block.style.paddingLeft;
     return Math.max(0, parseFloat(v) || 0);
   }
+  /* Блоки, которых касается выделение. Без выделения — блок под кареткой.
+     Отступ применяем ко всем выделенным абзацам, а не только к одному. */
+  function targetBlocks() {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return [];
+    const r = sel.getRangeAt(0);
+    if (r.collapsed) { const b = caretBlock(); return b ? [b] : []; }
+    const all = [];
+    content.querySelectorAll('div,p,h1,h2,h3,blockquote,li').forEach(b => {
+      if (r.intersectsNode(b)) all.push(b);
+    });
+    return all.filter(b => !all.some(o => o !== b && b.contains(o)));
+  }
   function changeIndent(dir) {
-    const block = caretBlock();
-    if (!block) return;
-    const next = Math.max(0, indentOf(block) + dir * INDENT_STEP);
-    block.style[indentSide(block) === 'right' ? 'paddingRight' : 'paddingLeft'] = next ? next + 'px' : '';
+    const blocks = targetBlocks();
+    if (!blocks.length) return;
+    blocks.forEach(block => {
+      const side = indentSide(block) === 'right' ? 'paddingRight' : 'paddingLeft';
+      const next = Math.max(0, indentOf(block) + dir * INDENT_STEP);
+      block.style[side] = next ? next + 'px' : '';
+    });
   }
   const FMT_ACTIONS = {
     p: () => document.execCommand('formatBlock', false, 'div'),
@@ -802,8 +848,11 @@ export function openEditor(id, opts = {}) {
     const q = c => { try { return document.queryCommandState(c); } catch (e) { return false; } };
     let block = '';
     try { block = (document.queryCommandValue('formatBlock') || '').toLowerCase(); } catch (e) {}
+    /* Заголовки набраны полужирным, поэтому браузер сообщает bold = true.
+       Это не «жирный текст», а сам заголовок, — кнопку «Жирный» не подсвечиваем. */
+    const isHeading = /^h[123]$/.test(block);
     const on = {
-      bold: q('bold'), italic: q('italic'), underline: q('underline'), strike: q('strikeThrough'),
+      bold: q('bold') && !isHeading, italic: q('italic'), underline: q('underline'), strike: q('strikeThrough'),
       ul: q('insertUnorderedList'), ol: q('insertOrderedList'),
       h1: block === 'h1', h2: block === 'h2', h3: block === 'h3',
       p: !block || block === 'div' || block === 'p', quote: block === 'blockquote',
@@ -811,9 +860,9 @@ export function openEditor(id, opts = {}) {
       'align-right': q('justifyRight'), 'align-justify': q('justifyFull'),
     };
     formatPanel.querySelectorAll('[data-fmt]').forEach(b => b.classList.toggle('active', !!on[b.dataset.fmt]));
-    /* «Уменьшить отступ» неактивна, пока у блока нет отступа — нечего убирать. */
+    /* «Уменьшить отступ» неактивна, пока ни у одного выделенного блока нет отступа. */
     const out = formatPanel.querySelector('[data-fmt="outdent"]');
-    if (out) out.disabled = indentOf(caretBlock()) <= 0;
+    if (out) out.disabled = !targetBlocks().some(b => indentOf(b) > 0);
   }
   /* Применение инструментов панели форматирования к тексту заметки. */
   formatPanel.addEventListener('click', e => {
@@ -824,7 +873,7 @@ export function openEditor(id, opts = {}) {
     if (k === 'close') { setFormatOpen(false); return; }
     saveSelection();
     if (k === 'check') insertChecklist();
-    else if (FMT_ACTIONS[k]) runFormat(FMT_ACTIONS[k]);
+    else if (FMT_ACTIONS[k]) runFormat(FMT_ACTIONS[k], k);
     syncFormatState();
   });
 

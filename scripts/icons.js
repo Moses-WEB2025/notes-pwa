@@ -24,8 +24,10 @@ const PATHS = {
   'list-ordered': '<path d="M11 5h10"/><path d="M11 12h10"/><path d="M11 19h10"/><path d="M4 4h1v5"/><path d="M4 9h2"/><path d="M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02"/>',
   'list-checks': '<path d="M13 5h8"/><path d="M13 12h8"/><path d="M13 19h8"/><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/>',
   'quote': '<path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/>',
-  'indent-increase': '<path d="M21 5H11"/><path d="M21 12H11"/><path d="M21 19H11"/><path d="m3 8 4 4-4 4"/>',
-  'indent-decrease': '<path d="M21 5H11"/><path d="M21 12H11"/><path d="M21 19H11"/><path d="m7 8-4 4 4 4"/>',
+  /* Сдвиг блока: увеличение отступа (вправо) и уменьшение (влево) —
+     это точные зеркальные отражения друг друга по вертикальной оси. */
+  'indent-increase': '<path d="M3 5h10"/><path d="M3 12h10"/><path d="M3 19h10"/><path d="m17 8 4 4-4 4"/>',
+  'indent-decrease': '<path d="M11 5h10"/><path d="M11 12h10"/><path d="M11 19h10"/><path d="m7 8-4 4 4 4"/>',
   'align-left': '<path d="M21 5H3"/><path d="M15 12H3"/><path d="M17 19H3"/>',
   'align-center': '<path d="M21 5H3"/><path d="M17 12H7"/><path d="M19 19H5"/>',
   'align-right': '<path d="M21 5H3"/><path d="M21 12H9"/><path d="M21 19H7"/>',

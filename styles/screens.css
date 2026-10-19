@@ -111,6 +111,7 @@ body.kb-open .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px
 .note-content-input[data-placeholder]:empty::before { content: attr(data-placeholder); }
 .note-content-input h1 { font: 700 22px/1.3 var(--font); margin: 12px 0 4px; }
 .note-content-input h2 { font: 700 19px/1.3 var(--font); margin: 10px 0 4px; }
+.note-content-input h3 { font: 700 17px/1.3 var(--font); margin: 9px 0 4px; }
 .note-content-input ul, .note-content-input ol { padding-left: 26px; }
 .note-content-input li { margin: 3px 0; }
 .note-content-input blockquote { border-left: 3px solid var(--accent); padding-left: 12px; margin: 8px 0; color: #6b5510; }
@@ -188,8 +189,9 @@ body.fmt-open > .format-toolbar { opacity: 0; transform: translateY(8px); pointe
   transition: background-color var(--dur-1) ease, transform var(--dur-1) var(--ease-out);
 }
 .format-toolbar .tool:active { background: var(--surface2); transform: scale(.96); }
-/* Кнопка «Т» в главном меню подсвечена, пока панель форматирования открыта */
-.format-toolbar .tool.active { color: var(--accent-deep, #c98b17); background: var(--accent-soft); }
+/* Кнопка «Т» в главном меню подсвечена, пока панель форматирования открыта.
+   Активное состояние — только смена цвета, без заливки-квадрата. */
+.format-toolbar .tool.active { color: var(--accent-deep, #c98b17); }
 
 /* ---- Панель форматирования ----
    Раскрывается НА МЕСТЕ главного меню: тот же слот и высота, поэтому при
@@ -261,7 +263,8 @@ body.fmt-open > .format-panel { opacity: 1; transform: none; pointer-events: aut
   transition: background-color var(--dur-1) ease, transform var(--dur-1) var(--ease-out);
 }
 .format-panel .fmt-tool:active { background: var(--surface2); transform: scale(.96); }
-.format-panel .fmt-tool.active { color: var(--accent-deep, #c98b17); background: var(--accent-soft); }
+/* Активный инструмент — просто основной жёлтый цвет, без заливки квадрата. */
+.format-panel .fmt-tool.active { color: var(--accent-deep, #c98b17); }
 .format-panel .fmt-tool:disabled { color: var(--text-tertiary); opacity: .4; }
 
 /* Закреплённый «крестик» справа: не скроллится и отделён тонкой линией. */
