@@ -783,18 +783,20 @@ export function openEditor(id, opts = {}) {
     }
   }));
 
-  /* Блочный стиль абзаца (H1/H2/H3, цитата) — переключателем: повторный тап
-     возвращает обычный текст, как в системных заметках. Текущий блок берём у
-     самого редактора (queryCommandValue), а не у anchorNode: при выделении
-     всего текста anchorNode — это контейнер, и проверка «через closest» не
-     находила заголовок/цитату, поэтому снять их было нельзя. */
+  /* Блочный стиль абзаца (H1/H2/H3) — переключателем: повторный тап возвращает
+     обычный текст. Блок берём самый внутренний (caretBlock), а не через
+     queryCommandValue: внутри цитаты он вернул бы саму цитату, и заголовок
+     «сбрасывался» — инструмент менял тег цитаты вместо текста внутри неё. */
   function currentBlockTag() {
     let cur = '';
     try { cur = (document.queryCommandValue('formatBlock') || '').toLowerCase(); } catch (e) {}
     return cur;
   }
   function toggleBlock(tag) {
-    const inside = currentBlockTag() === tag.toLowerCase();
+    const b = caretBlock();
+    let inside = !!b && b.tagName.toLowerCase() === tag.toLowerCase();
+    /* Блока рядом нет (курсор на пустом месте, выделен весь текст) — смотрим у редактора. */
+    if (!b) inside = currentBlockTag() === tag.toLowerCase();
     document.execCommand('formatBlock', false, inside ? 'div' : tag);
   }
   /* Снять цитату: убрать тег blockquote, сохранив абзацы внутри него. */
@@ -812,18 +814,42 @@ export function openEditor(id, opts = {}) {
     bq.replaceWith(div);
     return div;
   }
+  /* Находится ли курсор/выделение внутри цитаты (цитата может быть выше
+     текущего блока, поэтому проверяем предков, а не сам блок). */
+  function selectionInQuote() {
+    const blocks = targetBlocks();
+    if (blocks.length) return blocks.some(b => !!b.closest('blockquote'));
+    return !!caretBlock()?.closest?.('blockquote');
+  }
+  /* Поставить цитату: вложить блоки ВНУТРЬ blockquote, а не заменять их тег.
+     Иначе formatBlock менял, например, h1 на blockquote — формат текста
+     внутри цитаты «сбрасывался». */
+  function wrapQuote() {
+    const blocks = targetBlocks();
+    if (!blocks.length) { document.execCommand('formatBlock', false, 'blockquote'); return; }
+    /* Соседние блоки с одним родителем объединяем в одну цитату. */
+    const groups = [];
+    blocks.forEach(b => {
+      const g = groups.find(g => g.parent === b.parentNode && g.last.nextSibling === b);
+      if (g) g.last = b; else groups.push({ parent: b.parentNode, first: b, last: b });
+    });
+    groups.forEach(g => {
+      const bq = document.createElement('blockquote');
+      g.first.replaceWith(bq);
+      let n = g.first;
+      while (n) { const next = n === g.last ? null : n.nextSibling; bq.appendChild(n); n = next; }
+    });
+    /* Узлы не пересоздавались — каретка осталась валидной, возвращаем её. */
+    restoreSelection();
+  }
   /* Цитата — переключатель: повторный тап снимает её. */
   function toggleQuote() {
-    if (currentBlockTag() !== 'blockquote') {
-      document.execCommand('formatBlock', false, 'blockquote');
-      return;
-    }
+    if (!selectionInQuote()) { wrapQuote(); return; }
     const bqs = new Set();
     targetBlocks().forEach(b => { const q = b.closest('blockquote'); if (q) bqs.add(q); });
     if (!bqs.size) { const q = content.querySelector('blockquote'); if (q) bqs.add(q); }
     if (!bqs.size) return;
     let first = null;
-    /* Копия набора: replaceWith во время обхода Set безопасна, но порядок важен. */
     Array.from(bqs).forEach(q => { const n = unwrapQuote(q); if (!first) first = n; });
     if (first) placeCaretAtEnd(first);
   }
