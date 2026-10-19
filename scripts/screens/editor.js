@@ -9,8 +9,9 @@ import { openImageEditor } from '../components/image-editor.js';
 import { icon } from '../icons.js';
 
 /* ---------- Страницы панели форматирования ----------
-   Три страницы инструментов ровно как в системных заметках: каждая
-   заканчивается «крестиком», листаются горизонтальным свайпом. */
+   Три группы инструментов как в системных заметках, листаются свободным
+   горизонтальным скроллом. «Крестик» вынесен в закреплённую секцию справа
+   (общую для всех страниц), поэтому в страницы его не добавляем. */
 const FMT_PAGES = {
   1: [['p', 'case-sensitive', 'Обычный текст'], ['h1', 'heading-1', 'Заголовок 1'], ['h2', 'heading-2', 'Заголовок 2'], ['h3', 'heading-3', 'Заголовок 3'], ['bold', 'bold', 'Жирный'], ['ul', 'list', 'Список']],
   2: [['italic', 'italic', 'Курсив'], ['underline', 'underline', 'Подчёркнутый'], ['strike', 'strikethrough', 'Зачёркнутый'], ['ul', 'list', 'Список с маркерами'], ['ol', 'list-ordered', 'Нумерованный список'], ['check', 'list-checks', 'Чек-лист']],
@@ -21,7 +22,7 @@ function fmtButton(tool, ic, label) {
 }
 function fmtPage(n) {
   const items = FMT_PAGES[n].map(([t, i, l]) => fmtButton(t, i, l)).join('');
-  return `<div class="fmt-page" data-page="${n}">${items}${fmtButton('close', 'x', 'Закрыть')}</div>`;
+  return `<div class="fmt-page" data-page="${n}">${items}</div>`;
 }
 
 /* Цветовые темы холста */
@@ -113,7 +114,9 @@ export function openEditor(id, opts = {}) {
 
   const formatPanel = document.createElement('div');
   formatPanel.className = 'format-panel';
-  formatPanel.innerHTML = `<div class="fmt-scroll" role="toolbar" aria-label="Форматирование текста">${fmtPage(1)}${fmtPage(2)}${fmtPage(3)}</div>`;
+  formatPanel.innerHTML = `
+    <div class="fmt-scroll" role="toolbar" aria-label="Форматирование текста">${fmtPage(1)}${fmtPage(2)}${fmtPage(3)}</div>
+    <div class="fmt-close"><button type="button" class="fmt-tool" data-fmt="close" aria-label="Скрыть форматирование">${icon('x')}</button></div>`;
 
   el.append(topbar, topbarKb, bodyWrap, toolbar, formatPanel);
 
@@ -287,25 +290,33 @@ export function openEditor(id, opts = {}) {
     const a = document.activeElement;
     return !!a && (a === content || content.contains(a) || toolbar.contains(a) || formatPanel.contains(a));
   }
+  /* Кнопка «Т» отражает, раскрыта ли панель. */
+  function reflectFormatBtn() {
+    const btn = toolbar.querySelector('[data-tool="format"]');
+    btn?.classList.toggle('active', fmtOpen);
+    btn?.setAttribute('aria-expanded', fmtOpen ? 'true' : 'false');
+  }
   function syncFormatBar() {
     if (!el.isConnected) {
+      fmtOpen = false; reflectFormatBtn();
       document.body.classList.remove('toolbar-on', 'fmt-open');
       dock(toolbar, false); dock(formatPanel, false);
       return;
     }
     const show = !editingTitle() && (kbOpen || editorActive());
-    const panelOn = show && fmtOpen;
+    /* Панель живёт в том же слоте, что и меню, и появляется НА ЕГО МЕСТЕ.
+       Поэтому докаем её вместе с меню (невидимой), а видимость переключаем
+       классом fmt-open — так смена проигрывается переходом, а не «врывается». */
+    if (!show) fmtOpen = false;
+    reflectFormatBtn();
     dock(toolbar, show);
-    dock(formatPanel, panelOn);
+    dock(formatPanel, show);
     document.body.classList.toggle('toolbar-on', show && !kbOpen);
-    document.body.classList.toggle('fmt-open', panelOn);
+    document.body.classList.toggle('fmt-open', show && fmtOpen);
   }
-  /* Открыть/закрыть панель форматирования кнопкой «Т». */
+  /* Открыть/закрыть панель форматирования кнопкой «Т» или «крестиком». */
   function setFormatOpen(on) {
     fmtOpen = !!on;
-    const btn = toolbar.querySelector('[data-tool="format"]');
-    btn?.classList.toggle('active', fmtOpen);
-    btn?.setAttribute('aria-expanded', fmtOpen ? 'true' : 'false');
     syncFormatBar();
     if (fmtOpen) { syncFormatState(); ensureCaretClear(); }
   }
@@ -351,8 +362,8 @@ export function openEditor(id, opts = {}) {
     if (!el.isConnected || toolbar.parentElement !== document.body) return;
     const r = caretRect();
     if (!r) return;
-    /* Открытая панель форматирования добавляет высоту над нижним меню. */
-    const barH = (toolbar.offsetHeight || 0) + (fmtOpen ? (formatPanel.offsetHeight || 0) : 0);
+    /* Панель и меню занимают один слот, поэтому берём высоту видимой полосы. */
+    const barH = fmtOpen ? (formatPanel.offsetHeight || 0) : (toolbar.offsetHeight || 0);
     const safeBottom = bodyWrap.getBoundingClientRect().bottom - barH - CARET_GAP;
     const delta = r.bottom - safeBottom;
     if (delta > 0.5) bodyWrap.scrollTop += delta;

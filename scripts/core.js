@@ -254,7 +254,9 @@ function applyBackGestureDrag(g, dx) {
 let gesture = null;
 
 document.addEventListener('touchstart', e => {
-  if (e.touches.length !== 1 || backGestureBlocked()) return;
+  /* Свайп, начатый на панели форматирования, — это её горизонтальный скролл,
+     а не жест «назад»: иначе прокрутка у краёв закрывала бы заметку. */
+  if (e.touches.length !== 1 || backGestureBlocked() || e.target?.closest?.('.format-panel')) return;
   const screens = document.querySelectorAll('#screens-root > .screen');
   /* Тот же свайп «назад» закрывает и поиск на главном экране, когда других
      экранов нет: строка поиска уезжает вниз, возвращаясь на главную. */

@@ -80,8 +80,6 @@ body.kb-open .screen.under { visibility: hidden; }
 }
 body.kb-open .editor-screen .editor-body,
 body.toolbar-on .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px); }
-/* Открыта панель форматирования — холсту нужно место и под ней тоже. */
-body.fmt-open .editor-screen .editor-body { padding-bottom: calc(var(--toolbar-h, 54px) + var(--fmt-h, 52px)); }
 .editor-body::-webkit-scrollbar { display: none; }
 
 .note-title-input {
@@ -153,6 +151,8 @@ body.fmt-open .editor-screen .editor-body { padding-bottom: calc(var(--toolbar-h
   padding: 0 6px;
   height: var(--toolbar-h, 54px);
   z-index: 200;
+  /* Плавная смена местами с панелью форматирования (она встаёт в тот же слот). */
+  transition: opacity .18s var(--ease-standard), transform .18s var(--ease-standard);
 }
 body.kb-open > .format-toolbar,
 body.toolbar-on > .format-toolbar {
@@ -171,9 +171,11 @@ body.toolbar-on > .format-toolbar {
      bottom всегда точно равен --kb-h, поэтому тулбар ни в каком случае не
      окажется выше своего итогового места. Плавность даёт системная анимация
      клавиатуры: события visualViewport приходят каждый кадр. */
-  animation: toolbarIn var(--dur-3) var(--ease-standard) both;  /* выезд снизу вместе с клавиатурой (display не анимируется) */
+  animation: toolbarIn var(--dur-3) var(--ease-standard);
 }
 @keyframes toolbarIn { from { opacity: .3; transform: translateY(100%); } to { opacity: 1; transform: none; } }
+/* Открыта панель форматирования: главное меню уезжает, освобождая ей место. */
+body.fmt-open > .format-toolbar { opacity: 0; transform: translateY(8px); pointer-events: none; }
 .format-toolbar .tool {
   flex: 1;
   border: 0;
@@ -191,37 +193,53 @@ body.toolbar-on > .format-toolbar {
 /* Кнопка «Т» в главном меню подсвечена, пока панель форматирования открыта */
 .format-toolbar .tool.active { color: var(--accent-deep, #c98b17); background: var(--accent-soft); }
 
-/* ---- Панель форматирования: три страницы со снапом, горизонтальный скролл ----
-   Стоит вплотную над главным меню. Позицию ведём от тех же величин, что и
-   меню, поэтому панель не перекрывается клавиатурой ни на iOS (--kb-h), ни
-   на Android (там окно сжимается само и --kb-h = 0). */
+/* ---- Панель форматирования ----
+   Раскрывается НА МЕСТЕ главного меню: тот же слот и высота, поэтому при
+   переключении экран не дёргается — меняются только прозрачность и лёгкий
+   сдвиг (меню уезжает, панель встаёт ровно туда же). Слева лента страниц со
+   свободным горизонтальным скроллом, справа — закреплённый «крестик» за
+   тонкой линией. Позицию ведём от тех же величин, что и меню (--kb-h / safe
+   area), поэтому клавиатура панель не перекрывает ни на iOS, ни на Android. */
 .format-panel {
+  /* Пока панель не раскрыта, она уже стоит в слоте меню, но невидима: так
+     смена opacity/transform успевает проиграться переходом, а не «врывается». */
   display: none;
-  height: var(--fmt-h, 52px);
+  flex: none;
+  align-items: stretch;
+  height: var(--toolbar-h, 54px);
   background: var(--surface);
   border-top: 1px solid var(--divider);
-  padding: 0 6px;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition: opacity .18s var(--ease-standard), transform .18s var(--ease-standard);
+  will-change: opacity, transform;
   z-index: 200;
 }
-body.fmt-open > .format-panel {
-  display: block;
+body.kb-open > .format-panel,
+body.toolbar-on > .format-panel {
+  display: flex;
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(var(--kb-h, 0px) + var(--toolbar-h, 54px));
+  bottom: var(--kb-h, 0px);
   box-shadow: 0 -1px 0 var(--divider);
-  animation: toolbarIn var(--dur-3) var(--ease-standard) both;
 }
-/* Клавиатура скрыта (фокус есть): меню и панель поднимаем над home-indicator. */
+body.toolbar-on > .format-panel { bottom: calc(var(--kb-h, 0px) + var(--safe-bottom)); }
+body.fmt-open > .format-panel { opacity: 1; transform: none; pointer-events: auto; }
+/* Клавиатура скрыта (фокус есть): меню поднимаем над home-indicator. */
 body.toolbar-on > .format-toolbar { bottom: calc(var(--kb-h, 0px) + var(--safe-bottom)); }
-body.toolbar-on > .format-panel { bottom: calc(var(--kb-h, 0px) + var(--safe-bottom) + var(--toolbar-h, 54px)); }
 
+/* Лента страниц: свободный горизонтальный скролл — без привязки к странице,
+   крутится в любом темпе, с инерцией. */
 .format-panel .fmt-scroll {
+  flex: 1;
+  min-width: 0;
   display: flex;
   height: 100%;
+  padding: 0 6px;
   overflow-x: auto;
   overflow-y: hidden;
-  scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
   touch-action: pan-x;
@@ -229,14 +247,13 @@ body.toolbar-on > .format-panel { bottom: calc(var(--kb-h, 0px) + var(--safe-bot
 }
 .format-panel .fmt-scroll::-webkit-scrollbar { display: none; }
 .format-panel .fmt-page {
-  flex: 0 0 100%;
-  scroll-snap-align: start;
+  flex: none;
   display: flex;
   align-items: stretch;
 }
 .format-panel .fmt-tool {
-  flex: 1;
-  min-width: 0;
+  flex: 0 0 var(--fmt-slot, 46px);
+  min-width: var(--fmt-slot, 46px);
   border: 0;
   background: transparent;
   display: flex; align-items: center; justify-content: center;
@@ -251,6 +268,16 @@ body.toolbar-on > .format-panel { bottom: calc(var(--kb-h, 0px) + var(--safe-bot
 }
 .format-panel .fmt-tool:active { background: var(--surface2); transform: scale(.96); }
 .format-panel .fmt-tool.active { color: var(--accent-deep, #c98b17); background: var(--accent-soft); }
+
+/* Закреплённый «крестик» справа: не скроллится и отделён тонкой линией. */
+.format-panel .fmt-close {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  padding-left: 6px;
+  border-left: 1px solid var(--divider);
+}
+.format-panel .fmt-close .fmt-tool { flex: 0 0 46px; min-width: 46px; }
 
 /* ---- Иконки: официальный контурный Lucide, без заливки, цвет — от текста ---- */
 .format-toolbar .tool svg.lucide,
