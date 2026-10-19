@@ -66,7 +66,7 @@ export function openFolders(opts = {}) {
       scroll.appendChild(row);
     });
 
-    /* «Новая папка» — тонкая строка во всю ширину папок */
+    /* «Новая папка» — во всю ширину, плюс в кружке над подписью */
     const add = document.createElement('button');
     add.className = 'folder-new';
     add.innerHTML = `<span class="material-symbols-rounded">add_circle</span><span class="t">Новая папка</span>`;
