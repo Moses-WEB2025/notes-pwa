@@ -23,15 +23,19 @@ import { vibrate } from '../core.js';
 import { icon } from '../icons.js';
 
 const PAPER = '#ffffff';          /* цвет «бумаги» и ластика */
-const MAXDIM = 2560;              /* макс. сторона холста (логические px) */
+const MAX_SIDE = 3072;            /* макс. сторона рабочего холста (логические px) */
+const MAX_PIXELS = 4.5 * 1024 * 1024; /* предел общего числа пикселей: резче, но без тяжёлой памяти */
 const MIN_K = 0.2, MAX_K = 10;    /* пределы масштаба: сильное отдаление и приближение */
 const SIZE_MIN = 1, SIZE_MAX = 160;
 const TOLERANCE = 32;             /* допуск заливки (строгое совпадение) */
 const TOLERANCE_SOFT = 110;       /* мягкий допуск: дотягивает заливку до края линии */
+const SOFT_FILL_PASSES = 3;       /* сколько раз «расползаемся» по антиалиас-краю */
 const SNAP_STEP = Math.PI / 2;    /* «сетка» поворота: 0 / 90 / 180 / 270 */
 const SNAP_TOL = 4 * Math.PI / 180; /* магнитная микрофиксация у сетки (градусы) */
 const HIST_MAX = 40;              /* предел числа операций в истории */
 const HIST_BYTES = 48 * 1024 * 1024; /* и суммарной памяти под снимки */
+const FILL_TAP_MS = 220;          /* заливка срабатывает только на быстрый тап */
+const FILL_TAP_SLOP = 10;         /* и без заметного сдвига пальца */
 
 /* Пресеты под палитру приложения (тёплые/холодные, нейтральные). */
 const PRESETS = [
@@ -184,9 +188,15 @@ export function openDrawing(onDone) {
   const dpr = Math.min(window.devicePixelRatio || 1, 2) * 2;
   let docW = Math.round(availW * dpr);
   let docH = Math.round(availH * dpr);
+  const pixels = docW * docH;
+  if (pixels > MAX_PIXELS) {
+    const s = Math.sqrt(MAX_PIXELS / pixels);
+    docW = Math.max(1, Math.round(docW * s));
+    docH = Math.max(1, Math.round(docH * s));
+  }
   const longest = Math.max(docW, docH);
-  if (longest > MAXDIM) {
-    const s = MAXDIM / longest;
+  if (longest > MAX_SIDE) {
+    const s = MAX_SIDE / longest;
     docW = Math.max(1, Math.round(docW * s));
     docH = Math.max(1, Math.round(docH * s));
   }
@@ -486,6 +496,7 @@ export function openDrawing(onDone) {
     if (a >= 0.999 && tr === fr[0] && tg === fr[1] && tb === fr[2]) return;
 
     const seen = new Uint8Array(W * H);
+    const softSeen = new Uint8Array(W * H);
     /* Наибольшее расхождение пикселя с цветом-образцом (0..255). */
     const diff = (i) => {
       const o = i * 4;
@@ -532,32 +543,54 @@ export function openDrawing(onDone) {
     }
 
     /* Край линии сглажен (антиалиасинг), поэтому пиксели у самой
-       границы — смесь линии и фона. Дотягиваем заливку до них:
-       подмешиваем цвет тем сильнее, чем ближе пиксель к образцу.
-       Иначе по краю остаётся тонкая светлая рамка. */
-    const y0 = Math.max(0, minY - 1), y1 = Math.min(H - 1, maxY + 1);
-    const x0 = Math.max(0, minX - 1), x1 = Math.min(W - 1, maxX + 1);
-    for (let y = y0; y <= y1; y++) {
-      for (let x = x0; x <= x1; x++) {
-        const i = y * W + x;
-        if (seen[i]) continue;
-        const near =
-          (x > 0 && seen[i - 1]) || (x < W - 1 && seen[i + 1]) ||
-          (y > 0 && seen[i - W]) || (y < H - 1 && seen[i + W]);
-        if (!near) continue;
-        const dd = diff(i);
-        if (dd > TOLERANCE_SOFT) continue;
-        const w = a * clamp((TOLERANCE_SOFT - dd) / (TOLERANCE_SOFT - TOLERANCE), 0, 1);
+       границы — смесь линии и фона. Дотягиваем заливку несколькими
+       мягкими проходами по 8-связности, чтобы не оставалось даже
+       одиночных светлых щелей у толстой обводки. */
+    const softPad = SOFT_FILL_PASSES + 1;
+    const y0 = Math.max(0, minY - softPad), y1 = Math.min(H - 1, maxY + softPad);
+    const x0 = Math.max(0, minX - softPad), x1 = Math.min(W - 1, maxX + softPad);
+    const softDenom = Math.max(1, TOLERANCE_SOFT - TOLERANCE);
+    const hasFilledNeighbor = (x, y) => {
+      for (let dy = -1; dy <= 1; dy++) {
+        const ny = y + dy;
+        if (ny < 0 || ny >= H) continue;
+        for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue;
+          const nx = x + dx;
+          if (nx < 0 || nx >= W) continue;
+          const j = ny * W + nx;
+          if (seen[j] || softSeen[j]) return true;
+        }
+      }
+      return false;
+    };
+    for (let pass = 0; pass < SOFT_FILL_PASSES; pass++) {
+      const frontier = [];
+      for (let y = y0; y <= y1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          const i = y * W + x;
+          if (seen[i] || softSeen[i]) continue;
+          const dd = diff(i);
+          if (dd > TOLERANCE_SOFT || !hasFilledNeighbor(x, y)) continue;
+          frontier.push(i, dd);
+        }
+      }
+      if (!frontier.length) break;
+      for (let i = 0; i < frontier.length; i += 2) {
+        const idx = frontier[i];
+        const dd = frontier[i + 1];
+        const w = a * clamp((TOLERANCE_SOFT - dd) / softDenom, 0, 1);
         if (w <= 0) continue;
-        const o = i * 4;
+        const o = idx * 4;
         d[o] = Math.round(d[o] * (1 - w) + fr[0] * w);
         d[o + 1] = Math.round(d[o + 1] * (1 - w) + fr[1] * w);
         d[o + 2] = Math.round(d[o + 2] * (1 - w) + fr[2] * w);
         d[o + 3] = 255;
+        softSeen[idx] = 1;
       }
     }
 
-    const box = normBox({ x: minX - 1, y: minY - 1, w: (maxX - minX) + 3, h: (maxY - minY) + 3 });
+    const box = normBox({ x: minX - softPad, y: minY - softPad, w: (maxX - minX) + softPad * 2 + 1, h: (maxY - minY) + softPad * 2 + 1 });
     commit(box, () => {
       bctx.putImageData(img, 0, 0, box.x, box.y, box.w, box.h);
     });
@@ -565,7 +598,6 @@ export function openDrawing(onDone) {
 
   const beginPaint = (p) => {
     if (tool === 'picker') { pick(p); return; }
-    if (tool === 'fill') { fillAt(p); vibrate(8); return; }
     if (tool === 'shape') { beginShape(p); return; }
     beginStroke(p);
   };
@@ -584,6 +616,29 @@ export function openDrawing(onDone) {
   const pointers = new Map();
   let multi = false;         /* после двух пальцев рисование ждём до полного отпускания */
   let gesture = null;
+  let fillTap = null;
+
+  const beginFillTap = (e) => {
+    fillTap = {
+      id: e.pointerId,
+      t0: performance.now(),
+      x: e.clientX,
+      y: e.clientY,
+      p: toDoc(e.clientX, e.clientY),
+    };
+  };
+  const cancelFillTap = () => { fillTap = null; };
+  const finishFillTap = (e) => {
+    if (!fillTap || fillTap.id !== e.pointerId) return false;
+    const dt = performance.now() - fillTap.t0;
+    const dist = Math.hypot(e.clientX - fillTap.x, e.clientY - fillTap.y);
+    const p = fillTap.p;
+    fillTap = null;
+    if (dt > FILL_TAP_MS || dist > FILL_TAP_SLOP || multi) return false;
+    fillAt(p);
+    vibrate(8);
+    return true;
+  };
 
   const gestureMove = () => {
     const arr = Array.from(pointers.values());
@@ -648,10 +703,12 @@ export function openDrawing(onDone) {
     try { board.setPointerCapture(e.pointerId); } catch (_) {}
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 1) {
-      beginPaint(toDoc(e.clientX, e.clientY));
+      if (tool === 'fill') beginFillTap(e);
+      else beginPaint(toDoc(e.clientX, e.clientY));
     } else {
       multi = true;
       cancelPaint();
+      cancelFillTap();
       /* Жест начинаем ровно на втором пальце: третий и далее лишь
          продолжают уже начатый поворот/зум, не сбрасывая его. */
       if (pointers.size === 2) beginGesture();
@@ -664,6 +721,11 @@ export function openDrawing(onDone) {
     p.x = e.clientX;
     p.y = e.clientY;
     if (pointers.size >= 2) { gestureMove(); return; }
+    if (fillTap && fillTap.id === e.pointerId) {
+      const dist = Math.hypot(e.clientX - fillTap.x, e.clientY - fillTap.y);
+      if (dist > FILL_TAP_SLOP) cancelFillTap();
+      return;
+    }
     if (multi) return;
     /* Склеенные события: на 120 Гц экранах браузер отдаёт пачку точек
        одним кадром — линия получается заметно ровнее. */
@@ -679,10 +741,27 @@ export function openDrawing(onDone) {
     if (!pointers.has(e.pointerId)) return;
     pointers.delete(e.pointerId);
     try { board.releasePointerCapture(e.pointerId); } catch (_) {}
+    if (e.type === 'pointercancel') {
+      cancelPaint();
+      cancelFillTap();
+      if (pointers.size === 0) {
+        endGesture();
+        multi = false;
+      }
+      return;
+    }
     if (pointers.size === 0) {
-      if (!multi) finishPaint();
+      if (!multi) {
+        if (tool === 'fill') finishFillTap(e);
+        else finishPaint();
+      } else if (fillTap && fillTap.id === e.pointerId) {
+        cancelFillTap();
+      }
       endGesture();
       multi = false;
+      cancelFillTap();
+    } else if (fillTap && fillTap.id === e.pointerId) {
+      cancelFillTap();
     }
   };
 
@@ -952,14 +1031,27 @@ export function openDrawing(onDone) {
     setTimeout(() => ov.remove(), 360);
   };
 
-  const finish = () => {
+  const canvasToBlob = (canvas, type, quality) => new Promise((resolve) => {
+    try {
+      canvas.toBlob((blob) => resolve(blob || null), type, quality);
+    } catch (_) {
+      resolve(null);
+    }
+  });
+  const exportDrawingBlob = async (canvas) => {
+    const webp = await canvasToBlob(canvas, 'image/webp', 0.92);
+    const png = await canvasToBlob(canvas, 'image/png');
+    if (webp && png) return webp.size < png.size * 0.75 ? webp : png;
+    return webp || png;
+  };
+
+  const finish = async () => {
     if (!hist.length) { close(); return; }
     const pad = Math.round(16 * dpr);
     const box = contentBox
       ? normBox({ x: contentBox.x - pad, y: contentBox.y - pad, w: contentBox.w + pad * 2, h: contentBox.h + pad * 2 })
       : { x: 0, y: 0, w: docW, h: docH };
     if (!box.w || !box.h) { close(); return; }
-    let url = '';
     try {
       const out = document.createElement('canvas');
       out.width = Math.max(1, box.w);
@@ -968,13 +1060,13 @@ export function openDrawing(onDone) {
       octx.fillStyle = PAPER;
       octx.fillRect(0, 0, out.width, out.height);
       octx.drawImage(base, box.x, box.y, box.w, box.h, 0, 0, box.w, box.h);
-      url = out.toDataURL('image/png');
+      const blob = await exportDrawingBlob(out);
+      if (!blob) throw new Error('blob');
+      if (onDone) await onDone(blob);
+      close();
     } catch (err) {
       toast('Не удалось сохранить рисунок');
-      return;
     }
-    if (url && onDone) onDone(url);
-    close();
   };
 
   $('[data-a=done]').addEventListener('click', finish);

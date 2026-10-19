@@ -1280,10 +1280,18 @@ export function openEditor(id, opts = {}) {
     } else if (k === 'draw') {
       saveSelection();
       content.blur();
-      openDrawing(async (dataUrl) => {
-        runFormat(() => {
-          insertAtCursor(`<div data-drawing="1"><img class="rich-img" src="${dataUrl}" alt=""></div><div><br></div>`);
-        });
+      openDrawing(async (blob) => {
+        try {
+          const imgId = 'img_' + uid();
+          await Store.putBlob(imgId, blob);
+          const url = URL.createObjectURL(blob);
+          runFormat(() => {
+            insertAtCursor(`<div data-drawing="1"><img class="rich-img" src="${url}" data-blob="${imgId}" alt=""></div><div><br></div>`);
+          });
+        } catch (e) {
+          toast('Не удалось добавить рисунок');
+          throw e;
+        }
       });
     } else if (k === 'check') {
       insertChecklist();
