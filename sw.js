@@ -1,5 +1,5 @@
 /* Заметки — Service Worker: полный офлайн (прекэш всех ресурсов, fallback навигации) */
-const VERSION = 'notes-v2.5.0';
+const VERSION = 'notes-v2.5.1';
 const PRECACHE = `precache-${VERSION}`;
 const RUNTIME = `runtime-${VERSION}`;
 
@@ -25,12 +25,28 @@ const PRECACHE_URLS = [
   './scripts/components/ui.js',
   './scripts/components/recorder.js',
   './scripts/components/drawing.js',
-  './scripts/components/drawing-art.js',
   './scripts/components/image-editor.js',
   './scripts/screens/editor.js',
   './scripts/screens/folders.js',
   './scripts/screens/grid.js',
   './scripts/screens/trash.js',
+  './assets/draw/pen.png',
+  './assets/draw/pen-accent.png',
+  './assets/draw/pen-shape.png',
+  './assets/draw/markerBlue.png',
+  './assets/draw/markerBlue-accent.png',
+  './assets/draw/markerBlue-shape.png',
+  './assets/draw/markerYellow.png',
+  './assets/draw/markerYellow-accent.png',
+  './assets/draw/markerYellow-shape.png',
+  './assets/draw/fountain.png',
+  './assets/draw/fountain-accent.png',
+  './assets/draw/fountain-shape.png',
+  './assets/draw/eraser.png',
+  './assets/draw/image.png',
+  './assets/draw/text.png',
+  './assets/draw/text-accent.png',
+  './assets/draw/note.png',
   './assets/fonts/material-symbols-rounded.woff2',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png'

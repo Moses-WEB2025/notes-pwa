@@ -111,17 +111,18 @@ body.dw-open #screens-root { visibility: hidden; }
   width: 32px; height: 32px;
   border-radius: 50%;
   background: #000;
-  box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(0, 0, 0, .26), 0 6px 14px rgba(0, 0, 0, .12);
+  box-shadow: 0 0 0 2.5px #fff, 0 2px 7px rgba(0, 0, 0, .28), 0 7px 15px rgba(0, 0, 0, .13);
   transition: background-color .2s ease, transform .18s var(--dw-spring);
 }
 .dw-color:active .dw-color-dot { transform: scale(.9); }
+.dw-color.no-color { opacity: 0; transform: scale(.7); pointer-events: none; }
 
 .dw-strip {
   margin-left: 64px;
   height: 156px;
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: 6px;
   padding: 0 18px 0 0;
   overflow-x: auto;
   overflow-y: hidden;
@@ -133,6 +134,7 @@ body.dw-open #screens-root { visibility: hidden; }
 .dw-strip::-webkit-scrollbar { display: none; }
 
 .dw-tool {
+  position: relative;
   flex: none;
   height: 136px;
   margin-bottom: -26px;
@@ -146,18 +148,51 @@ body.dw-open #screens-root { visibility: hidden; }
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform .46s var(--dw-spring), filter .3s ease;
+  filter: drop-shadow(0 7px 8px rgba(0, 0, 0, .07));
 }
-.dw-tool svg {
-  width: 100%;
-  height: 100%;
+.dw-sprite-box {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: block;
-  overflow: visible;
   pointer-events: none;
-  filter: none;
-  transition: filter .3s ease;
 }
-.dw-tool.is-active { transform: translateY(-22px) scale(1.03); }
-.dw-tool.is-active svg { filter: drop-shadow(0 9px 13px rgba(0, 0, 0, .10)); }
+.dw-sprite {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: none;
+  -webkit-mask-image: var(--shape, none);
+  mask-image: var(--shape, none);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  transition: filter .24s ease;
+}
+.dw-accent,
+.dw-accent-dark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  -webkit-mask-image: var(--mask);
+  mask-image: var(--mask);
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  transition: opacity .2s ease;
+  z-index: 1;
+}
+.dw-accent { background: var(--ink, #000); }
+.dw-accent-dark { background: #000; mix-blend-mode: multiply; }
+.dw-tool.is-custom .dw-accent { opacity: 1; }
+.dw-tool.is-custom .dw-accent-dark { opacity: var(--accent-dark, 0); }
+.dw-tool.is-active { transform: translateY(-22px) scale(1.03); filter: drop-shadow(0 10px 14px rgba(0, 0, 0, .10)); }
 .dw-tool:not(.is-active):active { transform: translateY(-5px) scale(.985); }
 
 .draw-overlay.open .dw-tool {

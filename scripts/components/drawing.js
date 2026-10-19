@@ -8,7 +8,6 @@
 import { Store, uid, vibrate } from '../core.js';
 import { toast } from './ui.js';
 import { setEdgeColor, refreshEdgeColor } from '../edge.js';
-import { toolArt } from './drawing-art.js';
 
 const TAU = Math.PI * 2;
 const GRID = 21.33;                 // шаг точек в world-координатах (как на скриншоте)
@@ -35,15 +34,17 @@ const HUES = [
 ];
 
 const TOOLS = [
-  { id: 'pen',      label: 'Карандаш',      w: 50 },
-  { id: 'marker',   label: 'Маркер',        w: 46 },
-  { id: 'eraser',   label: 'Ластик',        w: 48 },
-  { id: 'fountain', label: 'Перо',          w: 48 },
-  { id: 'select',   label: 'Выделение',     w: 56 },
-  { id: 'image',    label: 'Изображение',   w: 60 },
-  { id: 'text',     label: 'Текст',         w: 62 },
-  { id: 'note',     label: 'Заметка',       w: 72 },
+  { id: 'pen',          label: 'Карандаш',         w: 44, ink: '#1c1c1c', top: -12, accent: 'mask', shape: true },
+  { id: 'markerBlue',   label: 'Голубой маркер',   w: 48, ink: '#5aaef8', marker: true, top: -7, accent: 'mask', shape: true },
+  { id: 'markerYellow', label: 'Жёлтый маркер',    w: 74, ink: '#ffab3f', marker: true, top: -9, accent: 'mask', shape: true },
+  { id: 'fountain',     label: 'Перо',             w: 44, ink: '#69cf36', top: -9, accent: 'mask', shape: true },
+  { id: 'eraser',       label: 'Ластик',           w: 62, top: 19 },
+  { id: 'image',        label: 'Изображение',      w: 90, top: 4 },
+  { id: 'text',         label: 'Текст',            w: 88, ink: '#1c1c1c', top: 19, accent: 'mask' },
+  { id: 'note',         label: 'Заметка',          w: 88, ink: '#1c1c1c', top: 19 },
 ];
+const TOOL_META = Object.fromEntries(TOOLS.map(t => [t.id, t]));
+const DEFAULT_INK = Object.fromEntries(TOOLS.filter(t => t.ink).map(t => [t.id, t.ink]));
 
 const SVG_UNDO = `<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M4.6 8.4h11.2a6.7 6.7 0 0 1 6.7 6.7v7.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.7 3.5 4.5 8.4l5.2 4.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const SVG_REDO = `<svg viewBox="0 0 28 28" aria-hidden="true"><g transform="matrix(-1 0 0 1 28 0)"><path d="M4.6 8.4h11.2a6.7 6.7 0 0 1 6.7 6.7v7.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.7 3.5 4.5 8.4l5.2 4.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
@@ -61,6 +62,33 @@ function hslHex(h, s, l) {
   const to = x => Math.round(255 * x).toString(16).padStart(2, '0');
   return `#${to(f(0))}${to(f(8))}${to(f(4))}`;
 }
+function rgbOf(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+  const n = m ? parseInt(m[1], 16) : 0;
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function hexToHsl(hex) {
+  const [r0, g0, b0] = rgbOf(hex);
+  const r = r0 / 255, g = g0 / 255, b = b0 / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  const l = (mx + mn) / 2;
+  const d = mx - mn;
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  let h = 0;
+  if (d) {
+    if (mx === r) h = ((g - b) / d) % 6;
+    else if (mx === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h = (h * 60 + 360) % 360;
+  }
+  return [h, s, l];
+}
+function mixHex(a, b, t) {
+  const A = rgbOf(a), B = rgbOf(b);
+  return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join('');
+}
+const tint = (c, t) => mixHex(c, '#ffffff', t);
+const shade = (c, t) => mixHex(c, '#000000', t);
 
 export function openDrawing(onDone, opts = {}) {
   const ov = document.createElement('div');
@@ -84,7 +112,7 @@ export function openDrawing(onDone, opts = {}) {
     <div class="dw-dock">
       <button type="button" class="dw-color" data-a="color" aria-label="Выбрать цвет"><span class="dw-color-dot"></span></button>
       <div class="dw-strip">
-        ${TOOLS.map((t, i) => `<button type="button" class="dw-tool" data-tool="${t.id}" style="width:${t.w}px;--i:${i}" aria-label="${t.label}">${toolArt(t.id)}</button>`).join('')}
+        ${TOOLS.map((t, i) => `<button type="button" class="dw-tool" data-tool="${t.id}" style="width:${t.w}px;--i:${i}" aria-label="${t.label}"><span class="dw-sprite-box" style="top:${t.top}px;width:${t.w}px"><img class="dw-sprite" src="assets/draw/${t.id}.png" alt="" draggable="false"${t.shape ? ` style="--shape:url('${new URL('assets/draw/' + t.id + '-shape.png', document.baseURI).href}')"` : ''}>${t.accent === 'mask' ? `<span class="dw-accent" style="--mask:url('${new URL('assets/draw/' + t.id + '-accent.png', document.baseURI).href}')"></span><span class="dw-accent-dark" style="--mask:url('${new URL('assets/draw/' + t.id + '-accent.png', document.baseURI).href}')"></span>` : ''}</span></button>`).join('')}
       </div>
     </div>
     <div class="dw-palette" aria-hidden="true">
@@ -110,6 +138,7 @@ export function openDrawing(onDone, opts = {}) {
   const hueBar = ov.querySelector('[data-hue]');
   const knob = ov.querySelector('[data-knob]');
   const colorDot = ov.querySelector('.dw-color-dot');
+  const colorBtn = ov.querySelector('[data-a=color]');
   const btnUndo = ov.querySelector('[data-a=undo]');
   const btnRedo = ov.querySelector('[data-a=redo]');
   const toolEls = [...ov.querySelectorAll('.dw-tool')];
@@ -123,9 +152,43 @@ export function openDrawing(onDone, opts = {}) {
   let viewReady = false;
   let doc = null;
   let tool = 'pen';
-  let ink = '#000000';
-  let hueIndex = 3;                 // амбра по умолчанию — как в оригинале
+  let toolInk = { ...DEFAULT_INK };
+  let hueIndex = 3;                 // палитра: амбра по умолчанию, пока не синхронизирована
   let shadeIndex = 3;
+  const activeInk = () => toolInk[tool] || null;
+
+  function applyToolAccent(el, id) {
+    const c = toolInk[id];
+    const meta = TOOL_META[id];
+    const img = el.querySelector('.dw-sprite');
+    if (!c) {
+      el.classList.remove('is-custom');
+      if (img) img.style.filter = '';
+      return;
+    }
+    el.style.setProperty('--ink', c);
+    el.style.setProperty('--ink-soft', tint(c, .55));
+    el.style.setProperty('--ink-deep', shade(c, .18));
+    if (!img) return;
+    if (meta.accent === 'mask') {
+      const custom = c !== DEFAULT_INK[id];
+      el.classList.toggle('is-custom', custom);
+      img.style.filter = custom ? 'grayscale(1) contrast(1.02)' : '';
+      const l = hexToHsl(c)[2];
+      el.style.setProperty('--accent-dark', custom ? clamp(.62 - l * 1.25, 0, .5).toFixed(2) : '0');
+    } else {
+      el.classList.remove('is-custom');
+      img.style.filter = '';
+    }
+  }
+  function applyAllToolAccents() {
+    toolEls.forEach(el => applyToolAccent(el, el.dataset.tool));
+  }
+  function updateColorUI() {
+    const c = activeInk();
+    colorBtn.classList.toggle('no-color', !c);
+    if (c) colorDot.style.background = c;
+  }
   let paletteOpen = false;
   let focus = false;
   let editing = null;
@@ -297,9 +360,135 @@ export function openDrawing(onDone, opts = {}) {
   }
 
   /* ---------- Кисти ---------- */
+  function hashStr(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
+    return h >>> 0;
+  }
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function traceSmooth(c, pts) {
+    c.beginPath();
+    c.moveTo(pts[0].x, pts[0].y);
+    if (pts.length === 2) {
+      c.lineTo(pts[1].x, pts[1].y);
+      return;
+    }
+    for (let i = 1; i < pts.length - 1; i++) {
+      const mx = (pts[i].x + pts[i + 1].x) / 2;
+      const my = (pts[i].y + pts[i + 1].y) / 2;
+      c.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+    }
+    c.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+  }
+
+  /* Графит: несколько тонких «волокон» с рваным краем и крупинками,
+     а не сплошная линия — как настоящий карандаш по бумаге. */
+  function drawPencil(c, s) {
+    const pts = s.points;
+    const rnd = mulberry32(hashStr(s.id || 'pencil'));
+    const base = Math.max(1.2, s.width || 2.4);
+    c.save();
+    c.globalCompositeOperation = 'multiply';
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    c.strokeStyle = s.color;
+    c.fillStyle = s.color;
+
+    if (pts.length === 1) {
+      c.globalAlpha = .5;
+      for (let i = 0; i < 5; i++) {
+        c.beginPath();
+        c.arc(pts[0].x + (rnd() - .5) * base * 1.4, pts[0].y + (rnd() - .5) * base * 1.4, .25 + rnd() * .55, 0, TAU);
+        c.fill();
+      }
+      c.restore();
+      return;
+    }
+
+    /* мягкая подложка */
+    c.globalAlpha = .22;
+    c.lineWidth = base * 1.6;
+    traceSmooth(c, pts);
+    c.stroke();
+
+    /* плотное графитовое ядро */
+    c.globalAlpha = .58;
+    c.lineWidth = Math.max(.55, base * .52);
+    c.setLineDash([3.2, 1.1]);
+    c.lineDashOffset = rnd() * 4;
+    traceSmooth(c, pts);
+    c.stroke();
+    c.setLineDash([]);
+
+    /* волокна графита */
+    for (let k = 0; k < 5; k++) {
+      c.globalAlpha = .24 + rnd() * .16;
+      c.lineWidth = Math.max(.3, base * (.2 + rnd() * .22));
+      c.setLineDash([.8 + rnd() * 1.8, .25 + rnd() * .8]);
+      c.lineDashOffset = rnd() * 9;
+      const ox = (rnd() - .5) * base * .5;
+      const oy = (rnd() - .5) * base * .5;
+      c.save();
+      c.translate(ox, oy);
+      traceSmooth(c, pts);
+      c.stroke();
+      c.restore();
+    }
+    c.setLineDash([]);
+
+    /* крупинки */
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const len = Math.hypot(dx, dy);
+      if (!len) continue;
+      const n = Math.min(6, Math.max(1, Math.round(len / 2.0)));
+      for (let j = 0; j < n; j++) {
+        const t = rnd();
+        const x = a.x + dx * t + (rnd() - .5) * base * 1.05;
+        const y = a.y + dy * t + (rnd() - .5) * base * 1.05;
+        c.globalAlpha = .18 + rnd() * .24;
+        c.beginPath();
+        c.arc(x, y, .2 + rnd() * .45, 0, TAU);
+        c.fill();
+      }
+    }
+    c.restore();
+  }
+
+  function smoothDense(pts, sub = 4) {
+    if (!pts || pts.length < 3) return pts;
+    const out = [pts[0]];
+    for (let i = 1; i < pts.length - 1; i++) {
+      const a = pts[i - 1], b = pts[i], c = pts[i + 1];
+      const ax = (a.x + b.x) / 2, ay = (a.y + b.y) / 2;
+      const bx = (b.x + c.x) / 2, by = (b.y + c.y) / 2;
+      const aw = (a.w || b.w || 2), bw = (b.w || c.w || 2);
+      for (let s = 1; s <= sub; s++) {
+        const t = s / sub, u = 1 - t;
+        out.push({
+          x: u * u * ax + 2 * u * t * b.x + t * t * bx,
+          y: u * u * ay + 2 * u * t * b.y + t * t * by,
+          w: aw + (bw - aw) * t,
+        });
+      }
+    }
+    out.push(pts[pts.length - 1]);
+    return out;
+  }
+
   function drawStroke(c, s) {
     const pts = s.points;
     if (!pts || !pts.length) return;
+    if (s.tool === 'pen') { drawPencil(c, s); return; }
+
     c.save();
     c.lineCap = 'round';
     c.lineJoin = 'round';
@@ -316,9 +505,10 @@ export function openDrawing(onDone, opts = {}) {
       return;
     }
     if (s.pressured) {
-      for (let i = 1; i < pts.length; i++) {
-        const a = pts[i - 1], b = pts[i];
-        c.lineWidth = Math.max(0.4, ((a.w || s.width) + (b.w || s.width)) / 2);
+      const line = s.tool === 'fountain' ? smoothDense(pts, 5) : pts;
+      for (let i = 1; i < line.length; i++) {
+        const a = line[i - 1], b = line[i];
+        c.lineWidth = Math.max(0.5, ((a.w || s.width) + (b.w || s.width)) / 2);
         c.beginPath();
         c.moveTo(a.x, a.y);
         c.lineTo(b.x, b.y);
@@ -328,18 +518,7 @@ export function openDrawing(onDone, opts = {}) {
       return;
     }
     c.lineWidth = s.width || 2;
-    c.beginPath();
-    c.moveTo(pts[0].x, pts[0].y);
-    if (pts.length === 2) {
-      c.lineTo(pts[1].x, pts[1].y);
-    } else {
-      for (let i = 1; i < pts.length - 1; i++) {
-        const mx = (pts[i].x + pts[i + 1].x) / 2;
-        const my = (pts[i].y + pts[i + 1].y) / 2;
-        c.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
-      }
-      c.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
-    }
+    traceSmooth(c, pts);
     c.stroke();
     c.restore();
   }
@@ -574,6 +753,7 @@ export function openDrawing(onDone, opts = {}) {
   btnRedo.addEventListener('click', doRedo);
 
   /* ---------- Палитра ---------- */
+  const GRAY_SHADE_L = [5, 18, 36, 50, 66, 82, 94];
   function shades() {
     const hue = HUES[hueIndex];
     if (hue.gray) return ['#0b0b0b', '#2e2e2e', '#5c5c5c', '#808080', '#a9a9a9', '#d0d0d0', '#efefef'];
@@ -585,7 +765,6 @@ export function openDrawing(onDone, opts = {}) {
       el.style.background = cols[i];
       el.classList.toggle('is-sel', i === shadeIndex);
     });
-    const hue = HUES[hueIndex];
     knob.style.left = (((hueIndex + .5) / HUES.length) * 100) + '%';
     knob.style.background = cols[shadeIndex];
     knob.style.borderColor = '#fff7df';
@@ -597,8 +776,8 @@ export function openDrawing(onDone, opts = {}) {
     paintPalette();
     if (!silent) vibrate(4);
   }
-  function syncPaletteFromInk() {
-    const m = /^#?([0-9a-f]{6})$/i.exec(ink || '');
+  function syncPaletteFromInk(color) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(color || '');
     if (!m) return;
     const n = parseInt(m[1], 16);
     const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
@@ -606,7 +785,17 @@ export function openDrawing(onDone, opts = {}) {
     const l = (mx + mn) / 2;
     const d = mx - mn;
     const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
-    if (sat < .18) return;
+    if (sat < .14) {
+      /* серый/чёрный — отдельная шкала */
+      hueIndex = HUES.length - 1;
+      let si = 0, sd = 1e9;
+      GRAY_SHADE_L.forEach((L, i) => {
+        const dd = Math.abs(L - l * 100);
+        if (dd < sd) { sd = dd; si = i; }
+      });
+      shadeIndex = si;
+      return;
+    }
     let h = 0;
     if (mx === r) h = ((g - b) / d) % 6;
     else if (mx === g) h = (b - r) / d + 2;
@@ -627,8 +816,8 @@ export function openDrawing(onDone, opts = {}) {
     shadeIndex = si;
   }
   function openPalette() {
-    if (paletteOpen) return;
-    syncPaletteFromInk();
+    if (paletteOpen || !activeInk()) return;
+    syncPaletteFromInk(activeInk());
     paletteOpen = true;
     ov.classList.add('palette-open');
     palette.setAttribute('aria-hidden', 'false');
@@ -642,16 +831,20 @@ export function openDrawing(onDone, opts = {}) {
     palette.setAttribute('aria-hidden', 'true');
   }
   function pickShade(i) {
+    if (!activeInk()) return;
     shadeIndex = i;
     const col = shades()[i];
-    ink = col;
-    colorDot.style.background = col;
+    toolInk[tool] = col;
+    const el = toolEls.find(x => x.dataset.tool === tool);
+    if (el) applyToolAccent(el, tool);
+    updateColorUI();
     paintPalette();
     vibrate(10);
     setTimeout(() => { if (!closed) closePalette(); }, 150);
   }
   shadeEls.forEach(el => el.addEventListener('click', () => pickShade(+el.dataset.shade)));
-  ov.querySelector('[data-a=color]').addEventListener('click', () => {
+  colorBtn.addEventListener('click', () => {
+    if (!activeInk()) return;
     paletteOpen ? closePalette() : openPalette();
   });
 
@@ -698,6 +891,7 @@ export function openDrawing(onDone, opts = {}) {
     ov.dataset.tool = id;
     toolEls.forEach(el => el.classList.toggle('is-active', el.dataset.tool === id));
     closePalette();
+    updateColorUI();
     vibrate(7);
     scrollToolIntoView(id, true);
   }
@@ -706,6 +900,8 @@ export function openDrawing(onDone, opts = {}) {
   });
   // стартовое положение
   toolEls[0].classList.add('is-active');
+  applyAllToolAccents();
+  updateColorUI();
 
   /* ---------- Точки/штрихи ---------- */
   function pressureOf(e) {
@@ -713,15 +909,18 @@ export function openDrawing(onDone, opts = {}) {
     return 0.5;
   }
   function startStroke(w, e) {
-    const base = tool === 'marker'
-      ? { width: 20, alpha: .30 }
+    const meta = TOOL_META[tool] || TOOL_META.pen;
+    const isMarker = !!meta.marker;
+    const base = isMarker
+      ? { width: tool === 'markerYellow' ? 22 : 20, alpha: .30 }
       : tool === 'fountain'
         ? { width: 3.1, alpha: 1 }
-        : { width: 2.5, alpha: 1 };
+        : { width: (e.pointerType === 'pen' && e.pressure > 0) ? 1.9 + e.pressure * 1.6 : 2.6, alpha: 1 };
     stroke = {
-      kind: 'stroke', id: uid(), tool,
-      color: ink, width: base.width, alpha: base.alpha,
-      pressured: tool === 'fountain' || (e.pointerType === 'pen' && tool === 'pen'),
+      kind: 'stroke', id: uid(),
+      tool: isMarker ? 'marker' : tool === 'fountain' ? 'fountain' : 'pen',
+      color: activeInk() || '#1c1c1c', width: base.width, alpha: base.alpha,
+      pressured: tool === 'fountain', stylus: e.pointerType === 'pen',
       points: [],
     };
     addPoint(w, pressureOf(e));
@@ -740,8 +939,9 @@ export function openDrawing(onDone, opts = {}) {
       if (stroke.tool === 'fountain') {
         const last2 = pts[pts.length - 1];
         const dist = last2 ? Math.hypot(w.x - last2.x, w.y - last2.y) : 0;
-        const f = clamp(1 - dist / 14, 0, 1);
-        width = 1.3 + f * 4.4;
+        width = stroke.stylus
+          ? 1.6 + press * 3.6
+          : 3.2 - clamp(dist / 40, 0, 1) * 0.8;
       } else {
         width = 1.6 + press * 3.2;
       }
@@ -807,14 +1007,14 @@ export function openDrawing(onDone, opts = {}) {
   }
 
   function insertText(w) {
-    const o = { kind: 'text', id: uid(), x: w.x, y: w.y, w: 230, text: '', size: 19, color: ink };
+    const o = { kind: 'text', id: uid(), x: w.x, y: w.y, w: 230, text: '', size: 19, color: activeInk() || '#1c1c1c' };
     pushUndo();
     items.push(o);
     startEditing(o);
     selectObject(o);
   }
   function insertNote(w) {
-    const o = { kind: 'note', id: uid(), x: w.x - 95, y: w.y - 60, w: 190, h: 140, text: '', size: 15, color: ink };
+    const o = { kind: 'note', id: uid(), x: w.x - 95, y: w.y - 60, w: 190, h: 140, text: '', size: 15, color: activeInk() || '#1c1c1c' };
     pushUndo();
     items.push(o);
     startEditing(o);
@@ -1127,21 +1327,6 @@ export function openDrawing(onDone, opts = {}) {
     if (pointers.size > 2) return;
     const w = toWorld(e);
 
-    if (tool === 'select') {
-      if (selBounds && w.x >= selBounds.minX - 6 / view.s && w.x <= selBounds.maxX + 6 / view.s &&
-          w.y >= selBounds.minY - 6 / view.s && w.y <= selBounds.maxY + 6 / view.s) {
-        const orig = new Map();
-        for (const it of items) {
-          if (it.kind === 'stroke' && selIds.has(it.id)) orig.set(it.id, it.points.map(p => ({ x: p.x, y: p.y, w: p.w })));
-        }
-        selDrag = { start: w, orig, moved: false };
-      } else {
-        clearSelection();
-        deselectObj();
-        lasso = { points: [w], closing: false };
-      }
-      return;
-    }
     if (tool === 'text' || tool === 'note') {
       const hit = hitObject(w);
       if (hit && (hit.kind === 'text' || hit.kind === 'note')) {
@@ -1342,7 +1527,7 @@ export function openDrawing(onDone, opts = {}) {
       let dataUrl = null;
       if (items.length) dataUrl = await renderPreview();
       if (items.length) {
-        const payload = { v: 1, items, view: { ...view }, ink, hueIndex, shadeIndex, tool };
+        const payload = { v: 1, items, view: { ...view }, tool };
         await Store.putBlob(drawId, new Blob([JSON.stringify(payload)], { type: 'application/json' }));
       }
       const result = { dataUrl, id: drawId };
@@ -1412,10 +1597,10 @@ export function openDrawing(onDone, opts = {}) {
     } else if (meta && e.key === 'Enter' && editing) {
       e.preventDefault(); commitEditing();
     } else if (e.key === '1' && !meta) setTool('pen');
-    else if (e.key === '2' && !meta) setTool('marker');
-    else if (e.key === '3' && !meta) setTool('eraser');
+    else if (e.key === '2' && !meta) setTool('markerBlue');
+    else if (e.key === '3' && !meta) setTool('markerYellow');
     else if (e.key === '4' && !meta) setTool('fountain');
-    else if (e.key === '5' && !meta) setTool('select');
+    else if (e.key === '5' && !meta) setTool('eraser');
     else if (e.key === '6' && !meta) setTool('image');
     else if (e.key === '7' && !meta) setTool('text');
     else if (e.key === '8' && !meta) setTool('note');
@@ -1449,16 +1634,18 @@ export function openDrawing(onDone, opts = {}) {
     }
     loaded = true;
     viewReady = false;
+    toolInk = { ...DEFAULT_INK };
     if (doc) {
-      if (typeof doc.ink === 'string' && /^#[0-9a-f]{6}$/i.test(doc.ink)) ink = doc.ink;
-      if (Number.isInteger(doc.hueIndex)) hueIndex = clamp(doc.hueIndex, 0, HUES.length - 1);
-      if (Number.isInteger(doc.shadeIndex)) shadeIndex = clamp(doc.shadeIndex, 0, 6);
-      if (doc.tool && TOOLS.some(t => t.id === doc.tool)) tool = doc.tool;
+      let t = doc.tool;
+      if (t === 'marker') t = 'markerBlue';
+      if (t === 'select') t = 'eraser';
+      if (t && TOOL_META[t]) tool = t;
     }
     toolEls.forEach(el => el.classList.toggle('is-active', el.dataset.tool === tool));
     ov.dataset.tool = tool;
+    applyAllToolAccents();
+    updateColorUI();
     paintPalette();
-    colorDot.style.background = ink;
     resize();
     scrollToolIntoView(tool, false);
     if (ov.isConnected) {
@@ -1476,7 +1663,7 @@ export function openDrawing(onDone, opts = {}) {
   const api = {
     close: cancel,
     element: ov,
-    getState: () => ({ items, view: { ...view }, tool, ink, hueIndex, shadeIndex, paletteOpen, focus, undo: undoStack.length, redo: redoStack.length }),
+    getState: () => ({ items, view: { ...view }, tool, ink: activeInk(), toolInk: { ...toolInk }, hueIndex, shadeIndex, paletteOpen, focus, undo: undoStack.length, redo: redoStack.length }),
   };
   try { window.__dwLast = api; } catch (e) {}
   return api;
