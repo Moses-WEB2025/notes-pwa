@@ -54,6 +54,11 @@ export function mainScreen(opts = {}) {
       <button class="search-cancel hidden" data-press>Отмена</button>
     </div>`;
 
+  /* чипы-папки под строкой поиска. На главной видны обычные папки, на
+     «Скрытых» — только скрытые: категории не пересекаются. */
+  const folderTabs = document.createElement('div');
+  folderTabs.className = 'folder-tabs hidden';
+
   const gridHolder = document.createElement('div');
   gridHolder.className = 'scroll grid-holder';
 
@@ -69,8 +74,10 @@ export function mainScreen(opts = {}) {
     <button class="chip" data-c="notes">Заметки</button>
     <button class="chip" data-c="nocat">Без категории</button>`;
 
+  /* Кнопка «плюс» на «Скрытых» — та же голубая, что и замок при протяжке,
+     чтобы страницы различались с первого взгляда. */
   const fab = document.createElement('button');
-  fab.className = 'fab';
+  fab.className = 'fab' + (isPrivate ? ' fab-private' : '');
   fab.innerHTML = `<span class="material-symbols-rounded">add</span>`;
 
   const tabbar = document.createElement('div');
@@ -87,7 +94,7 @@ export function mainScreen(opts = {}) {
     <button data-sel="move"><span class="material-symbols-rounded">drive_file_move</span><span class="lbl">Переместить</span></button>
     <button data-sel="delete"><span class="material-symbols-rounded">delete</span><span class="lbl">Удалить</span></button>`;
 
-  el.append(appbar, h1row, searchWrap, searchCanvas, chipsRow, gridHolder, fab, tabbar, selBar);
+  el.append(appbar, h1row, searchWrap, folderTabs, searchCanvas, chipsRow, gridHolder, fab, tabbar, selBar);
 
   /* Слой протяжки вниз (только на главной): пока список оттянут за верхний
      край, поверх проявляется замок с подсказкой. Живёт в разметке всегда —
@@ -211,8 +218,16 @@ export function mainScreen(opts = {}) {
 
   /* ---------- состояние ---------- */
   let notes = [];
+  let folders = [];
+  /* id скрытых папок: их заметки на главную не попадают */
+  const hiddenFolderIds = new Set();
   let filterColor = null, filterFolder = null;
   let chipEl = null;
+
+  const noteInHiddenFolder = n => !!(n.folderId && hiddenFolderIds.has(n.folderId));
+  /* «Личная» заметка: либо помечена скрытой, либо лежит в скрытой папке.
+     Такие заметки живут только на странице «Скрытые». */
+  const isPrivateNote = n => !!n.hidden || noteInHiddenFolder(n);
 
   const searchInput = searchWrap.querySelector('input');
   const searchField = searchWrap.querySelector('.searchfield');
@@ -220,14 +235,30 @@ export function mainScreen(opts = {}) {
   const searchCancel = searchWrap.querySelector('.search-cancel');
 
   async function load() {
-    /* Набор заметок задаёт режим: главная показывает всё, кроме скрытых,
-       личная папка — только скрытые. Поэтому скрытые никогда не попадают
-       на главный экран. */
-    notes = (await Store.notes())
-      .filter(n => !n.deleted && (isPrivate ? n.hidden : !n.hidden))
+    const [allNotes, allFolders] = await Promise.all([Store.notes(), Store.folders()]);
+    folders = allFolders.filter(f => !f.deleted);
+    hiddenFolderIds.clear();
+    for (const f of folders) if (f.hidden) hiddenFolderIds.add(f.id);
+    /* Набор заметок задаёт режим: главная показывает всё, кроме личных,
+       личная папка — только личные. Скрытые заметки и заметки из скрытых
+       папок на главный экран не попадают. */
+    notes = allNotes.filter(n => !n.deleted)
+      .filter(n => isPrivate ? isPrivateNote(n) : !isPrivateNote(n))
       .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.updatedAt - a.updatedAt);
+    /* Папка могла исчезнуть (удалена или больше не подходит режиму) —
+       снимаем фильтр, иначе список остался бы пустым без причины. */
+    if (filterFolder && !folders.some(f => f.id === filterFolder)) filterFolder = null;
     refresh();
   }
+
+  /* Перечитать себя и попросить другие экраны (главную под «Скрытыми»)
+     обновиться — чтобы снятие «скрыто» показывалось на главной сразу,
+     без перехода между экранами. */
+  const reload = () => {
+    load();
+    document.dispatchEvent(new CustomEvent('notes-changed', { detail: { source: el } }));
+    document.dispatchEvent(new CustomEvent('folders-changed', { detail: { source: el } }));
+  };
 
   function renderChip() {
     if (chipEl) { chipEl.remove(); chipEl = null; }
