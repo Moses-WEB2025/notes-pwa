@@ -78,8 +78,7 @@ body.kb-open .screen.under { visibility: hidden; }
      совсем немного, чтобы не мешать работе с текстом. */
   --pull-max-ratio: .1;
 }
-body.kb-open .editor-screen .editor-body,
-body.toolbar-on .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px); }
+body.kb-open .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px); }
 .editor-body::-webkit-scrollbar { display: none; }
 
 .note-title-input {
@@ -154,8 +153,7 @@ body.toolbar-on .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 5
   /* Плавная смена местами с панелью форматирования (она встаёт в тот же слот). */
   transition: opacity .18s var(--ease-standard), transform .18s var(--ease-standard);
 }
-body.kb-open > .format-toolbar,
-body.toolbar-on > .format-toolbar {
+body.kb-open > .format-toolbar {
   display: flex;
   position: fixed;
   left: 0;
@@ -198,8 +196,8 @@ body.fmt-open > .format-toolbar { opacity: 0; transform: translateY(8px); pointe
    переключении экран не дёргается — меняются только прозрачность и лёгкий
    сдвиг (меню уезжает, панель встаёт ровно туда же). Слева лента страниц со
    свободным горизонтальным скроллом, справа — закреплённый «крестик» за
-   тонкой линией. Позицию ведём от тех же величин, что и меню (--kb-h / safe
-   area), поэтому клавиатура панель не перекрывает ни на iOS, ни на Android. */
+   тонкой линией. Позицию ведём от той же величины, что и меню (--kb-h),
+   поэтому клавиатура панель не перекрывает ни на iOS, ни на Android. */
 .format-panel {
   /* Пока панель не раскрыта, она уже стоит в слоте меню, но невидима: так
      смена opacity/transform успевает проиграться переходом, а не «врывается». */
@@ -216,8 +214,7 @@ body.fmt-open > .format-toolbar { opacity: 0; transform: translateY(8px); pointe
   will-change: opacity, transform;
   z-index: 200;
 }
-body.kb-open > .format-panel,
-body.toolbar-on > .format-panel {
+body.kb-open > .format-panel {
   display: flex;
   position: fixed;
   left: 0;
@@ -225,10 +222,7 @@ body.toolbar-on > .format-panel {
   bottom: var(--kb-h, 0px);
   box-shadow: 0 -1px 0 var(--divider);
 }
-body.toolbar-on > .format-panel { bottom: calc(var(--kb-h, 0px) + var(--safe-bottom)); }
 body.fmt-open > .format-panel { opacity: 1; transform: none; pointer-events: auto; }
-/* Клавиатура скрыта (фокус есть): меню поднимаем над home-indicator. */
-body.toolbar-on > .format-toolbar { bottom: calc(var(--kb-h, 0px) + var(--safe-bottom)); }
 
 /* Лента страниц: свободный горизонтальный скролл — без привязки к странице,
    крутится в любом темпе, с инерцией. */

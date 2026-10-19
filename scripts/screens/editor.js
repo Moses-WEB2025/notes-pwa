@@ -275,21 +275,15 @@ export function openEditor(id, opts = {}) {
     if (show && node.parentElement !== document.body) document.body.appendChild(node);
     else if (!show && node.parentElement === document.body) el.appendChild(node);
   }
-  /* Тулбар форматирования должен быть виден, пока идёт редактирование текста.
-     Опираться только на состояние клавиатуры нельзя: после системного диалога
-     выбора файла (input type=file) клавиатура на iOS/Android не открывается
-     заново сама, kb-change больше не присылает open:true — и тулбар пропадал
-     навсегда. Поэтому дополнительно учитываем фокус в холсте заметки. */
+  /* Нижний тулбар (и основное меню, и панель форматирования) живёт ТОЛЬКО
+     вместе с клавиатурой: нет клавиатуры — нет тулбара. Поэтому видимость
+     ведём от состояния клавиатуры, а не от фокуса в тексте. */
   let kbOpen = false;
   /* Раскрыта ли панель форматирования (кнопка «Т» в нижнем меню). */
   let fmtOpen = false;
   /* Панель форматирования относится к тексту заметки, а не к заголовку: пока
      курсор в заголовке — прячем её, даже если клавиатура открыта. */
   function editingTitle() { return document.activeElement === titleInput; }
-  function editorActive() {
-    const a = document.activeElement;
-    return !!a && (a === content || content.contains(a) || toolbar.contains(a) || formatPanel.contains(a));
-  }
   /* Кнопка «Т» отражает, раскрыта ли панель. */
   function reflectFormatBtn() {
     const btn = toolbar.querySelector('[data-tool="format"]');
@@ -299,11 +293,14 @@ export function openEditor(id, opts = {}) {
   function syncFormatBar() {
     if (!el.isConnected) {
       fmtOpen = false; reflectFormatBtn();
-      document.body.classList.remove('toolbar-on', 'fmt-open');
+      document.body.classList.remove('fmt-open');
       dock(toolbar, false); dock(formatPanel, false);
       return;
     }
-    const show = !editingTitle() && (kbOpen || editorActive());
+    /* Клавиатура закрылась (в т.ч. системным жестом «назад» — Android сначала
+       закрывает именно её) — тулбара быть не должно вовсе. Иначе панель
+       оставалась висеть внизу пустой полосой и «падала» на место меню. */
+    const show = kbOpen && !editingTitle();
     /* Панель живёт в том же слоте, что и меню, и появляется НА ЕГО МЕСТЕ.
        Поэтому докаем её вместе с меню (невидимой), а видимость переключаем
        классом fmt-open — так смена проигрывается переходом, а не «врывается». */
@@ -311,7 +308,6 @@ export function openEditor(id, opts = {}) {
     reflectFormatBtn();
     dock(toolbar, show);
     dock(formatPanel, show);
-    document.body.classList.toggle('toolbar-on', show && !kbOpen);
     document.body.classList.toggle('fmt-open', show && fmtOpen);
   }
   /* Открыть/закрыть панель форматирования кнопкой «Т» или «крестиком». */
@@ -331,7 +327,7 @@ export function openEditor(id, opts = {}) {
   function teardownKb() {
     document.removeEventListener('kb-change', onKb);
     document.removeEventListener('fmt-close', onFmtClose);
-    document.body.classList.remove('toolbar-on', 'fmt-open');
+    document.body.classList.remove('fmt-open');
     dock(toolbar, false); dock(formatPanel, false);
   }
   document.addEventListener('kb-change', onKb);
