@@ -122,8 +122,33 @@ body.kb-open .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px
 .note-content-input mark { background: var(--accent-soft); }
 
 .check-item { display: flex; gap: 10px; align-items: flex-start; margin: 6px 0; }
-.check-item input[type="checkbox"] { width: 19px; height: 19px; accent-color: var(--accent); margin-top: 3px; flex: none; }
-.check-item span.lbl { flex: 1; line-height: 1.5; user-select: text; -webkit-user-select: text; }
+/* Кастомный бокс: пустой — контур в цвет текста; отмеченный — сплошная
+   заливка основным цветом (--accent, жёлтый) с белой галочкой внутри. */
+.check-item input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 19px;
+  height: 19px;
+  margin: 3px 0 0;
+  flex: none;
+  position: relative;
+  border: 2px solid color-mix(in srgb, var(--ed-ink, var(--text)) 40%, transparent);
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.check-item input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.check-item input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") no-repeat center / 12px 12px;
+}
+.check-item span.lbl { flex: 1; line-height: 1.5; min-width: 0; user-select: text; -webkit-user-select: text; }
 .check-item.checked span.lbl { text-decoration: line-through; color: var(--text-tertiary); }
 
 /* ---- Подсказка «Создать карту мыслей» под полем ввода ---- */

@@ -144,7 +144,13 @@ export function openEditor(id, opts = {}) {
     }
     titleInput.value = note.title || '';
     const c = note.content || '';
-    content.innerHTML = /[<>]/.test(c) ? c : c.split('\n').join('<br>');
+    /* Плейн-текст раскладываем в абзацы-<div> (строка = блок). Все инструменты
+       (заголовки, цитата, чек-лист) работают с блочными элементами, и «голый»
+       текст без обёрток ломал их: например, бокс чек-листа не находил абзац под
+       кареткой и создавал пустой новый пункт вместо обёртки уже написанного. */
+    content.innerHTML = /[<>]/.test(c)
+      ? c
+      : c.split('\n').map(line => `<div>${line || '<br>'}</div>`).join('');
     await hydrateImages();
     syncCheckboxes();
     updFolderChip(); updMeta(); renderPlayers(); applyTheme();
@@ -289,6 +295,9 @@ export function openEditor(id, opts = {}) {
     if (!cb) return;
     e.preventDefault();
     cb.checked = !cb.checked;
+    /* Атрибут (а не только свойство) — чтобы отметка сохранилась в разметке
+       заметки и восстановилась после перезагрузки. */
+    cb.toggleAttribute('checked', cb.checked);
     cb.closest('.check-item')?.classList.toggle('checked', cb.checked);
     commit(); scheduleSave();
   });
@@ -985,6 +994,8 @@ export function openEditor(id, opts = {}) {
     tapDownPt = null;
     if (moved > 12) { tapLastAt = 0; tapLastPt = null; return; }
     if (e.target?.closest?.('img.rich-img')) return;
+    /* Тап по боксу чек-листа не должен запускать выделение по двойному тапу. */
+    if (e.target?.closest?.('.check-item input[type="checkbox"]')) return;
     onTapUp(e);
   });
 
@@ -1018,20 +1029,43 @@ export function openEditor(id, opts = {}) {
   formatPanel.addEventListener('pointerdown', keepFocus);
   formatPanel.addEventListener('mousedown', keepFocus);
 
-  /* Вставить пункт чек-листа (нужен и в главном меню, и на панели). */
+  /* Вставить пункт чек-листа (нужен и в главном меню, и на панели).
+     Превращаем блок(и) под кареткой/выделением в пункты с чекбоксом, СОХРАНЯЯ
+     их текст: бокс ставится перед уже написанным текстом, а не создаёт пустой
+     новый пункт. Пустой абзац даёт пустой пункт. */
+  function makeCheckItem() {
+    const item = document.createElement('div');
+    item.className = 'check-item';
+    item.dataset.check = '1';
+    item.innerHTML = '<input type="checkbox"><span class="lbl"></span>';
+    return item;
+  }
   function insertChecklist() {
     runFormat(() => {
-      insertAtCursor('<div class="check-item" data-check="1"><input type="checkbox"><span class="lbl">Пункт</span></div><div><br></div>');
-      const items = content.querySelectorAll('.check-item');
-      const lbl = items[items.length - 1]?.querySelector('.lbl');
-      if (lbl) {
-        const r = document.createRange();
-        r.selectNodeContents(lbl);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(r);
-        savedRange = r.cloneRange();
+      /* Свежий «голый» текст под кареткой сначала собираем в абзац-<div>,
+         иначе блок не найдётся и получится пустой новый пункт. */
+      if (window.getSelection()?.isCollapsed) ensureCaretBlock();
+      const blocks = targetBlocks().filter(b => b.isConnected && !b.classList?.contains('check-item'));
+      if (!blocks.length) {
+        /* Каретка вне блока — вставляем новый пустой пункт. */
+        insertAtCursor(makeCheckItem().outerHTML);
+        const items = content.querySelectorAll('.check-item');
+        const lbl = items[items.length - 1]?.querySelector('.lbl');
+        if (lbl) placeCaretIn(lbl);
+        return;
       }
+      let firstLbl = null;
+      blocks.forEach(block => {
+        if (!block.isConnected || block.classList?.contains('check-item')) return;
+        const item = makeCheckItem();
+        const lbl = item.querySelector('.lbl');
+        while (block.firstChild) lbl.appendChild(block.firstChild);
+        block.replaceWith(item);
+        if (!firstLbl) firstLbl = lbl;
+      });
+      /* Перенос узлов мог «потерять» каретку — возвращаем её в текст пункта. */
+      const sel = window.getSelection();
+      if (firstLbl && (!sel?.anchorNode || !content.contains(sel.anchorNode))) placeCaretIn(firstLbl);
     });
   }
 
@@ -1167,6 +1201,24 @@ export function openEditor(id, opts = {}) {
       node = node.parentElement;
     }
     return null;
+  }
+  /* Текст, набранный в свежей заметке, бывает «голым» (без абзацев-<div>).
+     Тогда caretBlock() пуст, и инструменты не находят блок под кареткой.
+     Собираем такой текст в <div>, разбивая строки по <br>. Каретку сохраняем
+     по текстовому смещению (перестановка узлов её не сбивает). */
+  function ensureCaretBlock() {
+    if (caretBlock()) return;
+    const off = caretTextOffset();
+    const isBlock = n => n.nodeType === 1 &&
+      /^(DIV|P|H1|H2|H3|BLOCKQUOTE|UL|OL|LI|FIGURE)$/.test(n.tagName);
+    let div = null;
+    Array.from(content.childNodes).forEach(node => {
+      if (node.nodeType === 1 && node.tagName === 'BR') { div = null; node.remove(); return; }
+      if (isBlock(node)) { div = null; return; }
+      if (!div) { div = document.createElement('div'); content.insertBefore(div, node); }
+      div.appendChild(node);
+    });
+    if (off != null) setCaretTextOffset(off);
   }
   function indentSide(block) {
     if (!block) return 'left';
