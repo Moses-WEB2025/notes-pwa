@@ -80,6 +80,19 @@ export function openDrawing(onDone, opts = {}) {
   ov.className = 'draw-overlay';
   ov.dataset.tool = 'pen';
 
+  /* Панель инструментов масштабируется от высоты экрана: на телефоне
+     остаётся нативной (178dp), на планшете чуть крупнее. Скины рисуются
+     в натуральную величину, поэтому --dw-z просто масштабирует полотно. */
+  function fitDock() {
+    const vh = Math.max(420, Math.round(ov.getBoundingClientRect().height || window.innerHeight || 800));
+    const h = Math.round(clamp(vh * 0.21, 132, 208));
+    ov.style.setProperty('--dw-dock-h', h + 'px');
+    // скины нарисованы под панель 178: масштаб = высота панели / 178
+    ov.style.setProperty('--dw-z', (h / 178).toFixed(4));
+  }
+  document.body.appendChild(ov);
+  fitDock();
+
   const hueBg = HUES.map((h, i) => `${h.c} ${(i / HUES.length) * 100}% ${((i + 1) / HUES.length) * 100}%`).join(',');
   const swatches = Array.from({ length: 7 }, (_, i) =>
     `<button type="button" class="dw-swatch" data-shade="${i}" style="--i:${i}" aria-label="Оттенок ${i + 1}"></button>`).join('');
@@ -97,7 +110,7 @@ export function openDrawing(onDone, opts = {}) {
     <div class="dw-dock">
       <button type="button" class="dw-color" data-a="color" aria-label="Выбрать цвет"><span class="dw-color-dot"></span></button>
       <div class="dw-strip">
-        ${TOOLS.map((t, i) => `<button type="button" class="dw-tool" data-tool="${t.id}" style="width:${t.w}px;margin-left:${t.ml || 0}px;--i:${i}" aria-label="${t.label}">${toolSkin(t.id)}</button>`).join('')}
+        ${TOOLS.map((t, i) => `<button type="button" class="dw-tool" data-tool="${t.id}" style="width:calc(${t.w}px * var(--dw-z));margin-left:calc(${t.ml || 0}px * var(--dw-z));--i:${i}" aria-label="${t.label}">${toolSkin(t.id)}</button>`).join('')}
       </div>
     </div>
     <div class="dw-palette" aria-hidden="true">
@@ -109,7 +122,6 @@ export function openDrawing(onDone, opts = {}) {
     <button type="button" class="dw-focus-exit" data-a="focus" aria-label="Показать панели">${SVG_EXPAND}</button>
     <button type="button" class="hidden" data-a="close" aria-hidden="true"></button>`;
 
-  document.body.appendChild(ov);
   document.body.classList.add('dw-open');
   try { setEdgeColor('#ffffff'); } catch (e) {}
   ov.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
@@ -216,6 +228,8 @@ export function openDrawing(onDone, opts = {}) {
       if (!doc?.view && items.length) fitView();
     }
     if (!viewReady) { view = { x: W / 2, y: H * 0.46, s: 1 }; }
+    // пока открыта клавиатура, высота вида — это видимая часть, панель не трогаем
+    if (!editing) fitDock();
     buildScene(); draw(); syncChrome();
   }
 
@@ -493,6 +507,8 @@ export function openDrawing(onDone, opts = {}) {
   }
 
   /* ---------- Текст ---------- */
+  /* Перенос по словам — так же, как это делает textarea в редакторе:
+     иначе после подтверждения текст перескакивает на другие строки. */
   function wrapLines(text, maxW, size) {
     measure.font = `500 ${size}px ${FONT}`;
     const out = [];
@@ -500,10 +516,22 @@ export function openDrawing(onDone, opts = {}) {
     for (const para of paras) {
       if (!para) { out.push(''); continue; }
       let line = '';
-      for (const ch of para) {
-        const test = line + ch;
-        if (line && measure.measureText(test).width > maxW) { out.push(line); line = ch; }
-        else line = test;
+      for (const word of para.split(/(\s+)/)) {
+        if (!word) continue;
+        if (!line && /^\s+$/.test(word)) continue;
+        const test = line + word;
+        if (line && measure.measureText(test).width > maxW) {
+          out.push(line.replace(/\s+$/, ''));
+          line = word.replace(/^\s+/, '');
+          while (line.length > 1 && measure.measureText(line).width > maxW) {
+            let cut = line.length - 1;
+            while (cut > 1 && measure.measureText(line.slice(0, cut)).width > maxW) cut--;
+            out.push(line.slice(0, cut));
+            line = line.slice(cut);
+          }
+        } else {
+          line = test;
+        }
       }
       out.push(line);
     }
@@ -743,7 +771,8 @@ export function openDrawing(onDone, opts = {}) {
     if (i === hueIndex) return;
     hueIndex = i;
     paintPalette();
-    if (!silent) vibrate(4);
+    // тон применяется сразу: инструмент перекрашивается под ползунком
+    if (!silent) { setInkForTool(shades()[shadeIndex]); vibrate(4); }
   }
   function syncPaletteFromInk(color) {
     const m = /^#?([0-9a-f]{6})$/i.exec(color || '');
@@ -799,14 +828,19 @@ export function openDrawing(onDone, opts = {}) {
     ov.classList.remove('palette-open');
     palette.setAttribute('aria-hidden', 'true');
   }
-  function pickShade(i) {
-    if (!activeInk()) return;
-    shadeIndex = i;
-    const col = shades()[i];
-    toolInk[tool] = col;
+  /* Цвет принадлежит инструменту: у каждого свой акцент по умолчанию,
+     а выбранный в палитре цвет меняет и рисунок, и сам корпус. */
+  function setInkForTool(color) {
+    if (!color || !TOOL_META[tool]?.ink) return;
+    toolInk[tool] = color;
     const el = toolEls.find(x => x.dataset.tool === tool);
     if (el) applyToolAccent(el, tool);
     updateColorUI();
+  }
+  function pickShade(i) {
+    if (!activeInk()) return;
+    shadeIndex = i;
+    setInkForTool(shades()[i]);
     paintPalette();
     vibrate(10);
     setTimeout(() => { if (!closed) closePalette(); }, 150);
@@ -981,19 +1015,35 @@ export function openDrawing(onDone, opts = {}) {
     syncChrome();
   }
 
+  /* Новый объект не должен вырастать из-под панели или уезжать за край. */
+  function clampObjOnScreen(o) {
+    const s = view.s;
+    const dockH = dock.getBoundingClientRect().height || 178;
+    const topLimit = (topBar.getBoundingClientRect().bottom || 48) + 10;
+    const p = toScreen(o.x, o.y);
+    const h = (o.kind === 'note' ? o.h : o.size * 1.35) * s;
+    const w = o.w * s;
+    let dx = 0, dy = 0;
+    if (p.x + w > W - 12) dx = (W - 12) - (p.x + w);
+    if (p.x + dx < 12) dx = 12 - p.x;
+    if (p.y + h > H - dockH - 12) dy = (H - dockH - 12) - (p.y + h);
+    if (p.y + dy < topLimit) dy = topLimit - p.y;
+    o.x += dx / s;
+    o.y += dy / s;
+  }
   function insertText(w) {
-    const o = { kind: 'text', id: uid(), x: w.x, y: w.y, w: 230, text: '', size: 19, color: activeInk() || '#1c1c1c' };
+    const o = { kind: 'text', id: uid(), x: w.x, y: w.y, w: 230, text: '', size: 19, color: activeInk() || '#1c1c1c', __new: true };
+    clampObjOnScreen(o);
     pushUndo();
     items.push(o);
     startEditing(o);
-    selectObject(o);
   }
   function insertNote(w) {
-    const o = { kind: 'note', id: uid(), x: w.x - 95, y: w.y - 60, w: 190, h: 140, text: '', size: 15, color: activeInk() || '#1c1c1c' };
+    const o = { kind: 'note', id: uid(), x: w.x - 95, y: w.y - 60, w: 190, h: 140, text: '', size: 15, color: activeInk() || '#1c1c1c', __new: true };
+    clampObjOnScreen(o);
     pushUndo();
     items.push(o);
     startEditing(o);
-    selectObject(o);
   }
   function insertImageAt(file, w) {
     const blobId = 'dwi_' + uid();
@@ -1031,12 +1081,25 @@ export function openDrawing(onDone, opts = {}) {
   }
 
   /* ---------- Редактор текста/заметки ---------- */
-  let editorBox = null, editorTa = null, editorActs = null;
+  let editorBox = null, editorTa = null, editorBar = null;
 
   function startEditing(o) {
     if (editing === o) return;
     if (editing) commitEditing();
     editing = o;
+    // пока идёт правка, рамка выделения и её кнопки не нужны —
+    // иначе на экране две корзины и две галочки одновременно
+    selectedObj = null;
+    syncChrome();
+
+    // мелкий масштаб делает каретку нечитаемой — подходим к объекту
+    if (view.s < 0.8) {
+      const p = toScreen(o.x, o.y);
+      view.s = 1;
+      view.x = p.x - o.x;
+      view.y = p.y - o.y;
+    }
+
     editorBox = document.createElement('div');
     editorBox.className = 'dw-editor ' + (o.kind === 'note' ? 'is-note' : 'is-text');
     editorTa = document.createElement('textarea');
@@ -1045,29 +1108,67 @@ export function openDrawing(onDone, opts = {}) {
     editorTa.placeholder = o.kind === 'note' ? 'Заметка' : 'Текст';
     editorTa.style.color = o.color;
     editorTa.spellcheck = false;
+    editorTa.rows = 1;
     editorBox.appendChild(editorTa);
-    editorActs = document.createElement('div');
-    editorActs.className = 'dw-editor-acts';
-    editorActs.innerHTML = `<button type="button" class="dw-act del" data-e="del" aria-label="Удалить">${SVG_TRASH}</button><button type="button" class="dw-act ok" data-e="ok" aria-label="Готово">${SVG_OK_SM}</button>`;
-    editorBox.appendChild(editorActs);
     ui.appendChild(editorBox);
+
+    editorBar = document.createElement('div');
+    editorBar.className = 'dw-editor-bar';
+    editorBar.innerHTML = `<button type="button" class="dw-act del" data-e="del" aria-label="Удалить">${SVG_TRASH}</button><button type="button" class="dw-act ok" data-e="ok" aria-label="Готово">${SVG_OK_SM}</button>`;
+    ui.appendChild(editorBar);
+
     positionEditor();
-    if (o.kind === 'text') autoGrow();
+    if (o.kind === 'text') { autoGrow(); positionEditor(); }
+    requestAnimationFrame(() => { if (editorBar) editorBar.classList.add('show'); });
+
     const end = editorTa.value.length;
     editorTa.focus({ preventScroll: true });
     try { editorTa.setSelectionRange(end, end); } catch (e) {}
-    editorTa.addEventListener('input', () => { if (o.kind === 'text') { autoGrow(); positionEditor(); } });
+    editorTa.addEventListener('input', () => {
+      if (o.kind === 'text') autoGrow();
+      else growNote();
+      positionEditor();
+      ensureEditorVisible();
+    });
     editorTa.addEventListener('keydown', e => {
       if (e.key === 'Escape') { e.preventDefault(); commitEditing(); }
     });
-    editorActs.addEventListener('pointerdown', e => e.preventDefault());
-    editorActs.addEventListener('click', e => {
+    editorBar.addEventListener('pointerdown', e => e.preventDefault());
+    editorBar.addEventListener('click', e => {
       const b = e.target.closest('[data-e]');
       if (!b) return;
-      if (b.dataset.e === 'del') { removeEditing(true); }
+      if (b.dataset.e === 'del') { removeEditing(); }
       else commitEditing();
     });
+
     buildScene(); draw();
+    ensureEditorVisible();
+    // клавиатура появляется с задержкой: поправляемся после её анимации
+    setTimeout(() => { if (editing === o) ensureEditorVisible(); }, 260);
+  }
+
+  /* Держим редактор над клавиатурой: поднимаем/опускаем вид, если он вылез. */
+  function ensureEditorVisible() {
+    if (!editing || !editorBox || !editorBox.isConnected) return;
+    const vv = window.visualViewport;
+    const visibleH = Math.min(H, (vv ? vv.offsetTop + vv.height : H));
+    const topLimit = (topBar.getBoundingClientRect().bottom || 48) + 12;
+    const r = editorBox.getBoundingClientRect();
+    const ovr = ov.getBoundingClientRect();
+    const top = r.top - ovr.top;
+    const bottom = r.bottom - ovr.top;
+    const left = r.left - ovr.left;
+    const right = r.right - ovr.left;
+    let dy = 0, dx = 0;
+    if (bottom > visibleH - 14) dy = (visibleH - 14) - bottom;
+    if (top + dy < topLimit) dy = topLimit - top;
+    if (right > W - 12) dx = (W - 12) - right;
+    if (left + dx < 12) dx = 12 - left;
+    if (!dy && !dx) return;
+    view.x += dx;
+    view.y += dy;
+    buildScene(); draw();
+    positionEditor();
   }
 
   function autoGrow() {
@@ -1077,58 +1178,100 @@ export function openDrawing(onDone, opts = {}) {
     editorTa.style.height = h + 'px';
   }
 
+  /* Заметка растёт вместе с текстом, как бумажная карточка в системе,
+     а не прячет последние строки в скролле. */
+  function growNote() {
+    if (!editing || editing.kind !== 'note' || !editorTa) return;
+    const s = Math.max(0.2, view.s);
+    const pad = notePad(editing);
+    const prev = editorTa.style.height;
+    editorTa.style.height = 'auto';
+    const sh = editorTa.scrollHeight;
+    editorTa.style.height = prev;
+    const h = Math.max(140, Math.ceil(sh / s + pad * 2));
+    if (Math.abs(h - editing.h) < 1) return;
+    editing.h = h;
+    buildScene(); draw();
+  }
+
+  function positionEditorBar(left, top, boxW, boxH) {
+    if (!editorBar || !editorBar.isConnected) return;
+    const bw = editorBar.offsetWidth || 86;
+    const bh = editorBar.offsetHeight || 38;
+    const topLimit = (topBar.getBoundingClientRect().bottom || 48) + 6;
+    let bTop = top - bh - 10;
+    if (bTop < topLimit) bTop = top + boxH + 12;
+    bTop = clamp(bTop, 6, Math.max(6, H - bh - 10));
+    const bLeft = clamp(left + boxW - bw, 8, Math.max(8, W - bw - 8));
+    editorBar.style.left = bLeft + 'px';
+    editorBar.style.top = bTop + 'px';
+  }
+
   function positionEditor() {
     if (!editing || !editorBox) return;
     const s = view.s;
+    let left, top, w, h;
     if (editing.kind === 'note') {
       const pad = notePad(editing) * s;
       const p = toScreen(editing.x, editing.y);
-      editorBox.style.left = (p.x + pad) + 'px';
-      editorBox.style.top = (p.y + pad) + 'px';
-      editorBox.style.width = Math.max(20, editing.w * s - pad * 2) + 'px';
-      editorBox.style.height = Math.max(20, editing.h * s - pad * 2) + 'px';
-      editorTa.style.fontSize = (editing.size * s) + 'px';
-      editorBox.style.setProperty('--dw-ed-line', (editing.size * s * 1.35) + 'px');
+      left = p.x + pad;
+      top = p.y + pad;
+      w = Math.max(20, editing.w * s - pad * 2);
+      h = Math.max(20, editing.h * s - pad * 2);
+      editorBox.style.width = w + 'px';
+      editorBox.style.height = h + 'px';
     } else {
       const p = toScreen(editing.x, editing.y);
-      editorBox.style.left = p.x + 'px';
-      editorBox.style.top = p.y + 'px';
-      editorBox.style.width = Math.max(40, editing.w * s) + 'px';
-      editorTa.style.fontSize = (editing.size * s) + 'px';
-      editorBox.style.setProperty('--dw-ed-line', (editing.size * s * 1.35) + 'px');
+      left = p.x;
+      top = p.y;
+      w = Math.max(40, editing.w * s);
+      editorBox.style.width = w + 'px';
+      h = editorBox.offsetHeight || Math.max(28, editing.size * s * 1.35);
     }
-    editorBox.style.setProperty('--dw-ed-scale', s);
+    editorBox.style.left = left + 'px';
+    editorBox.style.top = top + 'px';
+    editorTa.style.fontSize = (editing.size * s) + 'px';
+    editorBox.style.setProperty('--dw-ed-line', (editing.size * s * 1.35) + 'px');
+    positionEditorBar(left, top, editorBox.offsetWidth || w, h);
   }
 
-  function removeEditing(silent) {
+  function closeEditorDom() {
+    if (editorBox) { editorBox.remove(); editorBox = null; }
+    if (editorBar) { editorBar.remove(); editorBar = null; }
+    editorTa = null;
+  }
+
+  function removeEditing() {
     if (!editing) return;
     const o = editing;
-    pushUndo();
-    items = items.filter(x => x !== o);
+    const isNew = !!o.__new;
     editing = null;
-    if (editorBox) { editorBox.remove(); editorBox = null; editorTa = null; editorActs = null; }
+    closeEditorDom();
+    delete o.__new;
+    if (!isNew) pushUndo();
+    items = items.filter(x => x !== o);
     selectedObj = null;
     buildScene(); draw(); syncChrome();
-    if (!silent) vibrate(6);
+    vibrate(8);
   }
 
-  function commitEditing(save = true) {
+  function commitEditing() {
     if (!editing) return;
     const o = editing;
     const text = editorTa ? editorTa.value.replace(/\s+$/, '') : (o.text || '');
-    const box = editorBox;
+    const isNew = !!o.__new;
     editing = null;
-    editorBox = null; editorTa = null; editorActs = null;
-    if (box) box.remove();
+    closeEditorDom();
+    delete o.__new;
     if (!text.trim()) {
-      pushUndo();
+      // пустую плашку не сохраняем; для нового объекта хватит отмены вставки
+      if (!isNew) pushUndo();
       items = items.filter(x => x !== o);
-      selectedObj = null;
     } else if (text !== o.text) {
-      pushUndo();
+      if (!isNew) pushUndo();
       o.text = text;
     }
-    if (selectedObj === o) selectedObj = null;
+    selectedObj = null;
     buildScene(); draw(); syncChrome();
   }
 
@@ -1502,7 +1645,7 @@ export function openDrawing(onDone, opts = {}) {
       let dataUrl = null;
       if (items.length) dataUrl = await renderPreview();
       if (items.length) {
-        const payload = { v: 1, items, view: { ...view }, tool };
+        const payload = { v: 1, items, view: { ...view }, tool, ink: { ...toolInk } };
         await Store.putBlob(drawId, new Blob([JSON.stringify(payload)], { type: 'application/json' }));
       }
       const result = { dataUrl, id: drawId };
@@ -1521,6 +1664,10 @@ export function openDrawing(onDone, opts = {}) {
     if (editing) commitEditing();
     document.removeEventListener('keydown', onKey);
     window.removeEventListener('resize', resize);
+    try {
+      window.visualViewport?.removeEventListener('resize', onViewport);
+      window.visualViewport?.removeEventListener('scroll', onViewport);
+    } catch (e) {}
     document.body.classList.remove('dw-open');
     try { refreshEdgeColor(); } catch (e) {}
     ov.classList.remove('open');
@@ -1615,6 +1762,12 @@ export function openDrawing(onDone, opts = {}) {
       if (t === 'marker') t = 'markerBlue';
       if (t === 'select') t = 'eraser';
       if (t && TOOL_META[t]) tool = t;
+      if (doc.ink && typeof doc.ink === 'object') {
+        for (const id of Object.keys(DEFAULT_INK)) {
+          const c = doc.ink[id];
+          if (typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c)) toolInk[id] = c;
+        }
+      }
     }
     toolEls.forEach(el => {
       const on = el.dataset.tool === tool;
@@ -1638,6 +1791,11 @@ export function openDrawing(onDone, opts = {}) {
   const ro = new ResizeObserver(() => { if (!closed) resize(); });
   ro.observe(ov);
   window.addEventListener('resize', resize);
+  const onViewport = () => { if (!closed && editing) ensureEditorVisible(); };
+  try {
+    window.visualViewport?.addEventListener('resize', onViewport);
+    window.visualViewport?.addEventListener('scroll', onViewport);
+  } catch (e) {}
 
   const api = {
     close: cancel,

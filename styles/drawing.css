@@ -14,6 +14,10 @@
   -webkit-user-select: none;
   --dw-safe-top: env(safe-area-inset-top, 0px);
   --dw-safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* высота панели инструментов и её масштаб (--dw-z) выставляются из JS:
+     на телефоне 178px, на планшете панель чуть крупнее */
+  --dw-dock-h: 178px;
+  --dw-z: 1;
   --dw-spring: cubic-bezier(.22, 1, .32, 1.06);
   --dw-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   transition: opacity .22s ease;
@@ -54,9 +58,12 @@ body.dw-open #screens-root { visibility: hidden; }
   display: flex;
   align-items: center;
   padding: calc(var(--dw-safe-top) + 4px) 12px 0 20px;
-  transition: transform .34s var(--dw-spring), opacity .22s ease;
+  transform: translateY(-10px);
+  opacity: 0;
+  transition: transform .34s var(--dw-spring), opacity .24s ease;
   pointer-events: none;
 }
+.draw-overlay.open .dw-top { transform: none; opacity: 1; }
 .dw-ib {
   flex: none;
   width: 44px; height: 44px;
@@ -85,19 +92,20 @@ body.dw-open #screens-root { visibility: hidden; }
 .dw-dock {
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  /* 156px — высота drawable, ещё 22px — запас под подъём выбранного
-     инструмента: полоса прокрутки обрезает по своей рамке. */
-  height: 178px;
+  height: var(--dw-dock-h);
   z-index: 5;
   display: flex;
   align-items: flex-end;
-  transition: transform .42s var(--dw-spring), opacity .24s ease;
+  transform: translateY(22px);
+  opacity: 0;
+  transition: transform .46s var(--dw-spring), opacity .3s ease;
   pointer-events: none;
 }
+.draw-overlay.open .dw-dock { transform: translateY(0); opacity: 1; }
 .dw-color {
   position: absolute;
-  left: 18px;
-  bottom: 66px;
+  left: calc(18px * var(--dw-z));
+  bottom: calc(64px * var(--dw-z) + var(--dw-safe-bottom));
   width: 28px; height: 28px;
   padding: 0;
   border: 0;
@@ -120,8 +128,9 @@ body.dw-open #screens-root { visibility: hidden; }
 .dw-color.no-color { opacity: 0; transform: scale(.7); pointer-events: none; }
 
 .dw-strip {
-  margin-left: 64px;
-  height: 178px;
+  margin-left: calc(64px * var(--dw-z));
+  /* выше панели: поднятый инструмент не должен резаться рамкой скролла */
+  height: calc(var(--dw-dock-h) + 40px);
   display: flex;
   align-items: flex-end;
   gap: 6px;
@@ -131,15 +140,16 @@ body.dw-open #screens-root { visibility: hidden; }
   scrollbar-width: none;
   -ms-overflow-style: none;
   touch-action: pan-x;
-  pointer-events: auto;
+  /* полоса выше панели нужна только как запас под подъём инструмента:
+     клики в этой полосе должны доставаться холсту */
+  pointer-events: none;
 }
 .dw-strip::-webkit-scrollbar { display: none; }
 
 .dw-tool {
   position: relative;
   flex: none;
-  height: 156px;   /* ровно высота док-панели: инструмент стоит на её кромке */
-  margin-bottom: 0;
+  height: var(--dw-dock-h);
   padding: 0;
   border: 0;
   background: transparent;
@@ -148,14 +158,20 @@ body.dw-open #screens-root { visibility: hidden; }
   justify-content: center;
   transform-origin: 50% 100%;
   cursor: pointer;
+  pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
   transition: transform .46s var(--dw-spring);
 }
+/* Полотно длиннее панели на 34px и уходит под нижнюю кромку экрана:
+   корпус продолжается вниз, поэтому торец инструмента не виден —
+   ни в покое, ни после подъёма выбранного. */
 .dw-skin-box {
   position: absolute;
   left: 50%;
+  bottom: calc(-34px * var(--dw-z));
   display: block;
-  transform: translateX(-50%);
+  transform: translateX(-50%) scale(var(--dw-z));
+  transform-origin: 50% 100%;
   pointer-events: none;
 }
 .dw-skin {
@@ -166,16 +182,19 @@ body.dw-open #screens-root { visibility: hidden; }
 }
 /* Тени инструментов уже запечены в оригинальных слоях shadow_s / shadow_u,
    поэтому CSS-фильтры не нужны: они удваивали бы контур. */
-.dw-tool.is-active { transform: translateY(-22px); }
-.dw-tool:not(.is-active):active { transform: translateY(-5px) scale(.985); }
+.dw-tool.is-active { transform: translateY(calc(-22px * var(--dw-z))); }
+.dw-tool:not(.is-active):active { transform: translateY(calc(-5px * var(--dw-z))) scale(.985); }
+.dw-tool:focus-visible { outline: none; }
 
-.draw-overlay.open .dw-tool {
-  animation: dwToolIn .5s var(--dw-spring) backwards;
-  animation-delay: calc(var(--i, 0) * 32ms + 40ms);
+/* Появление инструментов: поднимаются по очереди. Анимируем полотно,
+   а не кнопку, иначе анимация сбивает подъём выбранного инструмента. */
+.draw-overlay.open .dw-skin-box {
+  animation: dwToolIn .52s var(--dw-spring) backwards;
+  animation-delay: calc(var(--i, 0) * 34ms + 40ms);
 }
 @keyframes dwToolIn {
-  from { transform: translateY(22px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { opacity: 0; transform: translateX(-50%) translateY(24px) scale(calc(var(--dw-z) * .96)); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(var(--dw-z)); }
 }
 
 /* ---------- Палитра ---------- */
@@ -184,6 +203,8 @@ body.dw-open #screens-root { visibility: hidden; }
   left: 0; right: 0;
   bottom: calc(var(--dw-safe-bottom) + 36px);
   z-index: 6;
+  max-width: 560px;
+  margin: 0 auto;
   padding: 0 19px;
   opacity: 0;
   transform: translateY(calc(100% + 70px));
@@ -292,14 +313,20 @@ body.dw-open #screens-root { visibility: hidden; }
   border: 1.5px dashed rgba(0, 0, 0, .38);
   border-radius: 8px;
   pointer-events: none;
+  transition: opacity .16s ease, transform .2s var(--dw-spring);
 }
 .dw-lasso-chrome {
   position: absolute;
   z-index: 2;
   border: 1.5px dashed rgba(0, 0, 0, .42);
   pointer-events: none;
+  transition: opacity .16s ease, transform .2s var(--dw-spring);
 }
-.dw-obj-chrome.hidden, .dw-lasso-chrome.hidden { display: none; }
+.dw-obj-chrome.hidden, .dw-lasso-chrome.hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(.985);
+}
 .dw-chip {
   position: absolute;
   width: 34px; height: 34px;
@@ -338,13 +365,16 @@ body.dw-open #screens-root { visibility: hidden; }
   position: absolute;
   z-index: 3;
   pointer-events: auto;
+  border-radius: 4px;
+  animation: dwEdIn .24s var(--dw-spring) both;
 }
-.dw-editor.is-text {
-  outline: 1px dashed rgba(0, 0, 0, .22);
-  outline-offset: 4px;
-  border-radius: 2px;
-  min-width: 40px;
+@keyframes dwEdIn {
+  from { opacity: 0; transform: translateY(5px) scale(.99); }
+  to { opacity: 1; transform: none; }
 }
+/* в системе текст правится без рамки — только с кареткой */
+.dw-editor.is-text { min-width: 40px; }
+.dw-editor.is-note { border-radius: 7px; }
 .dw-editor-ta {
   display: block;
   width: 100%;
@@ -369,26 +399,38 @@ body.dw-open #screens-root { visibility: hidden; }
   overflow-wrap: break-word;
 }
 .dw-editor.is-note .dw-editor-ta { height: 100%; }
-.dw-editor-ta::placeholder { color: rgba(0, 0, 0, .28); }
-.dw-editor-acts {
+.dw-editor-ta::placeholder { color: rgba(0, 0, 0, .26); }
+/* Панель действий живёт отдельно от редактора: её можно прижать к экрану,
+   и она не наезжает на текст и на рамку выделения. */
+.dw-editor-bar {
   position: absolute;
-  right: 0;
-  top: -46px;
+  z-index: 4;
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  padding: 0;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(7px) scale(.82);
+  transform-origin: 100% 100%;
+  transition: opacity .16s ease, transform .32s var(--dw-spring), left .18s ease, top .18s ease;
 }
+.dw-editor-bar.show { opacity: 1; transform: none; }
 .dw-act {
-  width: 33px; height: 33px;
+  width: 38px; height: 38px;
   padding: 0;
   border: 0;
   border-radius: 50%;
   background: #fff;
   color: #1c1c1c;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, .15);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .16), 0 1px 4px rgba(0, 0, 0, .06);
   display: grid;
   place-items: center;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform .18s var(--dw-spring), background-color .18s ease, color .18s ease;
 }
-.dw-act svg { width: 18px; height: 18px; }
+.dw-act svg { width: 19px; height: 19px; }
 .dw-act.del { color: #d93025; }
-.dw-act:active { transform: scale(.9); }
+.dw-act.ok { color: #1c1c1c; }
+.dw-act:active { transform: scale(.88); background: #f4f4f4; }
