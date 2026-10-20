@@ -85,7 +85,9 @@ body.dw-open #screens-root { visibility: hidden; }
 .dw-dock {
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  height: 156px;
+  /* 156px — высота drawable, ещё 22px — запас под подъём выбранного
+     инструмента: полоса прокрутки обрезает по своей рамке. */
+  height: 178px;
   z-index: 5;
   display: flex;
   align-items: flex-end;
@@ -119,7 +121,7 @@ body.dw-open #screens-root { visibility: hidden; }
 
 .dw-strip {
   margin-left: 64px;
-  height: 156px;
+  height: 178px;
   display: flex;
   align-items: flex-end;
   gap: 6px;
@@ -136,8 +138,8 @@ body.dw-open #screens-root { visibility: hidden; }
 .dw-tool {
   position: relative;
   flex: none;
-  height: 136px;
-  margin-bottom: -26px;
+  height: 156px;   /* ровно высота док-панели: инструмент стоит на её кромке */
+  margin-bottom: 0;
   padding: 0;
   border: 0;
   background: transparent;
@@ -162,11 +164,9 @@ body.dw-open #screens-root { visibility: hidden; }
   height: 100%;
   pointer-events: none;
 }
-.dw-skin-tool { filter: none; }
-.dw-skin-card { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .06)); }
-.dw-tool.is-active { transform: translateY(-22px) scale(1.03); }
-.dw-tool.is-active .dw-skin-tool { filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .10)); }
-.dw-tool.is-active .dw-skin-card { filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .10)); }
+/* Тени инструментов уже запечены в оригинальных слоях shadow_s / shadow_u,
+   поэтому CSS-фильтры не нужны: они удваивали бы контур. */
+.dw-tool.is-active { transform: translateY(-22px); }
 .dw-tool:not(.is-active):active { transform: translateY(-5px) scale(.985); }
 
 .draw-overlay.open .dw-tool {

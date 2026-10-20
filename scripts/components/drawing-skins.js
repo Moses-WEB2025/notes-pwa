@@ -1,62 +1,69 @@
 /* ============ Скины инструментов ============
-   Точные 3D-рендеры инструментов из системного приложения, пересобранные
-   в чистые PNG: аккуратная альфа-маска, без фона и без карточки у ручек.
-   Для цветных инструментов есть отдельный слой акцента: при смене цвета
-   перекрашивается сам акцент с сохранением светотени, а не накладывается
-   плоское пятно. По умолчанию показывается оригинальный рендер. */
+   Оригинальные слои панели рисования Xiaomi Notes 3.2.7.9.
+   Каждый инструмент собран ровно из тех же drawable, что и в приложении:
+
+     doodle_ic_brush_<brush>_body / _head / _shadow_s / _shadow_u
+     doodle_ic_tool_<tool>_body / _shadow_s / _shadow_u
+
+   body и тени — готовые рендеры со светотенью; head — alpha-маска
+   акцентного слоя (наконечник, точка и полоса на корпусе). В системном
+   приложении она заливается активным цветом, поэтому мы делаем то же:
+   цвет заменяет RGB маски, а её альфа сохраняет оригинальную светотень.
+   Тень _s — у поднятого (выбранного) инструмента, _u — у остальных. */
+
+const NATIVE_W = 306;                       // ширина исходного полотна drawable
+const NATIVE_H = 547;                       // высота исходного полотна drawable
+// 547 px drawable при 560 dpi — это ровно 156 dp, то есть высота панели
+// инструментов. Рисуем полотно в натуральную величину: инструмент стоит
+// на нижней кромке панели, запечённые тени не обрезаются.
+const SKIN_H = 156;                         // высота полотна в CSS px
+const SKIN_W = NATIVE_W / NATIVE_H * SKIN_H;
+const SKIN_TOP = 0;                         // полотно совпадает с кнопкой
 
 const SKINS = {
-  pen:          { w: 43, h: 190.5, top: 0,  mode: 'color',    accent: true,  tool: true },
-  markerBlue:   { w: 64, h: 177.6, top: 4,  mode: 'multiply', accent: true,  tool: true },
-  markerYellow: { w: 68, h: 119.2, top: 9,  mode: 'multiply', accent: true,  tool: true },
-  fountain:     { w: 54, h: 171.3, top: 0,  mode: 'multiply', accent: true,  tool: true },
-  eraser:       { w: 48, h: 98,    top: 12, card: true },
-  image:        { w: 66, h: 98,    top: 12, card: true },
-  text:         { w: 65, h: 98,    top: 12, card: true, mode: 'color', accent: true },
-  note:         { w: 73, h: 98,    top: 12, card: true },
-};
-
-const DEFAULTS = {
-  pen: '#1c1c1c',
-  markerBlue: '#5aaef8',
-  markerYellow: '#ffab3f',
-  fountain: '#69cf36',
-  text: '#1c1c1c',
+  pen:          { res: 'pencil',       accent: true,  ink: '#1c1c1c' },
+  markerBlue:   { res: 'watercolor',   accent: true,  ink: '#5aaef8' },
+  markerYellow: { res: 'markpen',      accent: true,  ink: '#ffab3f' },
+  fountain:     { res: 'pen',          accent: true,  ink: '#69cf36' },
+  eraser:       { res: 'tool_eraser' },
+  image:        { res: 'tool_picture' },
+  text:         { res: 'tool_text' },
+  note:         { res: 'tool_background' },
 };
 
 const ITEMS = new Map();
 
 function asset(name) {
-  return new URL(`assets/skins/${name}`, document.baseURI).href;
+  return new URL(`assets/original/${name}`, document.baseURI).href;
 }
 
 export function toolSkin(id) {
   const s = SKINS[id];
   if (!s) return '';
-  const cls = s.tool ? ' dw-skin-tool' : (s.card ? ' dw-skin-card' : '');
-  return `<span class="dw-skin-box" style="width:${s.w}px;height:${s.h}px;top:${s.top}px"><canvas class="dw-skin${cls}" data-skin="${id}" aria-hidden="true"></canvas></span>`;
+  return `<span class="dw-skin-box" style="width:${SKIN_W.toFixed(2)}px;height:${SKIN_H}px;top:${SKIN_TOP}px"><canvas class="dw-skin" data-skin="${id}" aria-hidden="true"></canvas></span>`;
+}
+
+function paintHead(rec) {
+  const { ctx, cw, ch, imgs, tctx } = rec;
+  if (!imgs.head || !rec.ink) return;
+  tctx.globalCompositeOperation = 'source-over';
+  tctx.clearRect(0, 0, cw, ch);
+  tctx.fillStyle = rec.ink;
+  tctx.fillRect(0, 0, cw, ch);
+  tctx.globalCompositeOperation = 'destination-in';
+  tctx.drawImage(imgs.head, 0, 0, cw, ch);
+  tctx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(rec.tint, 0, 0);
 }
 
 function render(rec) {
-  const { ctx, cw, ch } = rec;
-  if (!ctx || !rec.orig) return;
-  ctx.globalCompositeOperation = 'source-over';
+  const { ctx, cw, ch, imgs } = rec;
+  if (!ctx) return;
   ctx.clearRect(0, 0, cw, ch);
-  const custom = rec.accent && rec.base && rec.mask && rec.ink && rec.ink !== DEFAULTS[rec.id];
-  ctx.drawImage(custom ? rec.base : rec.orig, 0, 0, cw, ch);
-  if (!custom) return;
-  const tint = document.createElement('canvas');
-  tint.width = cw; tint.height = ch;
-  const t = tint.getContext('2d');
-  t.fillStyle = rec.ink;
-  t.fillRect(0, 0, cw, ch);
-  t.globalCompositeOperation = 'destination-in';
-  t.drawImage(rec.mask, 0, 0, cw, ch);
-  t.globalCompositeOperation = 'destination-in';
-  t.drawImage(rec.base, 0, 0, cw, ch);
-  ctx.globalCompositeOperation = rec.mode;
-  ctx.drawImage(tint, 0, 0);
-  ctx.globalCompositeOperation = 'source-over';
+  const shadow = rec.active ? imgs.shadowS : imgs.shadowU;
+  if (shadow) ctx.drawImage(shadow, 0, 0, cw, ch);
+  if (imgs.body) ctx.drawImage(imgs.body, 0, 0, cw, ch);
+  if (rec.s.accent) paintHead(rec);
 }
 
 export function initToolSkins(toolInk, root = document) {
@@ -64,28 +71,35 @@ export function initToolSkins(toolInk, root = document) {
   for (const [id, s] of Object.entries(SKINS)) {
     const canvas = root.querySelector(`canvas[data-skin="${id}"]`);
     if (!canvas) continue;
-    const cw = Math.round(s.w * dpr);
-    const ch = Math.round(s.h * dpr);
+    const cw = Math.round(SKIN_W * dpr);
+    const ch = Math.round(SKIN_H * dpr);
     canvas.width = cw;
     canvas.height = ch;
     const ctx = canvas.getContext('2d');
     if (!ctx) continue;
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
+
+    const tint = document.createElement('canvas');
+    tint.width = cw;
+    tint.height = ch;
+
     const rec = {
       id, s, ctx, cw, ch,
-      ink: toolInk[id] || DEFAULTS[id] || null,
-      mode: s.mode || 'multiply',
-      accent: !!s.accent,
-      orig: null, base: null, mask: null,
-      ready: 0, need: s.accent ? 3 : 1,
+      ink: toolInk[id] || s.ink || null,
+      active: false,
+      imgs: { body: null, shadowS: null, shadowU: null, head: null },
+      tint, tctx: tint.getContext('2d'),
+      ready: 0,
+      need: s.accent ? 4 : 3,
     };
     ITEMS.set(id, rec);
-    const load = (name, key) => {
+
+    const load = (suffix, key) => {
       const img = new Image();
       img.decoding = 'async';
       img.onload = () => {
-        rec[key] = img;
+        rec.imgs[key] = img;
         rec.ready++;
         if (rec.ready >= rec.need) render(rec);
       };
@@ -93,22 +107,25 @@ export function initToolSkins(toolInk, root = document) {
         rec.ready++;
         if (rec.ready >= rec.need) render(rec);
       };
-      img.src = asset(name);
+      img.src = asset(`${s.res}-${suffix}.png`);
     };
-    load(`${id}.png`, 'orig');
-    if (s.accent) {
-      load(`${id}-base.png`, 'base');
-      load(`${id}-accent.png`, 'mask');
-    }
+    load('shadow-u', 'shadowU');
+    load('shadow-s', 'shadowS');
+    load('body', 'body');
+    if (s.accent) load('head', 'head');
   }
 }
 
 export function setToolSkinColor(id, ink) {
   const rec = ITEMS.get(id);
-  if (!rec) return;
-  if (rec.ink === ink) return;
+  if (!rec || !rec.s.accent || !ink || rec.ink === ink) return;
   rec.ink = ink;
   if (rec.ready >= rec.need) render(rec);
 }
 
-
+export function setToolSkinActive(id, active) {
+  const rec = ITEMS.get(id);
+  if (!rec || rec.active === active) return;
+  rec.active = active;
+  if (rec.ready >= rec.need) render(rec);
+}

@@ -8,7 +8,7 @@
 import { Store, uid, vibrate } from '../core.js';
 import { toast } from './ui.js';
 import { setEdgeColor, refreshEdgeColor } from '../edge.js';
-import { toolSkin, initToolSkins, setToolSkinColor } from './drawing-skins.js';
+import { toolSkin, initToolSkins, setToolSkinColor, setToolSkinActive } from './drawing-skins.js';
 
 const TAU = Math.PI * 2;
 const GRID = 21.33;                 // шаг точек в world-координатах (как на скриншоте)
@@ -858,7 +858,11 @@ export function openDrawing(onDone, opts = {}) {
     if (selectedObj) deselectObj();
     tool = id;
     ov.dataset.tool = id;
-    toolEls.forEach(el => el.classList.toggle('is-active', el.dataset.tool === id));
+    toolEls.forEach(el => {
+      const on = el.dataset.tool === id;
+      el.classList.toggle('is-active', on);
+      setToolSkinActive(el.dataset.tool, on);
+    });
     closePalette();
     updateColorUI();
     vibrate(7);
@@ -870,6 +874,7 @@ export function openDrawing(onDone, opts = {}) {
   // стартовое положение
   initToolSkins(toolInk, ov);
   toolEls[0].classList.add('is-active');
+  setToolSkinActive('pen', true);
   applyAllToolAccents();
   updateColorUI();
 
@@ -1611,7 +1616,11 @@ export function openDrawing(onDone, opts = {}) {
       if (t === 'select') t = 'eraser';
       if (t && TOOL_META[t]) tool = t;
     }
-    toolEls.forEach(el => el.classList.toggle('is-active', el.dataset.tool === tool));
+    toolEls.forEach(el => {
+      const on = el.dataset.tool === tool;
+      el.classList.toggle('is-active', on);
+      setToolSkinActive(el.dataset.tool, on);
+    });
     ov.dataset.tool = tool;
     applyAllToolAccents();
     updateColorUI();

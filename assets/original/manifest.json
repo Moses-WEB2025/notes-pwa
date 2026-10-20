@@ -1,0 +1,95 @@
+{
+  "source": "com.miui.notes 3.2.7.9 (3279) APK resources.arsc, drawable",
+  "native": { "width": 306, "height": 547, "density": "560dpi" },
+  "compositing": {
+    "order": ["shadow", "body", "head"],
+    "head": "alpha mask tinted with the active color (PorterDuff SRC_IN); alpha keeps the original shading",
+    "shadow": { "s": "selected (raised) tool", "u": "idle tool" }
+  },
+  "tools": {
+    "pen": {
+      "drawable": "doodle_ic_brush_pencil",
+      "layers": ["body", "head", "shadow-s", "shadow-u"],
+      "files": {
+        "body": "pencil-body.png",
+        "head": "pencil-head.png",
+        "shadow-s": "pencil-shadow-s.png",
+        "shadow-u": "pencil-shadow-u.png"
+      },
+      "accent": true
+    },
+    "markerBlue": {
+      "drawable": "doodle_ic_brush_watercolor",
+      "layers": ["body", "head", "shadow-s", "shadow-u"],
+      "files": {
+        "body": "watercolor-body.png",
+        "head": "watercolor-head.png",
+        "shadow-s": "watercolor-shadow-s.png",
+        "shadow-u": "watercolor-shadow-u.png"
+      },
+      "accent": true
+    },
+    "markerYellow": {
+      "drawable": "doodle_ic_brush_markpen",
+      "layers": ["body", "head", "shadow-s", "shadow-u"],
+      "files": {
+        "body": "markpen-body.png",
+        "head": "markpen-head.png",
+        "shadow-s": "markpen-shadow-s.png",
+        "shadow-u": "markpen-shadow-u.png"
+      },
+      "accent": true
+    },
+    "fountain": {
+      "drawable": "doodle_ic_brush_pen",
+      "layers": ["body", "head", "shadow-s", "shadow-u"],
+      "files": {
+        "body": "pen-body.png",
+        "head": "pen-head.png",
+        "shadow-s": "pen-shadow-s.png",
+        "shadow-u": "pen-shadow-u.png"
+      },
+      "accent": true
+    },
+    "eraser": {
+      "drawable": "doodle_ic_tool_eraser",
+      "layers": ["body", "shadow-s", "shadow-u"],
+      "files": {
+        "body": "tool_eraser-body.png",
+        "shadow-s": "tool_eraser-shadow-s.png",
+        "shadow-u": "tool_eraser-shadow-u.png"
+      },
+      "accent": false
+    },
+    "image": {
+      "drawable": "doodle_ic_tool_picture",
+      "layers": ["body", "shadow-s", "shadow-u"],
+      "files": {
+        "body": "tool_picture-body.png",
+        "shadow-s": "tool_picture-shadow-s.png",
+        "shadow-u": "tool_picture-shadow-u.png"
+      },
+      "accent": false
+    },
+    "text": {
+      "drawable": "doodle_ic_tool_text",
+      "layers": ["body", "shadow-s", "shadow-u"],
+      "files": {
+        "body": "tool_text-body.png",
+        "shadow-s": "tool_text-shadow-s.png",
+        "shadow-u": "tool_text-shadow-u.png"
+      },
+      "accent": false
+    },
+    "note": {
+      "drawable": "doodle_ic_tool_background",
+      "layers": ["body", "shadow-s", "shadow-u"],
+      "files": {
+        "body": "tool_background-body.png",
+        "shadow-s": "tool_background-shadow-s.png",
+        "shadow-u": "tool_background-shadow-u.png"
+      },
+      "accent": false
+    }
+  }
+}
