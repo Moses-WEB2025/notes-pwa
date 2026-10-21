@@ -286,47 +286,89 @@ body.dw-open #screens-root { visibility: hidden; }
 /* ---------- Настройки кисти: прозрачность, толщина, режим ластика ---------- */
 /* Две карточки над панелью инструментов — как в системном приложении:
    слева полоса прозрачности (шахматка → плотный цвет), справа ступени
-   толщины точками. У ластика вместо прозрачности — режим стирания.
+   толщины точками. У ластика вместо прозрачности — две круглые кнопки
+   режима стирания слева, как в системном приложении.
    Подняты выше панели настолько, чтобы не задевать поднятый инструмент. */
 .dw-opts {
   position: absolute;
   left: 0; right: 0;
-  bottom: calc(var(--dw-dock-h) + 26px + var(--dw-safe-bottom));
+  bottom: calc(var(--dw-dock-h) + 88px + var(--dw-safe-bottom));
   z-index: 6;
   display: flex;
   align-items: stretch;
-  gap: 10px;
-  max-width: 560px;
+  gap: 12px;
+  max-width: 600px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 12px;
   opacity: 0;
+  visibility: hidden;
   transform: translateY(12px) scale(.97);
   transform-origin: 50% 100%;
-  transition: opacity .26s ease, transform .42s var(--dw-spring);
+  transition: opacity .26s ease, transform .42s var(--dw-spring), visibility 0s linear .26s;
+  /* сама полоса не перехватывает касания: их ловят карточки и кнопки ниже */
   pointer-events: none;
 }
-.draw-overlay.open .dw-opts { opacity: 1; transform: none; }
-.draw-overlay.palette-open .dw-opts,
-.draw-overlay.focus .dw-opts,
-.dw-opts.is-off {
-  opacity: 0;
-  transform: translateY(12px) scale(.97);
-  pointer-events: none;
+.draw-overlay.open:not(.palette-open):not(.focus) .dw-opts:not(.is-off) {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity .26s ease, transform .42s var(--dw-spring), visibility 0s;
 }
+/* Видимая панель обязана быть нажимаемой — иначе все настройки «муляж». */
+.dw-opt-card,
+.dw-alpha-track,
+.dw-size,
+.dw-mode-btn { pointer-events: auto; }
 
 .dw-opt-card {
   height: 60px;
+  box-sizing: border-box;
   border-radius: 18px;
   background: #fff;
   box-shadow: 0 10px 26px rgba(0, 0, 0, .10), 0 2px 6px rgba(0, 0, 0, .05);
   display: flex;
   align-items: center;
 }
-.dw-opt-alpha { flex: 1 1 auto; min-width: 0; padding: 0 15px; }
-.dw-opt-size { flex: none; gap: 1px; padding: 0 8px; }
-.dw-opt-mode { display: none; flex: 1 1 auto; gap: 2px; padding: 0 9px; justify-content: center; }
+.dw-opt-alpha { flex: 1 1 0; min-width: 0; padding: 0 15px; }
+.dw-opt-size { flex: 1.76 1 0; min-width: 0; justify-content: space-between; padding: 0 8px; }
 .draw-overlay[data-tool="eraser"] .dw-opt-alpha { display: none; }
-.draw-overlay[data-tool="eraser"] .dw-opt-mode { display: flex; }
+/* Ластик: карточка толщины уходит вправо, слева — столбик режимов */
+.draw-overlay[data-tool="eraser"] .dw-opt-size { flex: 0 1 62%; margin-left: auto; }
+
+/* Два круглых переключателя режима ластика — столбиком у левого края */
+.dw-eraser-modes {
+  position: absolute;
+  left: 20px;
+  bottom: calc(var(--dw-dock-h) + 88px + var(--dw-safe-bottom));
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px) scale(.9);
+  transform-origin: 50% 100%;
+  transition: opacity .24s ease, transform .4s var(--dw-spring), visibility 0s linear .24s;
+  pointer-events: none;
+}
+.draw-overlay.open:not(.palette-open):not(.focus) .dw-eraser-modes:not(.is-off) {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity .24s ease, transform .4s var(--dw-spring), visibility 0s;
+}
+.dw-eraser-modes .dw-mode-btn {
+  width: 46px; height: 46px;
+  background: #fff;
+  color: #2b2b2b;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .13), 0 1px 3px rgba(0, 0, 0, .06);
+}
+.dw-eraser-modes .dw-mode-btn.is-sel {
+  background: #fff;
+  color: #111;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .16), 0 1px 3px rgba(0, 0, 0, .06), inset 0 0 0 1.6px rgba(0, 0, 0, .10);
+}
+.dw-eraser-modes .dw-mode-btn:not(.is-sel) { color: #2f2f2f; }
 
 .dw-alpha-track {
   position: relative;
@@ -354,7 +396,9 @@ body.dw-open #screens-root { visibility: hidden; }
 }
 
 .dw-size {
-  width: 34px; height: 46px;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 46px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -374,7 +418,7 @@ body.dw-open #screens-root { visibility: hidden; }
 }
 .dw-size.is-sel .dw-size-dot {
   opacity: 1;
-  box-shadow: 0 0 0 3.5px #fff, 0 0 0 5.5px var(--opt-ink, #1c1c1c);
+  box-shadow: 0 0 0 3px #fff, 0 0 0 4.8px var(--opt-ink, #1c1c1c);
 }
 .dw-size:active .dw-size-dot { transform: scale(.86); }
 
@@ -395,9 +439,9 @@ body.dw-open #screens-root { visibility: hidden; }
 .dw-mode-ico { width: 25px; height: 25px; display: block; }
 .dw-mode-ico.is-checker {
   border-radius: 50%;
-  box-shadow: inset 0 0 0 1.4px currentColor;
+  box-shadow: inset 0 0 0 1.5px currentColor, 0 0 0 1.5px #fff;
   background-image: repeating-conic-gradient(currentColor 0% 25%, transparent 0% 50%);
-  background-size: 8px 8px;
+  background-size: 5px 5px;
   background-position: 1px 1px;
 }
 .dw-mode-btn.is-sel {

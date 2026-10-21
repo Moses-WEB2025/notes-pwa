@@ -140,13 +140,13 @@ export function openDrawing(onDone, opts = {}) {
           <span class="dw-alpha-knob" data-alpha-knob></span>
         </div>
       </div>
-      <div class="dw-opt-card dw-opt-mode" role="group" aria-label="Режим ластика">
-        <button type="button" class="dw-mode-btn" data-mode="spot" aria-label="Стирать участками" title="Стирать участками"><span class="dw-mode-ico is-checker" aria-hidden="true"></span></button>
-        <button type="button" class="dw-mode-btn" data-mode="whole" aria-label="Стирать штрих целиком" title="Стирать штрих целиком">${SVG_ERASE_STROKE}</button>
-      </div>
       <div class="dw-opt-card dw-opt-size" role="group" aria-label="Толщина">
         ${SIZE_DOTS.map((d, i) => `<button type="button" class="dw-size" data-size="${SIZE_DOTS.length - 1 - i}" aria-label="${SIZE_LABELS[i]}"><i class="dw-size-dot" style="--d:${d}px"></i></button>`).join('')}
       </div>
+    </div>
+    <div class="dw-eraser-modes is-off" role="group" aria-label="Режим ластика" aria-hidden="true">
+      <button type="button" class="dw-mode-btn" data-mode="spot" aria-label="Стирать участками" title="Стирать участками"><span class="dw-mode-ico is-checker" aria-hidden="true"></span></button>
+      <button type="button" class="dw-mode-btn" data-mode="whole" aria-label="Стирать штрих целиком" title="Стирать штрих целиком">${SVG_ERASE_STROKE}</button>
     </div>
     <div class="dw-palette" aria-hidden="true">
       <div class="dw-swatch-card"><div class="dw-swatches">${swatches}</div></div>
@@ -185,6 +185,7 @@ export function openDrawing(onDone, opts = {}) {
   const alphaKnob = ov.querySelector('[data-alpha-knob]');
   const sizeEls = [...ov.querySelectorAll('.dw-size')];
   const modeEls = [...ov.querySelectorAll('.dw-mode-btn')];
+  const modesBox = ov.querySelector('.dw-eraser-modes');
   const measure = document.createElement('canvas').getContext('2d');
 
   /* ---------- Состояние ---------- */
@@ -245,6 +246,11 @@ export function openDrawing(onDone, opts = {}) {
     sizeEls.forEach(el => el.classList.toggle('is-sel', +el.dataset.size === cfg.size));
     const mode = cfg.mode || 'whole';
     modeEls.forEach(el => el.classList.toggle('is-sel', el.dataset.mode === mode));
+    if (modesBox) {
+      const eraser = tool === 'eraser';
+      modesBox.classList.toggle('is-off', !eraser);
+      modesBox.setAttribute('aria-hidden', eraser ? 'false' : 'true');
+    }
   }
   let alphaDrag = false;
   function setOpacityAt(clientX) {
