@@ -47,11 +47,32 @@ const TOOLS = [
 const TOOL_META = Object.fromEntries(TOOLS.map(t => [t.id, t]));
 const DEFAULT_INK = Object.fromEntries(TOOLS.filter(t => t.ink).map(t => [t.id, t.ink]));
 
+/* Настройки кистей: у первых четырёх инструментов — толщина и прозрачность,
+   у ластика — толщина и режим стирания. Толщина хранится индексом ступени,
+   поэтому одна и та же настройка одинаково читается на всех инструментах. */
+const BRUSH_IDS = ['pen', 'markerBlue', 'markerYellow', 'fountain', 'eraser'];
+const BASE_WIDTH = { pen: 2.6, markerBlue: 20, markerYellow: 22, fountain: 3.1, eraser: 14 };
+const SIZE_STEPS = [.42, .64, 1, 1.55, 2.3];
+const SIZE_DOTS = [20, 17, 14, 11, 8];   // диаметр точки в карточке: от крупной к мелкой
+const SIZE_LABELS = ['Самая толстая', 'Толстая', 'Средняя', 'Тонкая', 'Самая тонкая'];
+const ERASER_MODES = ['whole', 'spot'];
+const MIN_OPACITY = .1;
+function defaultToolSet() {
+  return {
+    pen:          { size: 2, opacity: 1 },
+    markerBlue:   { size: 2, opacity: 1 },
+    markerYellow: { size: 2, opacity: 1 },
+    fountain:     { size: 2, opacity: 1 },
+    eraser:       { size: 2, mode: 'whole' },
+  };
+}
+
 const SVG_UNDO = `<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M4.6 8.4h11.2a6.7 6.7 0 0 1 6.7 6.7v7.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.7 3.5 4.5 8.4l5.2 4.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const SVG_REDO = `<svg viewBox="0 0 28 28" aria-hidden="true"><g transform="matrix(-1 0 0 1 28 0)"><path d="M4.6 8.4h11.2a6.7 6.7 0 0 1 6.7 6.7v7.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9.7 3.5 4.5 8.4l5.2 4.9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
 const SVG_EXPAND = `<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M3.6 10.6V3.6h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17.4 24.4h7v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17.2" cy="10.7" r="1.75" fill="currentColor"/></svg>`;
 const SVG_CHECK = `<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M3.6 15.4l6.9 6.6L24.6 5.6" fill="none" stroke="currentColor" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const SVG_TRASH = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9.5 7V4.8h5V7M6.7 7l.8 12.2h9l.8-12.2M10.2 10.2v5.6M13.8 10.2v5.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const SVG_ERASE_STROKE = `<svg class="dw-mode-ico" viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(-38 12 11.4)"><rect x="6" y="7.4" width="12" height="8" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M11 7.6v7.8" stroke="currentColor" stroke-width="1.7"/></g><path d="M4.4 20.6h15.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
 const SVG_OK_SM = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.6l5 5L19.8 6.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -113,6 +134,20 @@ export function openDrawing(onDone, opts = {}) {
         ${TOOLS.map((t, i) => `<button type="button" class="dw-tool" data-tool="${t.id}" style="width:calc(${t.w}px * var(--dw-z));margin-left:calc(${t.ml || 0}px * var(--dw-z));--i:${i}" aria-label="${t.label}">${toolSkin(t.id)}</button>`).join('')}
       </div>
     </div>
+    <div class="dw-opts is-off" aria-hidden="true">
+      <div class="dw-opt-card dw-opt-alpha">
+        <div class="dw-alpha-track" data-alpha role="slider" aria-label="Прозрачность" aria-valuemin="10" aria-valuemax="100" aria-valuenow="100">
+          <span class="dw-alpha-knob" data-alpha-knob></span>
+        </div>
+      </div>
+      <div class="dw-opt-card dw-opt-mode" role="group" aria-label="Режим ластика">
+        <button type="button" class="dw-mode-btn" data-mode="spot" aria-label="Стирать участками" title="Стирать участками"><span class="dw-mode-ico is-checker" aria-hidden="true"></span></button>
+        <button type="button" class="dw-mode-btn" data-mode="whole" aria-label="Стирать штрих целиком" title="Стирать штрих целиком">${SVG_ERASE_STROKE}</button>
+      </div>
+      <div class="dw-opt-card dw-opt-size" role="group" aria-label="Толщина">
+        ${SIZE_DOTS.map((d, i) => `<button type="button" class="dw-size" data-size="${SIZE_DOTS.length - 1 - i}" aria-label="${SIZE_LABELS[i]}"><i class="dw-size-dot" style="--d:${d}px"></i></button>`).join('')}
+      </div>
+    </div>
     <div class="dw-palette" aria-hidden="true">
       <div class="dw-swatch-card"><div class="dw-swatches">${swatches}</div></div>
       <div class="dw-hue" data-hue style="background:linear-gradient(90deg,${hueBg})">
@@ -130,6 +165,11 @@ export function openDrawing(onDone, opts = {}) {
   const ctx = canvas.getContext('2d');
   const scene = document.createElement('canvas');
   const sctx = scene.getContext('2d');
+  /* Слой «чернил»: всё нарисованное лежит отдельно от бумаги. Так ластик
+     стирает штрихи, а не точки-сетку под ними, и мультиплай маркера
+     смешивается только с чернилами, а не с точками бумаги. */
+  const ink = document.createElement('canvas');
+  const ictx = ink.getContext('2d');
   const ui = ov.querySelector('.dw-ui-layer');
   const strip = ov.querySelector('.dw-strip');
   const hueBar = ov.querySelector('[data-hue]');
@@ -140,6 +180,11 @@ export function openDrawing(onDone, opts = {}) {
   const btnRedo = ov.querySelector('[data-a=redo]');
   const toolEls = [...ov.querySelectorAll('.dw-tool')];
   const shadeEls = [...ov.querySelectorAll('.dw-swatch')];
+  const optsRow = ov.querySelector('.dw-opts');
+  const alphaTrack = ov.querySelector('[data-alpha]');
+  const alphaKnob = ov.querySelector('[data-alpha-knob]');
+  const sizeEls = [...ov.querySelectorAll('.dw-size')];
+  const modeEls = [...ov.querySelectorAll('.dw-mode-btn')];
   const measure = document.createElement('canvas').getContext('2d');
 
   /* ---------- Состояние ---------- */
@@ -150,6 +195,9 @@ export function openDrawing(onDone, opts = {}) {
   let doc = null;
   let tool = 'pen';
   let toolInk = { ...DEFAULT_INK };
+  let toolSet = defaultToolSet();
+  const sizeStep = (id = tool) => SIZE_STEPS[(toolSet[id] || {}).size] || 1;
+  function eraserRadius() { return BASE_WIDTH.eraser * sizeStep('eraser'); }
   let hueIndex = 3;                 // палитра: амбра по умолчанию, пока не синхронизирована
   let shadeIndex = 3;
   const activeInk = () => toolInk[tool] || null;
@@ -169,7 +217,74 @@ export function openDrawing(onDone, opts = {}) {
     const c = activeInk();
     colorBtn.classList.toggle('no-color', !c);
     if (c) colorDot.style.background = c;
+    syncOpts();
   }
+
+  /* ---------- Настройки кисти (толщина / прозрачность / режим ластика) ---------- */
+  function hexA(hex, a) {
+    const [r, g, b] = rgbOf(hex || '#1c1c1c');
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  function syncOpts() {
+    if (!optsRow) return;
+    const on = BRUSH_IDS.includes(tool);
+    optsRow.classList.toggle('is-off', !on);
+    optsRow.setAttribute('aria-hidden', on ? 'false' : 'true');
+    if (!on) return;
+    const cfg = toolSet[tool] || {};
+    const ink = activeInk() || '#1c1c1c';
+    ov.style.setProperty('--opt-ink', ink);
+    /* полоса прозрачности: шахматка «бумаги» слева → плотный цвет инструмента справа */
+    alphaTrack.style.backgroundImage =
+      `linear-gradient(90deg,${hexA(ink, 0)} 0%,${ink} 100%),` +
+      'repeating-conic-gradient(#ededed 0% 25%,#fff 0% 50%)';
+    const op = cfg.opacity == null ? 1 : cfg.opacity;
+    const p = clamp((op - MIN_OPACITY) / (1 - MIN_OPACITY), 0, 1);
+    alphaKnob.style.left = (p * 100).toFixed(2) + '%';
+    alphaTrack.setAttribute('aria-valuenow', String(Math.round(op * 100)));
+    sizeEls.forEach(el => el.classList.toggle('is-sel', +el.dataset.size === cfg.size));
+    const mode = cfg.mode || 'whole';
+    modeEls.forEach(el => el.classList.toggle('is-sel', el.dataset.mode === mode));
+  }
+  let alphaDrag = false;
+  function setOpacityAt(clientX) {
+    if (!BRUSH_IDS.includes(tool) || tool === 'eraser') return;
+    const r = alphaTrack.getBoundingClientRect();
+    const p = clamp((clientX - r.left) / Math.max(1, r.width), 0, 1);
+    const op = MIN_OPACITY + (1 - MIN_OPACITY) * p;
+    toolSet[tool].opacity = Math.round(op * 100) / 100;
+    syncOpts();
+  }
+  alphaTrack.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    alphaDrag = true;
+    try { alphaTrack.setPointerCapture?.(e.pointerId); } catch (err) {}
+    setOpacityAt(e.clientX);
+    vibrate(3);
+  });
+  alphaTrack.addEventListener('pointermove', e => { if (alphaDrag) setOpacityAt(e.clientX); });
+  const endAlpha = () => { alphaDrag = false; };
+  alphaTrack.addEventListener('pointerup', endAlpha);
+  alphaTrack.addEventListener('pointercancel', endAlpha);
+  sizeEls.forEach(el => el.addEventListener('click', () => {
+    if (!BRUSH_IDS.includes(tool)) return;
+    const v = +el.dataset.size;
+    if (toolSet[tool].size === v) return;
+    toolSet[tool].size = v;
+    syncOpts();
+    vibrate(6);
+  }));
+  modeEls.forEach(el => el.addEventListener('click', () => {
+    if (tool !== 'eraser') return;
+    const m = el.dataset.mode;
+    if (!ERASER_MODES.includes(m) || toolSet.eraser.mode === m) return;
+    toolSet.eraser.mode = m;
+    syncOpts();
+    buildScene(); draw();
+    toast(m === 'whole' ? 'Касание стирает штрих целиком' : 'Стирайте участками, как ручкой');
+    vibrate(6);
+  }));
   let paletteOpen = false;
   let focus = false;
   let editing = null;
@@ -220,6 +335,8 @@ export function openDrawing(onDone, opts = {}) {
     canvas.height = Math.round(H * DPR);
     scene.width = canvas.width;
     scene.height = canvas.height;
+    ink.width = canvas.width;
+    ink.height = canvas.height;
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     sctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     if (!viewReady && loaded) {
@@ -255,6 +372,29 @@ export function openDrawing(onDone, opts = {}) {
     buildRaf = requestAnimationFrame(() => { buildRaf = 0; buildScene(); draw(); syncChrome(); });
   }
 
+  /* Плавный переход вида — там, где резкий скачок читается как рывок:
+     вход в правку текста, подгонка объекта под экран. */
+  let viewAnim = 0;
+  function animateView(to, ms = 220) {
+    cancelAnimationFrame(viewAnim);
+    const from = { ...view };
+    const t0 = performance.now();
+    const dur = Math.max(80, ms);
+    const ease = t => 1 - Math.pow(1 - t, 3);
+    const step = now => {
+      if (closed) return;
+      const k = clamp((now - t0) / dur, 0, 1);
+      const e = ease(k);
+      view.s = from.s + (to.s - from.s) * e;
+      view.x = from.x + (to.x - from.x) * e;
+      view.y = from.y + (to.y - from.y) * e;
+      buildScene(); draw();
+      if (editing) positionEditor();
+      if (k < 1) viewAnim = requestAnimationFrame(step);
+    };
+    viewAnim = requestAnimationFrame(step);
+  }
+
   function drawDots(c) {
     const step = GRID * view.s;
     if (step < 3.5) return;
@@ -271,26 +411,70 @@ export function openDrawing(onDone, opts = {}) {
     }
   }
 
+  /* Объекты рисуются в слой чернил в порядке слоёв; штрихи ластика
+     вырезают из него пиксели (destination-out), а не удаляют объекты. */
+  function paintErase(c, e) {
+    const pts = e.points;
+    if (!pts || !pts.length) return;
+    const r = Math.max(1, e.r || 12);
+    c.save();
+    c.globalCompositeOperation = 'destination-out';
+    c.strokeStyle = '#000';
+    c.fillStyle = '#000';
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    /* мягкая кромка: полупрозрачный широкий проход + плотная середина */
+    if (pts.length === 1) {
+      c.globalAlpha = .55;
+      c.beginPath(); c.arc(pts[0].x, pts[0].y, r * 1.12, 0, TAU); c.fill();
+      c.globalAlpha = 1;
+      c.beginPath(); c.arc(pts[0].x, pts[0].y, r * .86, 0, TAU); c.fill();
+    } else {
+      for (const [k, a] of [[1.18, .45], [1, 1]]) {
+        c.globalAlpha = a;
+        c.lineWidth = r * 2 * k;
+        c.beginPath();
+        c.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) c.lineTo(pts[i].x, pts[i].y);
+        c.stroke();
+      }
+    }
+    c.restore();
+  }
+
+  function paintInk() {
+    ictx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ictx.globalCompositeOperation = 'source-over';
+    ictx.globalAlpha = 1;
+    ictx.clearRect(0, 0, W, H);
+    ictx.save();
+    ictx.translate(view.x, view.y);
+    ictx.scale(view.s, view.s);
+    for (const it of items) {
+      if (it === editing) {
+        if (it.kind === 'note') drawNote(ictx, it, true);
+        continue;
+      }
+      if (it.kind === 'stroke') drawStroke(ictx, it);
+      else if (it.kind === 'erase') paintErase(ictx, it);
+      else if (it.kind === 'text') drawTextObj(ictx, it);
+      else if (it.kind === 'note') drawNote(ictx, it, false);
+      else if (it.kind === 'image') drawImageObj(ictx, it);
+    }
+    if (eraser && !eraser.whole) paintErase(ictx, eraser);
+    ictx.restore();
+    ictx.globalCompositeOperation = 'source-over';
+    ictx.globalAlpha = 1;
+  }
+
   function buildScene() {
     sctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     sctx.clearRect(0, 0, W, H);
     sctx.fillStyle = '#fff';
     sctx.fillRect(0, 0, W, H);
     drawDots(sctx);
-    sctx.save();
-    sctx.translate(view.x, view.y);
-    sctx.scale(view.s, view.s);
-    for (const it of items) {
-      if (it === editing) {
-        if (it.kind === 'note') drawNote(sctx, it, true);
-        continue;
-      }
-      if (it.kind === 'stroke') drawStroke(sctx, it);
-      else if (it.kind === 'text') drawTextObj(sctx, it);
-      else if (it.kind === 'note') drawNote(sctx, it, false);
-      else if (it.kind === 'image') drawImageObj(sctx, it);
-    }
-    sctx.restore();
+    paintInk();
+    sctx.drawImage(ink, 0, 0, W, H);
   }
 
   function drawLiveStroke(c) {
@@ -332,7 +516,7 @@ export function openDrawing(onDone, opts = {}) {
       const p = toScreen(eraser.x, eraser.y);
       ctx.save();
       ctx.beginPath();
-      ctx.arc(p.x, p.y, ERASER_R * view.s, 0, TAU);
+      ctx.arc(p.x, p.y, (eraser.r || eraserRadius()) * view.s, 0, TAU);
       ctx.fillStyle = 'rgba(255,255,255,.72)';
       ctx.fill();
       ctx.lineWidth = 1;
@@ -371,78 +555,180 @@ export function openDrawing(onDone, opts = {}) {
     c.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
   }
 
-  /* Графит: несколько тонких «волокон» с рваным краем и крупинками,
-     а не сплошная линия — как настоящий карандаш по бумаге. */
-  function drawPencil(c, s) {
-    const pts = s.points;
-    const rnd = mulberry32(hashStr(s.id || 'pencil'));
-    const base = Math.max(1.2, s.width || 2.4);
-    c.save();
-    c.globalCompositeOperation = 'multiply';
-    c.lineCap = 'round';
-    c.lineJoin = 'round';
-    c.strokeStyle = s.color;
-    c.fillStyle = s.color;
+  /* ---------- Геометрия штриха ---------- */
+  /* Осевая линия сглаженным сплайном — общая для всех инструментов. */
+  function centerPath(pts) {
+    const p = new Path2D();
+    p.moveTo(pts[0].x, pts[0].y);
+    if (pts.length === 2) { p.lineTo(pts[1].x, pts[1].y); return p; }
+    for (let i = 1; i < pts.length - 1; i++) {
+      const mx = (pts[i].x + pts[i + 1].x) / 2;
+      const my = (pts[i].y + pts[i + 1].y) / 2;
+      p.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+    }
+    p.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+    return p;
+  }
 
+  /* «Лента» переменной ширины: по перпендикуляру к оси откладываем половину
+     толщины. Так выглядит след реального инструмента — с нажимом и сужением
+     на сходе, без «бусин» на стыках отдельных сегментов. */
+  function ribbonPath(pts, widthAt) {
+    const n = pts.length;
+    const L = new Float32Array(n * 2), R = new Float32Array(n * 2);
+    for (let i = 0; i < n; i++) {
+      const p = pts[i];
+      const a = pts[i - 1] || p, b = pts[i + 1] || p;
+      let dx = b.x - a.x, dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      dx /= len; dy /= len;
+      const hw = Math.max(.08, widthAt(i, p) / 2);
+      L[i * 2] = p.x - dy * hw; L[i * 2 + 1] = p.y + dx * hw;
+      R[i * 2] = p.x + dy * hw; R[i * 2 + 1] = p.y - dx * hw;
+    }
+    const path = new Path2D();
+    path.moveTo(L[0], L[1]);
+    for (let i = 1; i < n; i++) path.lineTo(L[i * 2], L[i * 2 + 1]);
+    for (let i = n - 1; i >= 0; i--) path.lineTo(R[i * 2], R[i * 2 + 1]);
+    path.closePath();
+    /* круглые торцы */
+    const h0 = Math.max(.08, widthAt(0, pts[0]) / 2);
+    const h1 = Math.max(.08, widthAt(n - 1, pts[n - 1]) / 2);
+    path.moveTo(pts[0].x + h0, pts[0].y);
+    path.arc(pts[0].x, pts[0].y, h0, 0, TAU);
+    path.moveTo(pts[n - 1].x + h1, pts[n - 1].y);
+    path.arc(pts[n - 1].x, pts[n - 1].y, h1, 0, TAU);
+    return path;
+  }
+
+  /* Сужение к концам: реальный инструмент касается бумаги постепенно. */
+  function taper(t, edge = .12) {
+    const k = Math.min(t, 1 - t) / edge + .3;
+    return k >= 1 ? 1 : Math.max(0, k);
+  }
+
+  /* Графит: лента с нажимом и сужением на сходе плюс рваное «зерно»
+     вдоль оси — линия читается как карандаш по бумаге, а не как заливка. */
+  function drawGraphite(c, s) {
+    const pts = s.points;
+    if (!pts || !pts.length) return;
+    const rnd = mulberry32(hashStr(s.id || 'pencil'));
+    const base = Math.max(.8, s.width || 2.4);
+    const a = s.alpha == null ? 1 : s.alpha;
     if (pts.length === 1) {
-      c.globalAlpha = .5;
-      for (let i = 0; i < 5; i++) {
-        c.beginPath();
-        c.arc(pts[0].x + (rnd() - .5) * base * 1.4, pts[0].y + (rnd() - .5) * base * 1.4, .25 + rnd() * .55, 0, TAU);
-        c.fill();
-      }
+      c.save();
+      c.globalCompositeOperation = 'multiply';
+      c.fillStyle = s.color;
+      c.globalAlpha = .75 * a;
+      c.beginPath();
+      c.arc(pts[0].x, pts[0].y, Math.max(.5, base / 2), 0, TAU);
+      c.fill();
       c.restore();
       return;
     }
+    const line = smoothDense(pts, 3);
+    const n = line.length;
+    const wAt = (i, p) => Math.max(.42, base * taper(i / (n - 1), .1) * ((p.w || base) / base));
+    const body = ribbonPath(line, wAt);
+    const axis = centerPath(line);
 
-    /* мягкая подложка */
-    c.globalAlpha = .22;
-    c.lineWidth = base * 1.6;
-    traceSmooth(c, pts);
-    c.stroke();
+    c.save();
+    c.globalCompositeOperation = 'multiply';
+    c.fillStyle = s.color;
+    c.strokeStyle = s.color;
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
 
-    /* плотное графитовое ядро */
-    c.globalAlpha = .58;
-    c.lineWidth = Math.max(.55, base * .52);
-    c.setLineDash([3.2, 1.1]);
-    c.lineDashOffset = rnd() * 4;
-    traceSmooth(c, pts);
-    c.stroke();
-    c.setLineDash([]);
-
-    /* волокна графита */
+    /* корпус графита: чуть светлее, чтобы зерно читалось */
+    c.globalAlpha = .64 * a;
+    c.fill(body);
+    /* плотная сердцевина */
+    c.globalAlpha = .46 * a;
+    c.lineWidth = Math.max(.38, base * .32);
+    c.stroke(axis);
+    /* волокна: короткие разрывы вдоль оси — бумага «проступает» в штрихе */
     for (let k = 0; k < 5; k++) {
-      c.globalAlpha = .24 + rnd() * .16;
-      c.lineWidth = Math.max(.3, base * (.2 + rnd() * .22));
-      c.setLineDash([.8 + rnd() * 1.8, .25 + rnd() * .8]);
-      c.lineDashOffset = rnd() * 9;
-      const ox = (rnd() - .5) * base * .5;
-      const oy = (rnd() - .5) * base * .5;
-      c.save();
-      c.translate(ox, oy);
-      traceSmooth(c, pts);
-      c.stroke();
-      c.restore();
+      c.globalAlpha = (.1 + rnd() * .18) * a;
+      c.lineWidth = Math.max(.25, base * (.12 + rnd() * .34));
+      c.setLineDash([.5 + rnd() * 2.2, .4 + rnd() * 1.8]);
+      c.lineDashOffset = rnd() * 10;
+      c.stroke(axis);
     }
     c.setLineDash([]);
-
-    /* крупинки */
-    for (let i = 1; i < pts.length; i++) {
-      const a = pts[i - 1], b = pts[i];
-      const dx = b.x - a.x, dy = b.y - a.y;
-      const len = Math.hypot(dx, dy);
-      if (!len) continue;
-      const n = Math.min(6, Math.max(1, Math.round(len / 2.0)));
-      for (let j = 0; j < n; j++) {
-        const t = rnd();
-        const x = a.x + dx * t + (rnd() - .5) * base * 1.05;
-        const y = a.y + dy * t + (rnd() - .5) * base * 1.05;
-        c.globalAlpha = .18 + rnd() * .24;
+    /* крупинки у края ленты */
+    for (let i = 1; i < line.length; i += 2) {
+      const p = line[i];
+      const hw = wAt(i, p) / 2;
+      for (let j = 0; j < 2; j++) {
+        const a2 = rnd() * TAU, d = hw * (.72 + rnd() * .5);
+        c.globalAlpha = (.09 + rnd() * .16) * a;
         c.beginPath();
-        c.arc(x, y, .2 + rnd() * .45, 0, TAU);
+        c.arc(p.x + Math.cos(a2) * d, p.y + Math.sin(a2) * d, .12 + rnd() * .3, 0, TAU);
         c.fill();
       }
     }
+    c.restore();
+  }
+
+  /* Маркер: ровный тон одним проходом (без «бусин» на стыках) и multiply —
+     пересечения штрихов темнеют, как у настоящего маркера. */
+  function drawMarker(c, s) {
+    const pts = s.points;
+    if (!pts || !pts.length) return;
+    const w = Math.max(2, s.width || 20);
+    const a = s.alpha == null ? .3 : s.alpha;
+    c.save();
+    c.globalCompositeOperation = 'multiply';
+    c.strokeStyle = s.color;
+    c.fillStyle = s.color;
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    if (pts.length === 1) {
+      c.globalAlpha = a;
+      c.beginPath(); c.arc(pts[0].x, pts[0].y, w / 2, 0, TAU); c.fill();
+      c.restore();
+      return;
+    }
+    const axis = centerPath(smoothDense(pts, 3));
+    /* впитывание по кромке */
+    c.globalAlpha = a * .45;
+    c.lineWidth = w * 1.06;
+    c.stroke(axis);
+    /* ровный корпус */
+    c.globalAlpha = a;
+    c.lineWidth = w;
+    c.stroke(axis);
+    c.restore();
+  }
+
+  /* Перо: тонкая лента с сильным нажимом, острый сход и лёгкое впитывание
+     по кромке — линия как от настоящего пера. */
+  function drawInk(c, s) {
+    const pts = s.points;
+    if (!pts || !pts.length) return;
+    const base = Math.max(.6, s.width || 3);
+    const a = s.alpha == null ? 1 : s.alpha;
+    c.save();
+    c.fillStyle = s.color;
+    c.strokeStyle = s.color;
+    c.lineCap = 'round';
+    c.lineJoin = 'round';
+    if (pts.length === 1) {
+      c.globalAlpha = a;
+      c.beginPath(); c.arc(pts[0].x, pts[0].y, base / 2, 0, TAU); c.fill();
+      c.restore();
+      return;
+    }
+    const line = smoothDense(pts, 5);
+    const n = line.length;
+    const wAt = (i, p) => Math.max(.32, (p.w || base) * taper(i / (n - 1), .09));
+    const body = ribbonPath(line, wAt);
+    c.globalAlpha = a;
+    c.fill(body);
+    /* кромка темнее — впитывание в бумагу */
+    c.globalAlpha = a * .22;
+    c.lineWidth = .7;
+    c.stroke(body);
     c.restore();
   }
 
@@ -470,40 +756,9 @@ export function openDrawing(onDone, opts = {}) {
   function drawStroke(c, s) {
     const pts = s.points;
     if (!pts || !pts.length) return;
-    if (s.tool === 'pen') { drawPencil(c, s); return; }
-
-    c.save();
-    c.lineCap = 'round';
-    c.lineJoin = 'round';
-    c.strokeStyle = s.color;
-    c.fillStyle = s.color;
-    c.globalAlpha = s.alpha == null ? 1 : s.alpha;
-    if (s.tool === 'marker') c.globalCompositeOperation = 'multiply';
-
-    if (pts.length === 1) {
-      c.beginPath();
-      c.arc(pts[0].x, pts[0].y, Math.max(1, (s.width || 2) / 2), 0, TAU);
-      c.fill();
-      c.restore();
-      return;
-    }
-    if (s.pressured) {
-      const line = s.tool === 'fountain' ? smoothDense(pts, 5) : pts;
-      for (let i = 1; i < line.length; i++) {
-        const a = line[i - 1], b = line[i];
-        c.lineWidth = Math.max(0.5, ((a.w || s.width) + (b.w || s.width)) / 2);
-        c.beginPath();
-        c.moveTo(a.x, a.y);
-        c.lineTo(b.x, b.y);
-        c.stroke();
-      }
-      c.restore();
-      return;
-    }
-    c.lineWidth = s.width || 2;
-    traceSmooth(c, pts);
-    c.stroke();
-    c.restore();
+    if (s.tool === 'marker') return drawMarker(c, s);
+    if (s.tool === 'fountain') return drawInk(c, s);
+    return drawGraphite(c, s);
   }
 
   /* ---------- Текст ---------- */
@@ -876,17 +1131,52 @@ export function openDrawing(onDone, opts = {}) {
   hueBar.addEventListener('pointercancel', endHue);
 
   /* ---------- Инструменты ---------- */
-  const ERASER_R = 14;
-  function scrollToolIntoView(id, smooth = true) {
+  /* Своя прокрутка полосы: браузерный scrollTo с behavior: 'smooth' в этом
+     webview может не запустить анимацию вовсе (scrollLeft оставался на
+     месте), из-за чего полоса не ехала влево. Считаем сами — одинаково
+     в обе стороны и без зависимости от платформы. */
+  let stripAnim = 0;
+  function scrollStrip(to) {
+    cancelAnimationFrame(stripAnim);
+    const max = Math.max(0, strip.scrollWidth - strip.clientWidth);
+    const dst = clamp(to, 0, max);
+    const from = strip.scrollLeft;
+    if (Math.abs(dst - from) < 1) return;
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { strip.scrollLeft = dst; return; }
+    const t0 = performance.now();
+    const dur = 260;
+    const step = (t) => {
+      const p = Math.min(1, (t - t0) / dur);
+      const e = 1 - Math.pow(1 - p, 3);
+      strip.scrollLeft = from + (dst - from) * e;
+      if (p < 1) stripAnim = requestAnimationFrame(step);
+    };
+    stripAnim = requestAnimationFrame(step);
+  }
+  function scrollToolIntoView(id) {
     const el = toolEls.find(x => x.dataset.tool === id);
     if (!el) return;
-    const l = el.offsetLeft, r = l + el.offsetWidth;
-    if (l < strip.scrollLeft + 4) strip.scrollTo({ left: Math.max(0, l - 10), behavior: smooth ? 'smooth' : 'auto' });
-    else if (r > strip.scrollLeft + strip.clientWidth - 4) strip.scrollTo({ left: r - strip.clientWidth + 10, behavior: smooth ? 'smooth' : 'auto' });
+    /* Координаты с экрана приводим к вёрстке: панель может быть отмасштаблена
+       через --dw-z, а scrollLeft всегда в пикселях вёрстки. */
+    const sr = strip.getBoundingClientRect();
+    const er = el.getBoundingClientRect();
+    const scale = strip.offsetWidth > 0 ? sr.width / strip.offsetWidth : 1;
+    const k = Math.abs(scale) > 0.01 ? scale : 1;
+    const l = (er.left - sr.left) / k + strip.scrollLeft;
+    const r = l + er.width / k;
+    const view = strip.clientWidth;
+    if (l < strip.scrollLeft + 4) {
+      scrollStrip(Math.max(0, l - 12));
+    } else if (r > strip.scrollLeft + view - 4) {
+      scrollStrip(r - view + 12);
+    }
   }
   function setTool(id) {
     if (!TOOLS.some(t => t.id === id)) return;
-    if (id === tool) return;
+    /* Подкручиваем полосу даже для уже выбранного инструмента: иначе после
+       прокрутки вправо тап по активному левому инструменту ничего не делал. */
+    if (id === tool) { scrollToolIntoView(id); return; }
     if (editing) commitEditing();
     if (selIds.size) clearSelection();
     if (selectedObj) deselectObj();
@@ -900,7 +1190,7 @@ export function openDrawing(onDone, opts = {}) {
     closePalette();
     updateColorUI();
     vibrate(7);
-    scrollToolIntoView(id, true);
+    scrollToolIntoView(id);
   }
   toolEls.forEach(el => {
     el.addEventListener('click', () => setTool(el.dataset.tool));
@@ -920,6 +1210,11 @@ export function openDrawing(onDone, opts = {}) {
   function startStroke(w, e) {
     const meta = TOOL_META[tool] || TOOL_META.pen;
     const isMarker = !!meta.marker;
+    const cfg = toolSet[tool] || { size: 2, opacity: 1 };
+    const k = SIZE_STEPS[cfg.size] || 1;
+    const op = cfg.opacity == null ? 1 : cfg.opacity;
+    /* базовые значения — след инструмента при среднем размере и 100% прозрачности;
+       настройки из панели просто масштабируют толщину и альфу */
     const base = isMarker
       ? { width: tool === 'markerYellow' ? 22 : 20, alpha: .30 }
       : tool === 'fountain'
@@ -928,7 +1223,8 @@ export function openDrawing(onDone, opts = {}) {
     stroke = {
       kind: 'stroke', id: uid(),
       tool: isMarker ? 'marker' : tool === 'fountain' ? 'fountain' : 'pen',
-      color: activeInk() || '#1c1c1c', width: base.width, alpha: base.alpha,
+      color: activeInk() || '#1c1c1c', width: base.width * k, alpha: base.alpha * op,
+      scale: k,
       pressured: tool === 'fountain', stylus: e.pointerType === 'pen',
       points: [],
     };
@@ -948,11 +1244,11 @@ export function openDrawing(onDone, opts = {}) {
       if (stroke.tool === 'fountain') {
         const last2 = pts[pts.length - 1];
         const dist = last2 ? Math.hypot(w.x - last2.x, w.y - last2.y) : 0;
-        width = stroke.stylus
+        width = (stroke.stylus
           ? 1.6 + press * 3.6
-          : 3.2 - clamp(dist / 40, 0, 1) * 0.8;
+          : 3.2 - clamp(dist / 40, 0, 1) * 0.8) * (stroke.scale || 1);
       } else {
-        width = 1.6 + press * 3.2;
+        width = (1.6 + press * 3.2) * (stroke.scale || 1);
       }
     }
     pts.push({ x: w.x, y: w.y, w: width });
@@ -972,23 +1268,60 @@ export function openDrawing(onDone, opts = {}) {
     draw();
   }
 
-  /* ---------- Ластик ---------- */
-  function strokeHit(s, w, r) {
-    const rr = r + (s.width || 2) / 2;
-    for (const p of s.points) {
-      if (Math.hypot(p.x - w.x, p.y - w.y) < rr) return true;
+  /* ---------- Ластик ----------
+     Стираем пиксели слоя чернил: настоящая резинка снимает часть штриха,
+     а не удаляет объект целиком. */
+  function addErasePoint(w) {
+    if (!eraser) return false;
+    const pts = eraser.points;
+    const last = pts[pts.length - 1];
+    if (last && Math.hypot(w.x - last.x, w.y - last.y) < eraser.r * 0.22) return false;
+    pts.push({ x: w.x, y: w.y });
+    eraser.x = w.x; eraser.y = w.y;
+    return true;
+  }
+  function finishErase() {
+    if (!eraser) return;
+    const e = eraser; eraser = null;
+    /* В режиме «Целиком» штрихи уже удалены (отмена снята перед первым
+       удалением) — записывать штрих ластика в документ не нужно. */
+    if (!e.whole && e.points.length) { pushUndo(); items.push(e); }
+    buildScene(); draw(); syncChrome();
+  }
+
+  /* Режим «Целиком»: касание снимает весь штрих, который попал под ластик.
+     Так же работает резинка, которая стирает написанное, а не вырезает дырки. */
+  function strokeHitAt(it, x, y, r) {
+    const pts = it.points;
+    if (!pts || !pts.length) return false;
+    const half = r / 2 + Math.max(1, (it.width || 2) / 2);
+    if (pts.length === 1) return Math.hypot(pts[0].x - x, pts[0].y - y) <= half;
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i];
+      const vx = b.x - a.x, vy = b.y - a.y;
+      const len2 = vx * vx + vy * vy;
+      const t = len2 ? clamp(((x - a.x) * vx + (y - a.y) * vy) / len2, 0, 1) : 0;
+      const dx = x - (a.x + vx * t), dy = y - (a.y + vy * t);
+      if (Math.hypot(dx, dy) <= half) return true;
     }
     return false;
   }
-  function eraseAt(w) {
-    const before = items;
-    const kept = before.filter(it => !(it.kind === 'stroke' && strokeHit(it, w, ERASER_R)));
-    if (kept.length === before.length) return false;
-    if (!eraseUndo) { pushUndo(); eraseUndo = true; }
-    items = kept;
+  function eraseWholeAt(w, gest) {
+    const hits = [];
+    for (const it of items) {
+      if (it.kind !== 'stroke') continue;
+      if (gest.dead && gest.dead.has(it.id)) continue;
+      if (strokeHitAt(it, w.x, w.y, gest.r)) hits.push(it);
+    }
+    if (!hits.length) return false;
+    if (!gest.undone) { pushUndo(); gest.undone = true; }
+    const ids = new Set(hits.map(h => h.id));
+    items = items.filter(it => !ids.has(it.id));
+    hits.forEach(h => { if (gest.dead) gest.dead.add(h.id); selIds.delete(h.id); });
+    if (selIds.size) calcSelBounds(); else selBounds = null;
+    vibrate(6);
     return true;
   }
-  let eraseUndo = false;
 
   /* ---------- Объекты ---------- */
   function hitObject(w) {
@@ -1092,12 +1425,11 @@ export function openDrawing(onDone, opts = {}) {
     selectedObj = null;
     syncChrome();
 
-    // мелкий масштаб делает каретку нечитаемой — подходим к объекту
+    /* Мелкий масштаб делает каретку нечитаемой, но резкий зум выглядит
+       рывком: подводим масштаб плавно, одним коротким твином. */
     if (view.s < 0.8) {
       const p = toScreen(o.x, o.y);
-      view.s = 1;
-      view.x = p.x - o.x;
-      view.y = p.y - o.y;
+      animateView({ s: 1, x: p.x - o.x, y: p.y - o.y }, 220);
     }
 
     editorBox = document.createElement('div');
@@ -1119,25 +1451,34 @@ export function openDrawing(onDone, opts = {}) {
 
     positionEditor();
     if (o.kind === 'text') { autoGrow(); positionEditor(); }
-    requestAnimationFrame(() => { if (editorBar) editorBar.classList.add('show'); });
+    requestAnimationFrame(() => {
+      if (!editorBar) return;
+      editorBar.classList.add('show');
+      positionEditor();          // размеры плашки известны только после вставки
+    });
 
     const end = editorTa.value.length;
     editorTa.focus({ preventScroll: true });
     try { editorTa.setSelectionRange(end, end); } catch (e) {}
     editorTa.addEventListener('input', () => {
-      if (o.kind === 'text') autoGrow();
-      else growNote();
-      positionEditor();
+      /* рост считаем уже после того, как ширина рамки подогнана под строку,
+         иначе перенос считается по старой (узкой) ширине */
+      if (o.kind === 'text') { positionEditor(); autoGrow(); positionEditor(); }
+      else { growNote(); positionEditor(); }
       ensureEditorVisible();
     });
     editorTa.addEventListener('keydown', e => {
       if (e.key === 'Escape') { e.preventDefault(); commitEditing(); }
     });
-    editorBar.addEventListener('pointerdown', e => e.preventDefault());
-    editorBar.addEventListener('click', e => {
+    /* Срабатываем на pointerdown: на мобильных тап по кнопке не должен
+       уводить фокус из поля и обязан срабатывать с первого касания. */
+    editorBar.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      e.stopPropagation();
       const b = e.target.closest('[data-e]');
       if (!b) return;
-      if (b.dataset.e === 'del') { removeEditing(); }
+      vibrate(6);
+      if (b.dataset.e === 'del') removeEditing();
       else commitEditing();
     });
 
@@ -1194,17 +1535,26 @@ export function openDrawing(onDone, opts = {}) {
     buildScene(); draw();
   }
 
+  /* Нижняя граница — реально видимая часть экрана: с открытой клавиатурой
+     visualViewport ниже layout-viewport, и плашка не должна под неё уезжать. */
+  function visibleBottom() {
+    const vv = window.visualViewport;
+    const ovTop = ov.getBoundingClientRect().top || 0;
+    const vh = vv ? (vv.offsetTop + vv.height) : H;
+    return clamp(vh - ovTop, 160, H);
+  }
   function positionEditorBar(left, top, boxW, boxH) {
     if (!editorBar || !editorBar.isConnected) return;
-    const bw = editorBar.offsetWidth || 86;
-    const bh = editorBar.offsetHeight || 38;
+    const bw = editorBar.offsetWidth || 92;
+    const bh = editorBar.offsetHeight || 48;
     const topLimit = (topBar.getBoundingClientRect().bottom || 48) + 6;
-    let bTop = top - bh - 10;
-    if (bTop < topLimit) bTop = top + boxH + 12;
-    bTop = clamp(bTop, 6, Math.max(6, H - bh - 10));
-    const bLeft = clamp(left + boxW - bw, 8, Math.max(8, W - bw - 8));
-    editorBar.style.left = bLeft + 'px';
-    editorBar.style.top = bTop + 'px';
+    const bottomLim = visibleBottom();
+    let bTop = top - bh - 12;
+    if (bTop < topLimit) bTop = top + boxH + 14;
+    bTop = clamp(bTop, 6, Math.max(6, bottomLim - bh - 8));
+    const bLeft = clamp(left + (boxW - bw) / 2, 8, Math.max(8, W - bw - 8));
+    editorBar.style.left = Math.round(bLeft) + 'px';
+    editorBar.style.top = Math.round(bTop) + 'px';
   }
 
   function positionEditor() {
@@ -1224,7 +1574,19 @@ export function openDrawing(onDone, opts = {}) {
       const p = toScreen(editing.x, editing.y);
       left = p.x;
       top = p.y;
-      w = Math.max(40, editing.w * s);
+      /* Рамка идёт по фактической ширине строки (не шире самого блока):
+         пустой текст не выглядит полем во весь экран, а длинная строка
+         всё равно упирается в ширину блока и переносится как на холсте. */
+      let bw = Math.max(40, editing.w * s);
+      if (editorTa) {
+        measure.font = `500 ${Math.max(8, editing.size * s)}px ${FONT}`;
+        let mw = 0;
+        for (const ln of (editorTa.value || '').split('\n')) {
+          mw = Math.max(mw, measure.measureText(ln || ' ').width);
+        }
+        bw = clamp(mw + 10, 44, bw);
+      }
+      w = bw;
       editorBox.style.width = w + 'px';
       h = editorBox.offsetHeight || Math.max(28, editing.size * s * 1.35);
     }
@@ -1437,6 +1799,7 @@ export function openDrawing(onDone, opts = {}) {
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 2) {
       if (stroke) finishStroke();
+      if (eraser) finishErase();
       if (lasso) { lasso = null; draw(); }
       lassoChrome.classList.add('hidden');
       startPinch();
@@ -1468,9 +1831,10 @@ export function openDrawing(onDone, opts = {}) {
       return;
     }
     if (tool === 'eraser') {
-      eraseUndo = false;
-      eraser = { x: w.x, y: w.y };
-      if (eraseAt(w)) requestBuild(); else draw();
+      const whole = (toolSet.eraser.mode || 'whole') === 'whole';
+      eraser = { kind: 'erase', id: uid(), r: eraserRadius(), x: w.x, y: w.y, whole, points: [{ x: w.x, y: w.y }] };
+      if (whole) { eraser.dead = new Set(); eraseWholeAt(w, eraser); }
+      requestBuild();
       return;
     }
     startStroke(w, e);
@@ -1522,9 +1886,14 @@ export function openDrawing(onDone, opts = {}) {
       return;
     }
     if (eraser) {
-      const w = toWorld(e);
-      eraser.x = w.x; eraser.y = w.y;
-      if (eraseAt(w)) requestBuild(); else requestDraw();
+      if (eraser.whole) {
+        const w = toWorld(e);
+        eraser.x = w.x; eraser.y = w.y;
+        if (eraseWholeAt(w, eraser)) { buildScene(); syncChrome(); }
+        requestDraw();
+        return;
+      }
+      if (addErasePoint(toWorld(e))) requestBuild(); else requestDraw();
       return;
     }
     if (lasso) {
@@ -1571,7 +1940,7 @@ export function openDrawing(onDone, opts = {}) {
       }
       return;
     }
-    if (eraser) { eraser = null; draw(); return; }
+    if (eraser) { finishErase(); return; }
     if (lasso) { finishLasso(); return; }
     if (stroke) { finishStroke(); return; }
   }
@@ -1623,10 +1992,21 @@ export function openDrawing(onDone, opts = {}) {
     const g = c.getContext('2d');
     g.fillStyle = '#fff';
     g.fillRect(0, 0, cw, ch);
+    /* Штрихи и стирание собираем отдельным слоем: ластик вырезает пиксели
+       чернил (destination-out), поэтому в предпросмотре он должен снимать
+       часть штриха, а не пропадать совсем. */
+    const layer = document.createElement('canvas');
+    layer.width = cw; layer.height = ch;
+    const lg = layer.getContext('2d');
+    lg.setTransform(scale, 0, 0, scale, (pad - b.minX) * scale, (pad - b.minY) * scale);
+    for (const it of items) {
+      if (it.kind === 'stroke') drawStroke(lg, it);
+      else if (it.kind === 'erase') paintErase(lg, it);
+    }
+    g.drawImage(layer, 0, 0);
     g.setTransform(scale, 0, 0, scale, (pad - b.minX) * scale, (pad - b.minY) * scale);
     for (const it of items) {
-      if (it.kind === 'stroke') drawStroke(g, it);
-      else if (it.kind === 'text') drawTextObj(g, it);
+      if (it.kind === 'text') drawTextObj(g, it);
       else if (it.kind === 'note') drawNote(g, it, false);
       else if (it.kind === 'image') drawImageObj(g, it);
     }
@@ -1645,7 +2025,7 @@ export function openDrawing(onDone, opts = {}) {
       let dataUrl = null;
       if (items.length) dataUrl = await renderPreview();
       if (items.length) {
-        const payload = { v: 1, items, view: { ...view }, tool, ink: { ...toolInk } };
+        const payload = { v: 1, items, view: { ...view }, tool, ink: { ...toolInk }, set: toolSet };
         await Store.putBlob(drawId, new Blob([JSON.stringify(payload)], { type: 'application/json' }));
       }
       const result = { dataUrl, id: drawId };
@@ -1768,6 +2148,16 @@ export function openDrawing(onDone, opts = {}) {
           if (typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c)) toolInk[id] = c;
         }
       }
+      if (doc.set && typeof doc.set === 'object') {
+        for (const id of BRUSH_IDS) {
+          const s = doc.set[id];
+          if (!s || typeof s !== 'object') continue;
+          const sz = Number(s.size);
+          if (Number.isFinite(sz)) toolSet[id].size = clamp(Math.round(sz), 0, SIZE_STEPS.length - 1);
+          if (typeof s.opacity === 'number') toolSet[id].opacity = clamp(s.opacity, MIN_OPACITY, 1);
+          if (id === 'eraser' && ERASER_MODES.includes(s.mode)) toolSet[id].mode = s.mode;
+        }
+      }
     }
     toolEls.forEach(el => {
       const on = el.dataset.tool === tool;
@@ -1778,8 +2168,9 @@ export function openDrawing(onDone, opts = {}) {
     applyAllToolAccents();
     updateColorUI();
     paintPalette();
+    syncOpts();
     resize();
-    scrollToolIntoView(tool, false);
+    scrollToolIntoView(tool);
     if (ov.isConnected) {
       requestAnimationFrame(() => ov.classList.add('open'));
       setTimeout(() => { if (!closed) { ov.style.transition = 'none'; ov.style.opacity = '1'; } }, 320);
@@ -1791,7 +2182,11 @@ export function openDrawing(onDone, opts = {}) {
   const ro = new ResizeObserver(() => { if (!closed) resize(); });
   ro.observe(ov);
   window.addEventListener('resize', resize);
-  const onViewport = () => { if (!closed && editing) ensureEditorVisible(); };
+  const onViewport = () => {
+    if (closed || !editing) return;
+    positionEditor();          // плашка действий держится у объекта
+    ensureEditorVisible();
+  };
   try {
     window.visualViewport?.addEventListener('resize', onViewport);
     window.visualViewport?.addEventListener('scroll', onViewport);
@@ -1800,7 +2195,7 @@ export function openDrawing(onDone, opts = {}) {
   const api = {
     close: cancel,
     element: ov,
-    getState: () => ({ items, view: { ...view }, tool, ink: activeInk(), toolInk: { ...toolInk }, hueIndex, shadeIndex, paletteOpen, focus, undo: undoStack.length, redo: redoStack.length }),
+    getState: () => ({ items, view: { ...view }, tool, ink: activeInk(), toolInk: { ...toolInk }, toolSet: JSON.parse(JSON.stringify(toolSet)), hueIndex, shadeIndex, paletteOpen, focus, undo: undoStack.length, redo: redoStack.length }),
   };
   try { window.__dwLast = api; } catch (e) {}
   return api;

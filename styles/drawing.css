@@ -162,16 +162,17 @@ body.dw-open #screens-root { visibility: hidden; }
   -webkit-tap-highlight-color: transparent;
   transition: transform .46s var(--dw-spring);
 }
-/* Полотно длиннее панели на 34px и уходит под нижнюю кромку экрана:
-   корпус продолжается вниз, поэтому торец инструмента не виден —
-   ни в покое, ни после подъёма выбранного. */
+/* Полотно скина длиннее панели на 44px и уходит под нижнюю кромку экрана:
+   корпус и тень продолжаются вниз, поэтому торец инструмента не виден —
+   ни в покое, ни после подъёма выбранного (полоса обрезается краем панели). */
 .dw-skin-box {
   position: absolute;
   left: 50%;
-  bottom: calc(-34px * var(--dw-z));
+  bottom: calc(-44px * var(--dw-z));
   display: block;
-  transform: translateX(-50%) scale(var(--dw-z));
-  transform-origin: 50% 100%;
+  width: calc(var(--sk-w) * var(--dw-z));
+  height: calc(var(--sk-h) * var(--dw-z));
+  transform: translateX(-50%);
   pointer-events: none;
 }
 .dw-skin {
@@ -193,8 +194,8 @@ body.dw-open #screens-root { visibility: hidden; }
   animation-delay: calc(var(--i, 0) * 34ms + 40ms);
 }
 @keyframes dwToolIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(24px) scale(calc(var(--dw-z) * .96)); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(var(--dw-z)); }
+  from { opacity: 0; transform: translateX(-50%) translateY(24px) scale(.96); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
 
 /* ---------- Палитра ---------- */
@@ -220,13 +221,13 @@ body.dw-open #screens-root { visibility: hidden; }
 .draw-overlay.palette-open .dw-color { opacity: 0; transform: scale(.75); pointer-events: none; }
 
 .dw-swatch-card {
-  height: 54px;
-  border-radius: 16px;
+  height: 60px;
+  border-radius: 18px;
   background: #fff;
   box-shadow: 0 10px 26px rgba(0, 0, 0, .10), 0 2px 6px rgba(0, 0, 0, .05);
   display: flex;
   align-items: center;
-  padding: 0 26px;
+  padding: 0 22px;
 }
 .dw-swatches {
   flex: 1;
@@ -235,7 +236,7 @@ body.dw-open #screens-root { visibility: hidden; }
   justify-content: space-between;
 }
 .dw-swatch {
-  width: 27px; height: 27px;
+  width: 32px; height: 32px;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -260,7 +261,7 @@ body.dw-open #screens-root { visibility: hidden; }
 
 .dw-hue {
   position: relative;
-  height: 31px;
+  height: 36px;
   margin-top: 10px;
   border-radius: 16px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, .06);
@@ -281,6 +282,130 @@ body.dw-open #screens-root { visibility: hidden; }
   transition: left .17s ease, background-color .2s ease, transform .4s var(--dw-spring);
 }
 .draw-overlay.palette-open .dw-knob { transform: scale(1); }
+
+/* ---------- Настройки кисти: прозрачность, толщина, режим ластика ---------- */
+/* Две карточки над панелью инструментов — как в системном приложении:
+   слева полоса прозрачности (шахматка → плотный цвет), справа ступени
+   толщины точками. У ластика вместо прозрачности — режим стирания.
+   Подняты выше панели настолько, чтобы не задевать поднятый инструмент. */
+.dw-opts {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: calc(var(--dw-dock-h) + 26px + var(--dw-safe-bottom));
+  z-index: 6;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0 16px;
+  opacity: 0;
+  transform: translateY(12px) scale(.97);
+  transform-origin: 50% 100%;
+  transition: opacity .26s ease, transform .42s var(--dw-spring);
+  pointer-events: none;
+}
+.draw-overlay.open .dw-opts { opacity: 1; transform: none; }
+.draw-overlay.palette-open .dw-opts,
+.draw-overlay.focus .dw-opts,
+.dw-opts.is-off {
+  opacity: 0;
+  transform: translateY(12px) scale(.97);
+  pointer-events: none;
+}
+
+.dw-opt-card {
+  height: 60px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .10), 0 2px 6px rgba(0, 0, 0, .05);
+  display: flex;
+  align-items: center;
+}
+.dw-opt-alpha { flex: 1 1 auto; min-width: 0; padding: 0 15px; }
+.dw-opt-size { flex: none; gap: 1px; padding: 0 8px; }
+.dw-opt-mode { display: none; flex: 1 1 auto; gap: 2px; padding: 0 9px; justify-content: center; }
+.draw-overlay[data-tool="eraser"] .dw-opt-alpha { display: none; }
+.draw-overlay[data-tool="eraser"] .dw-opt-mode { display: flex; }
+
+.dw-alpha-track {
+  position: relative;
+  width: 100%;
+  height: 32px;
+  border-radius: 16px;
+  background-color: #fff;
+  background-repeat: no-repeat, repeat;
+  background-size: 100% 100%, 12px 12px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .05);
+  touch-action: none;
+  cursor: pointer;
+}
+.dw-alpha-knob {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 38px; height: 38px;
+  margin: -19px 0 0 -19px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 .5px rgba(0, 0, 0, .07), 0 1px 2px rgba(0, 0, 0, .14), 0 6px 14px rgba(0, 0, 0, .18);
+  pointer-events: none;
+  transition: left .1s linear;
+}
+
+.dw-size {
+  width: 34px; height: 46px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.dw-size-dot {
+  display: block;
+  width: var(--d, 16px);
+  height: var(--d, 16px);
+  border-radius: 50%;
+  background: var(--opt-ink, #1c1c1c);
+  opacity: .55;
+  transition: opacity .18s ease, box-shadow .18s ease, transform .22s var(--dw-spring);
+}
+.dw-size.is-sel .dw-size-dot {
+  opacity: 1;
+  box-shadow: 0 0 0 3.5px #fff, 0 0 0 5.5px var(--opt-ink, #1c1c1c);
+}
+.dw-size:active .dw-size-dot { transform: scale(.86); }
+
+.dw-mode-btn {
+  flex: 0 0 auto;
+  width: 46px; height: 46px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #b4b4b4;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color .2s ease, background-color .2s ease, box-shadow .2s ease, transform .22s var(--dw-spring);
+}
+.dw-mode-ico { width: 25px; height: 25px; display: block; }
+.dw-mode-ico.is-checker {
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.4px currentColor;
+  background-image: repeating-conic-gradient(currentColor 0% 25%, transparent 0% 50%);
+  background-size: 8px 8px;
+  background-position: 1px 1px;
+}
+.dw-mode-btn.is-sel {
+  color: var(--opt-ink, #1c1c1c);
+  background: #f4f4f4;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .05);
+}
+.dw-mode-btn:active { transform: scale(.9); }
 
 /* ---------- Полноэкранный режим ---------- */
 .dw-focus-exit {
@@ -372,9 +497,16 @@ body.dw-open #screens-root { visibility: hidden; }
   from { opacity: 0; transform: translateY(5px) scale(.99); }
   to { opacity: 1; transform: none; }
 }
-/* в системе текст правится без рамки — только с кареткой */
-.dw-editor.is-text { min-width: 40px; }
+/* текст правится без плашки, но с тонкой пунктирной обводкой:
+   видно, где именно сейчас каретка, и рамка не сдвигает строку */
+.dw-editor.is-text {
+  min-width: 40px;
+  outline: 1.5px dashed rgba(0, 0, 0, .16);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
 .dw-editor.is-note { border-radius: 7px; }
+.dw-editor.is-note .dw-editor-ta { padding: 0 2px; }
 .dw-editor-ta {
   display: block;
   width: 100%;
@@ -400,29 +532,31 @@ body.dw-open #screens-root { visibility: hidden; }
 }
 .dw-editor.is-note .dw-editor-ta { height: 100%; }
 .dw-editor-ta::placeholder { color: rgba(0, 0, 0, .26); }
-/* Панель действий живёт отдельно от редактора: её можно прижать к экрану,
-   и она не наезжает на текст и на рамку выделения. */
+/* Панель действий — одна «пилюля» с двумя кнопками, как в системном
+   приложении: она прижата к объекту и не распадается на два кружка. */
 .dw-editor-bar {
   position: absolute;
   z-index: 4;
   display: flex;
-  gap: 10px;
-  padding: 0;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .14), 0 1px 4px rgba(0, 0, 0, .06);
   pointer-events: auto;
   opacity: 0;
-  transform: translateY(7px) scale(.82);
-  transform-origin: 100% 100%;
-  transition: opacity .16s ease, transform .32s var(--dw-spring), left .18s ease, top .18s ease;
+  transform: translateY(8px) scale(.9);
+  transition: opacity .18s ease, transform .34s var(--dw-spring), left .2s ease, top .2s ease;
 }
 .dw-editor-bar.show { opacity: 1; transform: none; }
 .dw-act {
-  width: 38px; height: 38px;
+  width: 40px; height: 40px;
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: #fff;
+  background: transparent;
   color: #1c1c1c;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, .16), 0 1px 4px rgba(0, 0, 0, .06);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -430,7 +564,7 @@ body.dw-open #screens-root { visibility: hidden; }
   touch-action: manipulation;
   transition: transform .18s var(--dw-spring), background-color .18s ease, color .18s ease;
 }
-.dw-act svg { width: 19px; height: 19px; }
+.dw-act svg { width: 20px; height: 20px; }
 .dw-act.del { color: #d93025; }
 .dw-act.ok { color: #1c1c1c; }
-.dw-act:active { transform: scale(.88); background: #f4f4f4; }
+.dw-act:active { transform: scale(.9); background: #f2f2f2; }
