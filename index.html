@@ -80,8 +80,16 @@
       lastTouchend = now;
     }, { passive: false });
 
-    // Запрет контекстного меню (долгое нажатие на текст/картинку)
-    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    // Контекстное меню гасим ТОЛЬКО для картинок и холста (долгое нажатие
+    // не должно предлагать «Сохранить изображение»). Для текста меню НЕ
+    // подавляем: на Android/Chrome именно оно открывает нативные кнопки
+    // «Копировать / Вырезать / Выбрать все / Вставить» при выделении.
+    document.addEventListener('contextmenu', (e) => {
+      const t = e.target;
+      if (t && t.closest && (t.closest('img') || t.closest('canvas') || t.closest('[data-drawing]'))) {
+        e.preventDefault();
+      }
+    });
 
     // Блокировка обновления страницы (F5 / Ctrl+R) — ведём себя как нативное приложение
     window.addEventListener('keydown', (e) => {
