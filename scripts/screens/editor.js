@@ -1189,15 +1189,28 @@ export function openEditor(id, opts = {}) {
   content.addEventListener('keyup', saveSelection);
   content.addEventListener('mouseup', saveSelection);
   content.addEventListener('focus', saveSelection);
+  /* Работу по выделению делаем ОДНИМ кадром. При протяжке выделения событие
+     selectionchange приходит десятки раз в секунду; если каждый раз читать
+     геометрию (getClientRects/offsetHeight → пересчёт layout) и автосдвигать
+     холст, редактор начинает лагать, а страница — дёргаться под пальцем. */
+  let selFrame = 0;
+  const runSelectionWork = () => {
+    selFrame = 0;
+    const sel = window.getSelection();
+    if (!(sel?.anchorNode && content.contains(sel.anchorNode))) return;
+    saveSelection();
+    /* Автодосдвиг холста нужен только СВЁРНУТОЙ каретке (курсор в тексте).
+       Пока идёт выделение диапазона, прокрутка холста под пальцем и была
+       причиной рывков страницы — поэтому здесь её не делаем. */
+    if (sel.isCollapsed) ensureCaretClear();
+    if (fmtOpen) syncFormatState();
+  };
   document.addEventListener('selectionchange', () => {
     /* Тап по боксу чек-листа не должен ни переписывать сохранённую каретку,
        ни тянуть за собой холст — на время тапа просто молчим. */
     if (performance.now() - lastBoxTap < 450) return;
-    const sel = window.getSelection();
-    if (sel?.anchorNode && content.contains(sel.anchorNode)) {
-      saveSelection(); ensureCaretClear();
-      if (fmtOpen) syncFormatState();
-    }
+    if (selFrame) return;
+    selFrame = requestAnimationFrame(runSelectionWork);
   });
 
   /* Тап по кнопкам меню и панели не должен уводить каретку из текста. */

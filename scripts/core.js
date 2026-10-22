@@ -373,6 +373,13 @@ export function initKeyboard(){
   const vv=window.visualViewport;
   let refH=window.innerHeight;
   let lastOpen=false;
+  /* Гистерезис состояния клавиатуры. Считаем её открытой при сжатии вьюпорта
+     больше OPEN_T, а «закрытой» — только когда сжатие вернулось почти к нулю.
+     Зазор нужен потому, что на пограничных колебаниях высоты (например, когда
+     система слегка прокручивает визуальный вьюпорт при протяжке выделения)
+     состояние мигало: вместе с ним дёргались верхняя панель и нижний тулбар. */
+  let kbIsOpen=false;
+  const OPEN_T=80, CLOSE_T=30;
 
   const measure=()=>{
     const shrink=Math.max(0,refH-window.innerHeight);
@@ -389,10 +396,13 @@ export function initKeyboard(){
        строкам длинного текста iOS сдвигает visualViewport вверх (offsetTop
        растёт), vvKb «проседал» и kb-open снимался: тулбар терял позицию над
        клавиатурой. Теперь позиция считается, пока клавиатура реально открыта. */
-    const open=shrink>80||vvShrink>80;
+    const shrunk=shrink>OPEN_T||vvShrink>OPEN_T;
+    const closed=shrink<CLOSE_T&&vvShrink<CLOSE_T;
+    kbIsOpen=kbIsOpen?!closed:shrunk;
+    const open=kbIsOpen;
     /* Android уменьшает само окно — там клавиатуру компенсирует layout (kbH=0).
        iOS — берём отступ от низа visualViewport (учёт offsetTop сохраняем). */
-    const kbH=!open?0:(shrink>80?0:vvKb);
+    const kbH=!open?0:(shrink>OPEN_T?0:vvKb);
     return { open, kbH, vvTop:open?vvTop:0 };
   };
 
@@ -400,7 +410,10 @@ export function initKeyboard(){
     document.documentElement.style.setProperty('--kb-h',open?kbH+'px':'0px');
     document.documentElement.style.setProperty('--vv-top',open?vvTop+'px':'0px');
     document.body.classList.toggle('kb-open',open);
-    if(open) window.scrollTo(0,0);
+    /* Держим layout-вьюпорт в нуле, но только если он реально сдвинулся:
+       безусловный scrollTo(0,0) на каждом событии вьюпорта (а их при протяжке
+       выделения много) сам по себе дёргал страницу. */
+    if(open&&window.scrollY) window.scrollTo(0,0);
   };
 
   const upd=(ev)=>{
