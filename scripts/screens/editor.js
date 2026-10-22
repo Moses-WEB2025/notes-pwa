@@ -152,6 +152,7 @@ export function openEditor(id, opts = {}) {
       ? c
       : c.split('\n').map(line => `<div>${line || '<br>'}</div>`).join('');
     await hydrateImages();
+    normalizeBlankBlocks();
     normalizeChecklist();
     updFolderChip(); updMeta(); renderPlayers(); applyTheme();
     history = [snapshot()]; histIndex = 0; updUndoBtns();
@@ -256,6 +257,20 @@ export function openEditor(id, opts = {}) {
       if (box.getAttribute('aria-checked') !== aria) { box.setAttribute('aria-checked', aria); changed = true; }
     });
     if (changed && off != null) setCaretTextOffset(off);
+  }
+  /* Пустой абзац (пробел между строками) держится на <br>. В старых заметках
+     он сохранён как <div>\n</div> (см. прежний saveContent) — пробельный узел
+     схлопывается, абзац теряет высоту и строка пропадает. Возвращаем таким
+     абзацам <br>, чтобы заметки, сохранённые до исправления, снова читались
+     ровно так, как были написаны. */
+  function normalizeBlankBlocks() {
+    content.querySelectorAll('div, p').forEach(block => {
+      if (block.querySelector('br, img, .box') || block.children.length) return;
+      if (block.textContent === '' || !/[^\s]/.test(block.textContent)) {
+        block.textContent = '';
+        block.appendChild(document.createElement('br'));
+      }
+    });
   }
   /* Восстанавливаем «фото» из IndexedDB: в сохранённом HTML лежат data-blob ссылки,
      а src (blob:-URL) после перезапуска недействителен. */
@@ -595,7 +610,11 @@ export function openEditor(id, opts = {}) {
   /* ---------- Сохранение ---------- */
   const saveContent = () => {
     note.title = titleInput.value.trim();
-    note.content = content.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+    /* Разметку сохраняем как есть. Раньше здесь <br> заменялся на «\n» — из-за
+       этого пустой абзац (<div><br></div>) уходил в базу как <div>\n</div>:
+       пробельный текстовый узел схлопывался, абзац терял высоту и пробел между
+       строками при повторном входе исчезал. */
+    note.content = content.innerHTML;
   };
   /* Отпечаток «того, что видим». baseline — состояние сразу после загрузки;
      если к закрытию отпечаток не изменился, значит правок не было. */
