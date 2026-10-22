@@ -1240,6 +1240,10 @@ export function openEditor(id, opts = {}) {
   function insertChecklist() {
     runFormat(() => {
       const sel = window.getSelection();
+      /* Точку каретки запоминаем ДО перестройки: узлы при переносе в .lbl не
+         пересоздаются, поэтому по ней можно вернуть каретку ровно туда, где
+         она была, — справа от бокса, а не «в» него. */
+      const anchor = sel?.anchorNode, anchorOff = sel?.anchorOffset;
       /* Каретка (или начало выделения) уже в пункте — добавляем новый пункт ПОД
          текущим. Раньше здесь блочный <div> вставлялся внутрь <span class="lbl">
          и разметка ломалась. */
@@ -1272,9 +1276,25 @@ export function openEditor(id, opts = {}) {
         block.replaceWith(item);
         if (!firstLbl) firstLbl = lbl;
       });
-      /* Перенос узлов мог «потерять» каретку — возвращаем её в текст пункта. */
+      /* Каретка должна оказаться ВНУТРИ метки, справа от бокса. Перенос узлов
+         мог её «потерять» (браузер сбрасывал её в начало холста — ровно на
+         бокс, из-за чего чекбокс было не нажать). Прежняя проверка
+         `!content.contains(anchorNode)` не ловила этот случай: корень холста
+         тоже «внутри» content, и каретка оставалась на боксе. Проверяем именно
+         метку и, если каретка вне неё, ставим её в начало метки. */
       const s = window.getSelection();
-      if (firstLbl && (!s?.anchorNode || !content.contains(s.anchorNode))) placeCaretIn(firstLbl);
+      const node = s?.anchorNode;
+      const holder = node && (node.nodeType === 3 ? node.parentElement : node);
+      const insideLbl = !!holder?.closest?.('.lbl');
+      if (firstLbl && anchor && anchor.isConnected && insideLbl) {
+        const r = document.createRange();
+        r.setStart(anchor, Math.min(anchorOff || 0, anchor.nodeType === 3 ? anchor.nodeValue.length : anchor.childNodes.length));
+        r.collapse(true);
+        const g = window.getSelection(); g.removeAllRanges(); g.addRange(r);
+        savedRange = r.cloneRange();
+      } else if (firstLbl) {
+        placeCaretIn(firstLbl);
+      }
     });
   }
 
@@ -1343,12 +1363,55 @@ export function openEditor(id, opts = {}) {
     try { cur = (document.queryCommandValue('formatBlock') || '').toLowerCase(); } catch (e) {}
     return cur;
   }
+  /* Смена тега абзаца БЕЗ участия execCommand('formatBlock').
+     formatBlock умеет «переставлять» родителя: если внутри цитаты лежит
+     «голый» текст (без абзаца-<div>), он заменял сам <blockquote> — жёлтая
+     линия цитаты при смене размера текста рвалась на части или пропадала.
+     Здесь меняем тег только у самого абзаца, никогда не трогая предков:
+     внутри цитаты на месте абзаца встаёт нужный тег, а blockquote остаётся. */
+  function setBlockTag(tag) {
+    const want = tag.toLowerCase();
+    const blocks = targetBlocks();
+    /* Абзаца рядом нет (курсор на пустом месте) — пусть решает браузер. */
+    if (!blocks.length) { document.execCommand('formatBlock', false, want); return; }
+    const sel = window.getSelection();
+    const anchor = sel?.anchorNode, anchorOff = sel?.anchorOffset;
+    blocks.forEach(b => {
+      if (b.classList?.contains('check-item')) return; /* пункт чек-листа не трогаем */
+      /* Внутри цитаты абзаца нет — заворачиваем её содержимое в новый блок
+         ВНУТРЬ blockquote, чтобы сама цитата уцелела. */
+      if (b.tagName === 'BLOCKQUOTE') {
+        const inner = document.createElement(want);
+        while (b.firstChild) inner.appendChild(b.firstChild);
+        if (!inner.firstChild) inner.appendChild(document.createElement('br'));
+        b.appendChild(inner);
+        return;
+      }
+      const el = document.createElement(want);
+      if (b.className) el.className = b.className;
+      if (b.getAttribute && b.getAttribute('style')) el.setAttribute('style', b.getAttribute('style'));
+      while (b.firstChild) el.appendChild(b.firstChild);
+      if (!el.firstChild) el.appendChild(document.createElement('br'));
+      b.replaceWith(el);
+    });
+    /* Узлы не пересоздавались (их переносили) — каретка осталась на месте.
+       Но браузер мог её сбросить на время правки DOM: возвращаем по точке. */
+    if (anchor && anchor.isConnected && content.contains(anchor)) {
+      const len = anchor.nodeType === 3 ? anchor.nodeValue.length : anchor.childNodes.length;
+      const r = document.createRange();
+      r.setStart(anchor, Math.min(anchorOff || 0, len));
+      r.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(r);
+      savedRange = r.cloneRange();
+    } else restoreSelection();
+  }
   function toggleBlock(tag) {
     const b = caretBlock();
     let inside = !!b && b.tagName.toLowerCase() === tag.toLowerCase();
     /* Блока рядом нет (курсор на пустом месте, выделен весь текст) — смотрим у редактора. */
     if (!b) inside = currentBlockTag() === tag.toLowerCase();
-    document.execCommand('formatBlock', false, inside ? 'div' : tag);
+    setBlockTag(inside ? 'div' : tag);
   }
   /* Снять цитату: убрать тег blockquote, сохранив абзацы внутри него. */
   function unwrapQuote(bq) {
@@ -1486,7 +1549,7 @@ export function openEditor(id, opts = {}) {
     });
   }
   const FMT_ACTIONS = {
-    p: () => document.execCommand('formatBlock', false, 'div'),
+    p: () => setBlockTag('div'),
     h1: () => toggleBlock('h1'),
     h2: () => toggleBlock('h2'),
     h3: () => toggleBlock('h3'),
