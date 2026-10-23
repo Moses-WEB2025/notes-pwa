@@ -122,6 +122,15 @@ body.kb-open .editor-screen .editor-body { padding-bottom: var(--toolbar-h, 54px
 .note-content-input img.img-selected { outline: 2px solid var(--accent); outline-offset: 3px; touch-action: none; }
 .note-content-input img.img-dragging { opacity: .5; }
 .note-content-input mark { background: var(--accent-soft); }
+/* Ссылка в тексте заметки — в любом оформлении остаётся кликабельной. */
+.note-content-input a {
+  color: var(--ed-link, #155dc8);
+  text-decoration: underline;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.note-content-input a:active { opacity: .7; }
 
 .check-item { display: flex; gap: 10px; align-items: flex-start; margin: 6px 0; }
 /* Бокс — обычный <span> (не <input>): пустой — контур в цвет текста;

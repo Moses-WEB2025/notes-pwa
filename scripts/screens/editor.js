@@ -54,6 +54,8 @@ function textColorFor(bg) { return bg && lum(bg) < LIGHT_TEXT_MAX ? '#ffffff' : 
 function mutedFor(bg)     { return bg && lum(bg) < LIGHT_TEXT_MAX ? 'rgba(255,255,255,.62)' : 'var(--text-tertiary)'; }
 function caretFor(bg)     { return bg && lum(bg) < LIGHT_TEXT_MAX ? 'rgba(255,255,255,.9)' : 'var(--accent)'; }
 function folderChipFor(bg){ return bg && lum(bg) < LIGHT_TEXT_MAX ? 'rgba(255,255,255,.16)' : 'var(--surface2)'; }
+/* Цвет ссылки в тексте: на тёмном холсте светлый синий, на светлом — тёмный. */
+function linkColorFor(bg) { return bg && lum(bg) < LIGHT_TEXT_MAX ? '#9fc2ff' : '#155dc8'; }
 
 export function openEditor(id, opts = {}) {
   const isNew = !id;
@@ -154,6 +156,8 @@ export function openEditor(id, opts = {}) {
     await hydrateImages();
     normalizeBlankBlocks();
     normalizeChecklist();
+    /* Ссылки из разметки заметки (и старые плейн-текст адреса) — в кликабельные <a>. */
+    linkifyContent();
     updFolderChip(); updMeta(); renderPlayers(); applyTheme();
     history = [snapshot()]; histIndex = 0; updUndoBtns();
     baseline = signature();
@@ -172,6 +176,7 @@ export function openEditor(id, opts = {}) {
     el.style.setProperty('--ed-muted', mutedFor(bg));
     el.style.setProperty('--ed-caret', caretFor(bg));
     el.style.setProperty('--ed-chip', folderChipFor(bg));
+    el.style.setProperty('--ed-link', linkColorFor(bg));
     /* Смена цвета холста — сразу перекрашиваем и системные зоны. */
     refreshEdgeColor();
   }
@@ -372,6 +377,8 @@ export function openEditor(id, opts = {}) {
   /* После каждой правки возвращаем пункты чек-листа к канону: если бокс стёрли,
      пункт снова становится обычным абзацем (зачёркивание уходит вместе с ним). */
   content.addEventListener('input', e => { if (!e.isComposing) normalizeChecklist(); });
+  /* Адреса, набранные или вставленные, сразу становятся кликабельными ссылками. */
+  content.addEventListener('input', e => { if (!e.isComposing) linkifyContent(); });
 
   /* ---------- Отметка пункта чек-листа ----------
      Тап по боксу переключает пункт. Тап НЕ должен ни двигать каретку, ни
@@ -413,6 +420,9 @@ export function openEditor(id, opts = {}) {
   });
   content.addEventListener('mousedown', e => {
     if (boxFromEvent(e)) e.preventDefault();
+    /* Клик по ссылке не должен двигать каретку и создавать выделение —
+       открытием занимается обработчик выше. */
+    else if (linkAtEvent(e)) e.preventDefault();
   });
 
   /* Enter внутри пункта: «хвост» метки после каретки переезжает в новый пункт.
@@ -1038,6 +1048,79 @@ export function openEditor(id, opts = {}) {
     if (changed && off != null) setCaretTextOffset(off);
   }
 
+  /* ---- Ссылки в тексте заметки ----
+     Адрес (http/https/ftp или www), набранный или вставленный в заметку,
+     автоматически становится кликабельной ссылкой — В ЛЮБОМ оформлении:
+     жирный, курсив, заголовок, пункт чек-листа и т.д. Обрабатываем текстовые
+     узлы, поэтому существующие inline-обёртки вокруг адреса не мешают, а
+     уже собранные <a> и нередактируемые узлы (боксы) пропускаем. */
+  const LINK_RE = /\b((?:https?|ftp):\/\/[^\s<>"'`]+|www\.[^\s<>"'`]+)/gi;
+  const LINK_TRAIL = /[.,;:!?)\]}"'»]+$/;
+  function linkHref(url) { return /^www\./i.test(url) ? 'https://' + url : url; }
+  /* Ближайшая ссылка под событием (внутри холста). */
+  function linkAtEvent(e) {
+    const t = e.target;
+    if (!t || t.nodeType !== 1 || !t.closest) return null;
+    const a = t.closest('a');
+    return a && content.contains(a) ? a : null;
+  }
+  function openLinkHref(a) {
+    const href = a?.getAttribute('href') || '';
+    if (!href) return;
+    let url = href;
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(url)) url = 'https://' + url;
+    window.open(url, '_blank', 'noopener');
+  }
+  /* Развернуть адреса в одном текстовом узле на <a>. Возвращает true, если
+     узел менялся. Доводящие знаки («https://x.com,») в адрес не берём. */
+  function linkifyTextNode(node) {
+    const text = node.nodeValue;
+    if (!text || !LINK_RE.test(text)) return false;
+    LINK_RE.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let last = 0, m, changed = false;
+    while ((m = LINK_RE.exec(text))) {
+      const raw = m[0];
+      const tail = raw.match(LINK_TRAIL);
+      const url = tail ? raw.slice(0, raw.length - tail[0].length) : raw;
+      if (!url) continue;
+      if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+      const a = document.createElement('a');
+      a.href = linkHref(url);
+      a.textContent = url;
+      frag.appendChild(a);
+      last = m.index + raw.length;
+      changed = true;
+    }
+    if (!changed) return false;
+    if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+    node.replaceWith(frag);
+    return true;
+  }
+  /* Пройтись по холсту и собрать адреса в ссылки, не сбивая каретку. */
+  function linkifyContent() {
+    const wasCollapsed = !!window.getSelection()?.isCollapsed;
+    const off = wasCollapsed ? caretTextOffset() : null;
+    let changed = false;
+    const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    for (const node of nodes) {
+      if (!node.isConnected) continue;
+      let el = node.parentElement, skip = false;
+      while (el && el !== content) {
+        if (el.tagName === 'A' || el.getAttribute?.('contenteditable') === 'false') { skip = true; break; }
+        el = el.parentElement;
+      }
+      if (skip) continue;
+      if (linkifyTextNode(node)) changed = true;
+    }
+    if (!changed) return;
+    /* Пустой <a> (текст целиком стёрли) больше не нужен. */
+    content.querySelectorAll('a').forEach(a => { if (a.isConnected && !a.textContent) a.remove(); });
+    if (off != null) setCaretTextOffset(off);
+  }
+
   /* ---- Прогрессивное выделение двойным тапом ---- */
   /* Слово → предложение → абзац → весь текст. Повторный двойной тап по тому
      же слову поднимает выделение на ступень выше, тап по другому слову
@@ -1165,7 +1248,13 @@ export function openEditor(id, opts = {}) {
     dtLastAt = now;
     applyExpand(dtLevel, pos, word);
   }
-  content.addEventListener('pointerdown', e => { tapDownPt = { x: e.clientX, y: e.clientY }; });
+  /* Тап по ссылке открывает её; время нажатия запоминаем, чтобы не путать
+     простое касание с длинным (браузерным контекстным меню). */
+  let linkTapAt = 0;
+  content.addEventListener('pointerdown', e => {
+    tapDownPt = { x: e.clientX, y: e.clientY };
+    linkTapAt = linkAtEvent(e) ? performance.now() : 0;
+  });
   content.addEventListener('pointerup', e => {
     const moved = tapDownPt ? Math.hypot(e.clientX - tapDownPt.x, e.clientY - tapDownPt.y) : 0;
     tapDownPt = null;
@@ -1174,7 +1263,19 @@ export function openEditor(id, opts = {}) {
     if (e.target?.closest?.('.draw-block')) return;
     /* Тап по боксу чек-листа не должен запускать выделение по двойному тапу. */
     if (e.target?.closest?.('.check-item .box')) return;
+    /* Короткое касание ссылки — открываем её, не трогая каретку и выделение. */
+    const a = linkAtEvent(e);
+    if (a && linkTapAt && performance.now() - linkTapAt < 500) {
+      e.preventDefault();
+      linkTapAt = 0;
+      openLinkHref(a);
+      return;
+    }
     onTapUp(e);
+  });
+  /* Не даём браузеру в contenteditable самому переходить по ссылке. */
+  content.addEventListener('click', e => {
+    if (linkAtEvent(e)) e.preventDefault();
   });
 
   function runFormat(mutate, key) {
@@ -1183,6 +1284,8 @@ export function openEditor(id, opts = {}) {
     if (INLINE_TOOLS.has(key)) { expandToSentence(); trimSelection(); }
     mutate();
     if (INLINE_TOOLS.has(key)) stripSpaceDecoration();
+    /* Оформление могло разобрать <a> на куски — возвращаем ссылки на место. */
+    linkifyContent();
     saveSelection();
     commit();
     scheduleSave();
