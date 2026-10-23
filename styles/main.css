@@ -106,7 +106,7 @@
      сливается с фоном — даже когда поднимается наверх, на серый холст
      того же цвета (#ececec). */
   box-shadow: 0 0 0 1px rgba(0,0,0,.06);
-  transition: background-color .2s ease, box-shadow .2s ease;
+  transition: background-color var(--dur-2) var(--ease-standard), box-shadow var(--dur-2) var(--ease-standard);
 }
 /* При фокусе строка поиска НЕ меняет цвет — остаётся точно такой же,
    как на главной (#ececec), но кольцо становится заметнее, чтобы границы
@@ -231,7 +231,13 @@
   color: var(--text-secondary);
   cursor: pointer;
   box-shadow: var(--shadow-card);
+  /* Появление/смена чипа — тем же «доводчиком», что и у остальных
+     микровзаимодействий: чип мягко встаёт на место, без вспышки. */
+  transition: transform var(--dur-2) var(--ease-spring),
+              background-color var(--dur-2) var(--ease-standard),
+              color var(--dur-2) var(--ease-standard);
 }
+.cat-chip:active { transform: scale(.95); }
 .cat-chip .material-symbols-rounded { font-size: 17px; font-variation-settings: 'FILL' 1; color: var(--text-secondary); }
 
 /* ===== Ряд чипов-категорий под строкой поиска =====
@@ -367,13 +373,18 @@
    (светло-розовый/жёлтый) — убрали, чтобы найденное слово читалось одинаково. */
 mark.hm { background: transparent; color: #e0473a; font-weight: 700; }
 
-/* Появление карточек */
-.note-card.entering { animation: cardIn .32s var(--ease-standard) both; }
+/* Появление карточек. Кривая «тормозит к концу» (--ease-decel): карточки
+   мягко оседают на место, а не влетают механическим ease-in-out.
+   fill — backwards, а не both: ключевой кадр нужен только до/во время
+   анимации (чтобы карточка не мигнула и стартовала из прозрачности). При
+   forwards/both конечный `transform: none` держался бы на карточке НАВСЕГДА
+   и перебивал `.pressed` — отклик нажатия пропадал бы у первых карточек. */
+.note-card.entering { animation: cardIn var(--dur-3) var(--ease-decel) backwards; }
 @keyframes cardIn { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
 
 /* «Отскок» карточки при выборе/снятии в режиме выбора.
    Только масштаб — карточка не смещается по сторонам. */
-.note-card.bounce { animation: cardBounce .36s var(--ease-standard); }
+.note-card.bounce { animation: cardBounce var(--dur-3) var(--ease-standard); }
 @keyframes cardBounce {
   0%   { transform: scale(1); }
   38%  { transform: scale(.9); }

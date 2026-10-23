@@ -48,21 +48,27 @@
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   /* ==== Анимация ====
-     Единая система «как на iPhone»: короткие длительности и плавное
-     доигрывание. Все переходы работают только по transform/opacity —
-     это держит стабильные 60/120 fps и не даёт приложению тормозить.
-     ВАЖНО: cubic-bezier() требует ровно 4 числа. Раньше здесь были
-     невалидные значения — браузер молча отключал анимации. */
-  --dur-1: 160ms;    /* микровзаимодействия: нажатия, иконки, чипы */
-  --dur-2: 220ms;    /* элементы: карточки, меню, тосты */
-  --dur-3: 300ms;    /* экраны, sheet, оверлеи */
+     Единая система таймингов «как в iOS»: одна шкала длительностей и набор
+     кривых на все переходы приложения. Все переходы работают только по
+     transform/opacity — эти свойства доводит композитор, дерево не
+     перекладывается каждый кадр, поэтому 60/120 fps держатся и на слабых
+     устройствах.
+     ВАЖНО: cubic-bezier() требует ровно 4 числа. Невалидное значение браузер
+     молча игнорирует — анимация «отключается» целиком. */
+  --dur-1: 180ms;    /* микровзаимодействия: нажатия, иконки, чипы */
+  --dur-2: 260ms;    /* элементы: карточки, меню, тосты */
+  --dur-3: 340ms;    /* экраны, sheet, оверлеи, морфинг заметки */
   --dur-kb: 260ms;   /* появление/скрытие клавиатуры */
 
-  --ease-standard: cubic-bezier(.32,.72,0,1);   /* плавный «выход» — базовый */
-  --ease-emphasized: cubic-bezier(.2,0,0,1);    /* акцентированный (экраны) */
-  --ease-out: cubic-bezier(.22,.61,.36,1);      /* замедление к концу */
-  --ease-in: cubic-bezier(.4,0,1,1);            /* разгон в начале */
-  --ease-ios: cubic-bezier(.25,.1,.25,1);       /* классический iOS ease-in-out */
+  /* Кривые. Все устроены одинаково: движение уверенно набирает ход и мягко
+     доводится к концу — без резкого старта и без «обрыва» в финале. */
+  --ease-standard: cubic-bezier(.25,.1,.25,1);   /* базовый iOS ease-in-out */
+  --ease-emphasized: cubic-bezier(.2,0,0,1);     /* крупные поверхности (шапка, экраны) */
+  --ease-decel: cubic-bezier(.22,1,.36,1);       /* появление: тормозит к концу */
+  --ease-out: cubic-bezier(.22,.61,.36,1);       /* замедление к концу */
+  --ease-in: cubic-bezier(.4,0,1,1);             /* разгон в начале */
+  --ease-ios: cubic-bezier(.25,.1,.25,1);        /* классический iOS ease-in-out */
+  --ease-spring: cubic-bezier(.34,1.32,.5,1);    /* лёгкий «доводчик» микрокнопок */
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -162,10 +168,16 @@ body {
 /* Морфинг: экран растёт из карточки (и сжимается обратно в неё).
    Ведём только transform и border-radius — transform доводится композитором,
    поэтому переход плавный и на iOS. top/bottom здесь не участвуют: высоту
-   экран не меняет. */
+   экран не меняет.
+   Кривая — «тормозящая к концу» (--ease-decel): рост начинается уверенно и
+   мягко оседает в полный экран, без механического «въезда» ease-in-out.
+   backface-visibility убирает мерцание кромки на устройствах, где слой
+   растеризуется дважды во время масштабирования. */
 .screen.morphing {
-  transition: transform var(--dur-3) var(--ease-standard), border-radius var(--dur-3) var(--ease-standard);
+  transition: transform var(--dur-3) var(--ease-decel), border-radius var(--dur-3) var(--ease-decel);
   will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 /* Содержимое экрана на время морфинга прозрачно (растёт только поверхность
    заметки, а не растянутый текст).
@@ -177,7 +189,7 @@ body {
    Переход по прозрачности живёт на отдельном классе morph-fade: его снимают
    позже, и именно он даёт плавное проявление, когда убирают morph-hide. */
 .screen.morph-hide > * { opacity: 0 !important; }
-.screen.morph-fade > * { transition: opacity var(--dur-1) var(--ease-standard); }
+.screen.morph-fade > * { transition: opacity var(--dur-2) var(--ease-out); }
 /* Шапка редактора должна приходить вместе со всем окном. У неё есть своя
    анимация входа (topbarIn), которая стартует сразу при создании экрана —
    то есть параллельно морфингу. В каскаде CSS-анимация приоритетнее обычных
@@ -213,7 +225,7 @@ body {
   align-items: center; justify-content: center;
   color: var(--text);
   cursor: pointer;
-  transition: background-color var(--dur-1) ease, transform var(--dur-1) var(--ease-standard), opacity var(--dur-1) ease;
+  transition: background-color var(--dur-1) ease, transform var(--dur-1) var(--ease-spring), opacity var(--dur-1) ease;
 }
 .icon-btn:active { background: rgba(0,0,0,.07); transform: scale(.94); }
 .icon-btn:disabled { opacity: .32; }
@@ -274,7 +286,7 @@ body {
   padding: 10px 8px calc(10px + var(--safe-bottom));
   transform: translateY(100%);
   opacity: 0;
-  transition: transform var(--dur-3) var(--ease-out), opacity var(--dur-2) ease;
+  transition: transform var(--dur-3) var(--ease-decel), opacity var(--dur-2) ease;
   pointer-events: none;
 }
 .select-bar:not(.hidden) { transform: translateY(0); opacity: 1; pointer-events: auto; }

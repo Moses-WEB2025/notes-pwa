@@ -10,9 +10,17 @@
    при неоднородном сжатии один общий радиус превращался в широкий эллипс
    (60×20 вместо 20×20) — из-за этого переход выглядел «кривым». */
 
-const DUR = 300;      /* длительность перехода — как у слайда (--dur-3) */
-const SETTLE = 340;   /* когда снимаем служебные стили / убираем экран */
-const REVEAL = 140;   /* когда проявляем содержимое растущего экрана */
+import { cssMs } from './core.js';
+
+/* Длительность берём из CSS (--dur-3) — одна точка правды со стилями. Если бы
+   здесь стояло своё число, при смене тайминга в CSS служебные классы снимались
+   бы раньше конца анимации, и в финале был бы виден рывок. Запас settleMs
+   покрывает старт (двойной rAF) и возможное опоздание кадра на слабом
+   устройстве — снятие стилей всегда попадает в уже законченный переход. */
+const dur3 = () => cssMs('--dur-3', 340);
+const settleMs = () => dur3() + 80;
+/* Момент проявления содержимого — чуть раньше середины роста. */
+const revealMs = () => Math.round(dur3() * 0.42);
 
 /* Состояние анимации по каждому экрану. Каждой новой анимации выдаём номер
    поколения: незавершённые колбэки (rAF/setTimeout) предыдущей запоминают свой
@@ -22,9 +30,12 @@ const REVEAL = 140;   /* когда проявляем содержимое ра
 const phase = new WeakMap();     /* 'open' | 'close' — пока анимация не доехала */
 const token = new WeakMap();     /* номер текущего поколения */
 const timers = new WeakMap();    /* Set<timeout id> — чтобы отменять по поколению */
+const endOff = new WeakMap();    /* снять transitionend предыдущего перехода */
 
-/* Начать новое поколение: гасим все отложенные шаги предыдущей анимации. */
+/* Начать новое поколение: гасим все отложенные шаги и слушатели предыдущей
+   анимации. */
 function begin(el) {
+  const off = endOff.get(el); if (off) { off(); endOff.delete(el); }
   const set = timers.get(el);
   if (set) { set.forEach(clearTimeout); set.clear(); }
   const t = (token.get(el) || 0) + 1;
@@ -46,6 +57,23 @@ function later(el, t, ms, fn) {
 /* requestAnimationFrame с той же проверкой поколения. */
 function frame(el, t, fn) {
   requestAnimationFrame(() => { if (token.get(el) === t) fn(); });
+}
+
+/* Дождаться конца перехода точно: transitionend срабатывает в момент реального
+   завершения (учитывает опоздавшие кадры), а таймер страхует от случая, когда
+   событие не придёт вовсе (например, элемент потерял слой). */
+function onSettled(el, t, fn) {
+  let done = false;
+  const run = () => {
+    if (done || token.get(el) !== t) return;
+    done = true;
+    const off = endOff.get(el); if (off) { off(); endOff.delete(el); }
+    fn();
+  };
+  const onEnd = e => { if (e.target === el && e.propertyName === 'transform') run(); };
+  el.addEventListener('transitionend', onEnd);
+  endOff.set(el, () => el.removeEventListener('transitionend', onEnd));
+  later(el, t, settleMs(), run);
 }
 
 /* Системная настройка «уменьшить движение» — тогда морфинг не играем. */
@@ -72,14 +100,27 @@ function radiusOf(el) {
   return Number.isFinite(v) ? v : 0;
 }
 
-/* Геометрия, которой экран должен совпасть с карточкой. */
+/* Геометрия, которой экран должен совпасть с карточкой.
+   В момент тапа карточка «нажата» (bindPress сжимает её до scale(.96)), и
+   getBoundingClientRect() вернул бы СЖАТЫЙ прямоугольник — заметка тогда
+   вырастала бы не из карточки, а чуть изнутри неё, и в начале анимации был бы
+   заметен рывок. Поэтому пересчитываем бокс обратно к «спокойному»:
+   размеры берём из offsetWidth/offsetHeight (transform их не меняет), а
+   положение — обратным преобразованием относительно transform-origin
+   (у .note-card это center bottom). */
 function frameOf(card) {
   const r = card.getBoundingClientRect();
+  const ow = card.offsetWidth || r.width;
+  const s = ow > 0 ? r.width / ow : 1;          /* текущий масштаб (нажатие) */
+  const w = s > 0 ? r.width / s : r.width;      /* несжатые размеры */
+  const h = s > 0 ? r.height / s : r.height;
+  const x = r.left - (1 - s) * w / 2;           /* origin по X — центр… */
+  const y = r.top - (1 - s) * h;                /* …по Y — низ карточки */
   return {
-    x: r.left,
-    y: r.top,
-    sx: Math.max(0.01, r.width / window.innerWidth),
-    sy: Math.max(0.01, r.height / window.innerHeight),
+    x,
+    y,
+    sx: Math.max(0.01, w / window.innerWidth),
+    sy: Math.max(0.01, h / window.innerHeight),
     radius: radiusOf(card),
   };
 }
@@ -97,6 +138,7 @@ function reset(el) {
   el.style.transform = '';
   el.style.borderRadius = '';
   el.style.willChange = '';
+  el.style.backfaceVisibility = '';
 }
 
 /* Вырастить экран из карточки. el уже добавлен в DOM.
@@ -113,6 +155,7 @@ export function morphOpen(el, card) {
   el.classList.remove('morphing');      /* без перехода — задаём старт вручную */
   el.style.transformOrigin = '0 0';
   el.style.willChange = 'transform';
+  el.style.backfaceVisibility = 'hidden';
   el.style.transform = `translate3d(${f.x}px, ${f.y}px, 0) scale(${f.sx}, ${f.sy})`;
   el.style.borderRadius = cornerRadius(f);
   /* Содержимое скрыто с ПЕРВОГО кадра и меняет прозрачность с переходом
@@ -125,9 +168,9 @@ export function morphOpen(el, card) {
     void el.offsetWidth;
     el.style.transform = 'translate3d(0px, 0px, 0) scale(1, 1)';
     el.style.borderRadius = '0px';
-    later(el, t, REVEAL, () => el.classList.remove('morph-hide'));
+    later(el, t, revealMs(), () => el.classList.remove('morph-hide'));
+    onSettled(el, t, () => reset(el));
   });
-  later(el, t, SETTLE, () => reset(el));
 }
 
 /* Сжать экран обратно в карточку. onEnd — когда анимация закончилась
@@ -139,6 +182,7 @@ export function morphClose(el, card, onEnd) {
   const f = frameOf(card);
   el.style.transformOrigin = '0 0';
   el.style.willChange = 'transform';    /* слой готовим до старта перехода */
+  el.style.backfaceVisibility = 'hidden';
   el.classList.add('morphing');         /* переход включён, геометрия ещё полного экрана */
   void el.offsetWidth;
   /* Скрытие содержимого и старт сжатия — в одном кадре. Если спрятать
@@ -147,7 +191,5 @@ export function morphClose(el, card, onEnd) {
   el.classList.add('morph-hide');
   el.style.transform = `translate3d(${f.x}px, ${f.y}px, 0) scale(${f.sx}, ${f.sy})`;
   el.style.borderRadius = cornerRadius(f);
-  later(el, t, SETTLE, () => { reset(el); onEnd && onEnd(); });
+  onSettled(el, t, () => { reset(el); onEnd && onEnd(); });
 }
-
-export { DUR };

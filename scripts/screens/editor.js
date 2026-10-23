@@ -1,5 +1,5 @@
 /* ============ Редактор заметки ============ */
-import { Store, Nav, fmtEditorDate, escapeHtml, uid, debounce, vibrate, trashNote } from '../core.js';
+import { Store, Nav, fmtEditorDate, escapeHtml, uid, debounce, vibrate, trashNote, screenSettle } from '../core.js';
 import { refreshEdgeColor } from '../edge.js';
 import { morphOpen, morphClose, morphDisabled, cardOnScreen, morphPhase } from '../morph.js';
 import { toast, attachMenu, sheetSections, openSheet, confirmSheet, folderPickSheet } from '../components/ui.js';
@@ -626,7 +626,10 @@ export function openEditor(id, opts = {}) {
     saveContent();
     await Store.saveNoteRaw(note);
   }, 450);
-  async function finalSave(redrawDelay = 360) {
+  /* Пауза перед перерисовкой главной — ровно столько, сколько длится переход
+     экрана (--dur-3 + запас). Так сетка перестраивается уже после анимации и
+     не «дёргает» её на слабых устройствах, где кадр может опоздать. */
+  async function finalSave(redrawDelay = screenSettle()) {
     saveContent();
     /* Ничего не правили — не трогаем базу и не перерисовываем главную.
        Иначе Store.saveNote() каждый раз обновлял updatedAt, и заметка
@@ -660,13 +663,13 @@ export function openEditor(id, opts = {}) {
       morphClose(el, card, () => Nav.dropTop());
       /* Сетку перерисовываем после сжатия, чтобы карточка не сменилась
          посреди анимации. */
-      await finalSave(420);
+      await finalSave();
       return;
     }
     /* Слайд запускаем сразу, не дожидаясь записи в базу: пауза перед анимацией
        и перерисовка главной «на ходу» делали возврат медленным и рваным. */
     Nav.pop();
-    await finalSave(360);
+    await finalSave();
   }
 
   topbar.querySelector('[data-a=back]').addEventListener('click', done);

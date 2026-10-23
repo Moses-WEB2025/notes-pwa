@@ -30,6 +30,11 @@ export function openFolders(opts = {}) {
      себя и учтут скрытые папки сразу, без перехода между экранами. */
   const notify = () => document.dispatchEvent(new CustomEvent('folders-changed'));
 
+  /* id папок из прошлой отрисовки: строки, которых там не было, появляются
+     анимацией (.enter), а не возникают мгновенно при перерисовке списка.
+     null — первый прогон: анимировать нечего, все папки «уже были». */
+  let seenIds = null;
+
   async function load() {
     const [folders, allNotes] = await Promise.all([Store.folders(), Store.notes()]);
     /* Личная (скрытая) заметка — либо с флагом hidden, либо лежит в скрытой
@@ -51,9 +56,13 @@ export function openFolders(opts = {}) {
     /* Папки только своего раздела: на главной скрытых нет, на «Скрытых» —
        только скрытые. Замок отмечает личную папку, заметки которой видны
        лишь на экране «Скрытые». */
-    folders.filter(f => !f.deleted && (isPrivate ? f.hidden : !f.hidden)).forEach(f => {
+    const sectionFolders = folders.filter(f => !f.deleted && (isPrivate ? f.hidden : !f.hidden));
+    sectionFolders.forEach(f => {
       const row = document.createElement('div');
       row.className = 'folder-row' + (f.hidden ? ' f-hidden' : '');
+      /* Новая папка (которой не было в прошлой отрисовке) появляется плавно:
+         список перерисовывается целиком, и без этого строка «вспыхивала». */
+      if (seenIds && !seenIds.has(f.id)) row.classList.add('enter');
       row.setAttribute('data-press', '');
       const cnt = allNotes.filter(n => !n.deleted && n.folderId === f.id && (isPrivate ? priv(n) : !priv(n))).length;
       row.innerHTML = `<span class="material-symbols-rounded f-fold" style="color:${f.hidden ? 'var(--private-blue)' : 'var(--accent)'}">${f.hidden ? 'lock' : 'folder'}</span><span class="f-name">${escapeHtml(f.name)}</span><span class="f-count">${cnt}</span>`;
@@ -82,6 +91,9 @@ export function openFolders(opts = {}) {
     });
     scroll.appendChild(add);
     bindPress(scroll);
+    /* Запоминаем состав отрисованных папок — следующая отрисовка по нему
+       поймёт, какие строки новые. */
+    seenIds = new Set(sectionFolders.map(f => f.id));
   }
 
   async function openFolderView(f) {

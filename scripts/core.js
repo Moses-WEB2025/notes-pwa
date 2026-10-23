@@ -26,6 +26,27 @@ export function uid(){return Date.now().toString(36)+Math.random().toString(36).
 export function debounce(fn,ms){let t;return function(...a){clearTimeout(t);t=setTimeout(()=>fn.apply(this,a),ms);};}
 export function vibrate(ms=10){try{navigator.vibrate&&navigator.vibrate(ms);}catch(e){}}
 
+/* ---------- Тайминги анимаций ----------
+   Длительности переходов заданы в CSS (--dur-*). JS-таймеры (уборка экранов,
+   снятие служебных классов) берут значения оттуда же — одна точка правды.
+   Если бы здесь стояло жёстко зашитое число, при смене тайминга в CSS оно
+   «отрезало» бы хвост анимации: экран исчезал бы за кадр до её конца. */
+const ANIM_MS = new Map();
+export function cssMs(name, fallback = 0) {
+  if (ANIM_MS.has(name)) return ANIM_MS.get(name);
+  let ms = fallback;
+  try {
+    const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const m = /^([\d.]+)(ms|s)?$/.exec(raw);
+    if (m) ms = m[2] === 's' ? parseFloat(m[1]) * 1000 : parseFloat(m[1]);
+  } catch (e) {}
+  ANIM_MS.set(name, ms);
+  return ms;
+}
+/* Когда служебные классы экрана можно снять: длительность перехода плюс запас
+   на старт (двойной rAF) и возможное опоздание кадра на слабом устройстве. */
+export function screenSettle() { return cssMs('--dur-3', 340) + 80; }
+
 export function highlight(text,q){
   const t=escapeHtml(text||'');
   if(!q)return t;
@@ -130,7 +151,7 @@ export const Nav={
     requestAnimationFrame(() => requestAnimationFrame(() => {
       el.classList.add('anim');
       el.classList.remove('enter-right');
-      setTimeout(() => { el.classList.remove('anim'); prev && prev.classList.remove('anim'); }, 340);
+      setTimeout(() => { el.classList.remove('anim'); prev && prev.classList.remove('anim'); }, screenSettle());
     }));
     vibrate(5);
   },
@@ -162,9 +183,9 @@ export const Nav={
       prev.classList.add('anim');
       prev.classList.remove('under');
       prev.style.transform = '';
-      setTimeout(() => prev.classList.remove('anim'), 340);
+      setTimeout(() => prev.classList.remove('anim'), screenSettle());
     }
-    setTimeout(() => { top.remove(); }, 340);
+    setTimeout(() => { top.remove(); }, screenSettle());
     vibrate(4);
     return true;
   },
@@ -236,7 +257,7 @@ function settleBackGesture(g) {
   setTimeout(() => {
     g.top.classList.remove('anim');
     if (g.prev) g.prev.classList.remove('anim');
-  }, 340);
+  }, screenSettle());
 }
 
 function applyBackGestureDrag(g, dx) {

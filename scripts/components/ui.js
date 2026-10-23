@@ -1,5 +1,5 @@
 /* Общие UI-компоненты: тосты, bottom-sheet диалоги, контекстное меню */
-import { Store, uid } from '../core.js';
+import { Store, uid, cssMs } from '../core.js';
 const escapeHtml = s => (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 export function toast(text, ms = 2200) {
@@ -11,7 +11,7 @@ export function toast(text, ms = 2200) {
   requestAnimationFrame(() => t.classList.add('show'));
   setTimeout(() => {
     t.classList.remove('show');
-    setTimeout(() => t.remove(), 300);
+    setTimeout(() => t.remove(), cssMs('--dur-2', 260) + 60);
   }, ms);
 }
 
@@ -27,7 +27,7 @@ export function openSheet(builder) {
     close: () => {
       bd.classList.remove('open');
       sheet.classList.remove('open');
-      setTimeout(() => bd.remove(), 320);
+      setTimeout(() => bd.remove(), cssMs('--dur-3', 340) + 60);
     },
     el: sheet
   };
@@ -190,7 +190,7 @@ export function attachMenu(anchor, items) {
   const close = () => {
     menu.classList.remove('open');
     document.removeEventListener('pointerdown', onDoc, true);
-    setTimeout(() => menu.remove(), 180);
+    setTimeout(() => menu.remove(), cssMs('--dur-2', 260) + 40);
   };
   const onDoc = (e) => { if (!menu.contains(e.target)) close(); };
   menu.addEventListener('click', e => {

@@ -25,7 +25,7 @@
   box-shadow: 0 10px 40px rgba(0,0,0,.16);
   transform: translateY(calc(100% + 40px));
   opacity: 0;
-  transition: transform var(--dur-3) var(--ease-out), opacity var(--dur-2) ease;
+  transition: transform var(--dur-3) var(--ease-decel), opacity var(--dur-2) ease;
   max-height: 84%;
   overflow: hidden auto;
   overscroll-behavior: contain;
@@ -60,7 +60,7 @@
   background: #ececec;
   border: 1px solid var(--divider);
   cursor: pointer;
-  transition: transform .18s var(--ease-standard);
+  transition: transform var(--dur-1) var(--ease-spring);
   flex: none;
 }
 .swatch.selected { border: 2px solid var(--text); }
@@ -79,7 +79,7 @@
   opacity: 0;
   transform: scale(.9);
   transform-origin: top right;
-  transition: opacity var(--dur-1) ease, transform var(--dur-1) var(--ease-standard);
+  transition: opacity var(--dur-2) ease, transform var(--dur-2) var(--ease-spring);
   pointer-events: none;
 }
 .menu-surface.open { opacity: 1; transform: scale(1); pointer-events: auto; }
@@ -109,7 +109,7 @@
   padding: 15px 10px;
   font: 600 15.5px/1.3 var(--font);
   cursor: pointer;
-  transition: transform .18s var(--ease-standard), background-color .18s ease;
+  transition: transform var(--dur-1) var(--ease-spring), background-color var(--dur-1) ease;
 }
 .confirm-btn:active { transform: scale(.97); background: var(--surface3); }
 .confirm-btn.danger { color: var(--danger); }
@@ -149,7 +149,7 @@
   box-shadow: var(--shadow-raised);
   opacity: 0;
   transform: translateY(12px) scale(.96);
-  transition: opacity var(--dur-2) ease, transform var(--dur-2) var(--ease-out);
+  transition: opacity var(--dur-2) ease, transform var(--dur-2) var(--ease-decel);
 }
 .toast.show { opacity: 1; transform: translateY(0) scale(1); }
 
@@ -194,7 +194,7 @@
   color: var(--text);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
-  transition: transform .18s var(--ease-standard);
+  transition: transform var(--dur-1) var(--ease-spring);
 }
 .rec-circle-btn:active { transform: scale(.9); }
 .rec-circle-btn .material-symbols-rounded { font-size: 28px; }
@@ -212,10 +212,12 @@
   box-shadow: var(--shadow-card);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  /* Мягкое сглаженное нажатие: сжимается и сереет плавно, без рывка */
-  transition: transform .32s var(--ease-emphasized),
-              background-color .32s var(--ease-emphasized),
-              box-shadow .32s var(--ease-emphasized);
+  /* Мягкое сглаженное нажатие: сжимается и сереет плавно, без рывка.
+     Кривая с лёгким «доводчиком» (--ease-spring) даёт тот самый пружинистый
+     отклик, как у кнопок в iOS. */
+  transition: transform var(--dur-2) var(--ease-spring),
+              background-color var(--dur-2) var(--ease-standard),
+              box-shadow var(--dur-2) var(--ease-standard);
 }
 /* Папка «прижимается» как физическая кнопка: чуть уменьшается,
    сереет и теряет тень — перед появлением меню действий. */
@@ -224,6 +226,20 @@
   background: var(--surface2);
   box-shadow: 0 1px 2px rgba(0,0,0,.05);
 }
+/* Появление только что созданной папки: строка мягко «выпрыгивает» на место,
+   вместо того чтобы возникнуть мгновенно при полной перерисовке списка.
+   Конечная прозрачность берётся из --enter-op: у скрытой папки она .6
+   (см. .f-hidden ниже), иначе анимация «дотянула» бы её до 1 — папка на
+   «Скрытых» выглядела бы обычной. */
+/* fill: backwards — не both. Конечный `transform: none` не должен держаться
+   на строке после анимации: иначе он перебивал бы `.pressed` и папка не
+   «прижималась» бы при нажатии. */
+.folder-row.enter { animation: folderRowIn var(--dur-3) var(--ease-decel) backwards; }
+@keyframes folderRowIn {
+  from { opacity: 0; transform: translateY(12px) scale(.94); }
+  to   { opacity: var(--enter-op, 1); transform: none; }
+}
+.folder-row.enter.f-hidden { --enter-op: .6; }
 /* Скрытая папка: её заметки видны только на экране «Скрытые». */
 .folder-row.f-hidden { opacity: .6; }
 .folder-row .f-check { color: var(--accent); font-size: 22px; font-variation-settings: 'FILL' 1; }
@@ -244,7 +260,7 @@
   border: 0;
   cursor: pointer;
   font-family: var(--font);
-  transition: transform .2s var(--ease-standard);
+  transition: transform var(--dur-1) var(--ease-spring);
 }
 .folder-new:active { transform: scale(.985); }
 .folder-new .material-symbols-rounded { color: var(--accent); font-size: 34px; font-variation-settings: 'FILL' 0, 'wght' 400; }
@@ -264,7 +280,7 @@
   background: var(--accent); color: #fff;
   display: inline-flex; align-items: center; justify-content: center;
   cursor: pointer;
-  transition: transform .16s var(--ease-standard);
+  transition: transform var(--dur-1) var(--ease-spring);
 }
 .player-card .pc-play:active { transform: scale(.9); }
 .player-card .pc-play .material-symbols-rounded { font-size: 26px; font-variation-settings: 'FILL' 1; }
@@ -278,7 +294,7 @@
   color: var(--danger);
   display: inline-flex; align-items: center; justify-content: center;
   cursor: pointer;
-  transition: background-color .16s ease, transform .16s var(--ease-standard);
+  transition: background-color var(--dur-1) ease, transform var(--dur-1) var(--ease-spring);
 }
 .player-card .pc-del:active { background: rgba(217,48,37,.12); transform: scale(.9); }
 .player-card .pc-del .material-symbols-rounded { font-size: 22px; }
@@ -314,7 +330,7 @@
   padding: 8px 6px calc(8px + var(--safe-bottom));
   box-shadow: 0 -6px 24px rgba(0,0,0,.08);
   transform: translateY(100%);
-  animation: imgBarIn .22s var(--ease-out) forwards;
+  animation: imgBarIn var(--dur-2) var(--ease-decel) forwards;
 }
 @keyframes imgBarIn { to { transform: translateY(0); } }
 .img-bar .img-act {
@@ -323,7 +339,7 @@
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   font: 500 11.5px/1.1 var(--font);
   padding: 6px 2px; border-radius: 12px; cursor: pointer;
-  transition: background-color .15s ease, transform .15s var(--ease-standard);
+  transition: background-color var(--dur-1) var(--ease-standard), transform var(--dur-1) var(--ease-spring);
 }
 .img-bar .img-act:active { background: var(--surface2); transform: scale(.94); }
 .img-bar .img-act .material-symbols-rounded { font-size: 23px; }
@@ -370,7 +386,7 @@
   flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
   border: 0; border-radius: 14px; background: rgba(255,255,255,.12); color: #fff;
   font: 500 14px/1 var(--font); padding: 14px 10px; cursor: pointer;
-  transition: background-color .16s ease, transform .16s var(--ease-standard);
+  transition: background-color var(--dur-1) var(--ease-standard), transform var(--dur-1) var(--ease-spring);
 }
 .ie-tool:active { background: rgba(255,255,255,.22); transform: scale(.97); }
 .ie-tool .material-symbols-rounded { font-size: 20px; }
