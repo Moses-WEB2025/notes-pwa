@@ -399,6 +399,11 @@ export function openEditor(id, opts = {}) {
     if (!item || !content.contains(item)) return;
     item.classList.toggle('checked');
     box.setAttribute('aria-checked', item.classList.contains('checked') ? 'true' : 'false');
+    /* Каретку сразу уводим со «стаканчика» бокса в текст пункта: фокус должен
+       стоять справа от галочки на той же строке, а не на самом боксе — иначе
+       следующий тап по нему промахивается мимо переключателя. */
+    const lbl = item.querySelector('.lbl');
+    if (lbl) placeCaretIn(lbl);
     commit(); scheduleSave(); updMeta();
   }
   content.addEventListener('touchstart', e => {
@@ -1343,6 +1348,42 @@ export function openEditor(id, opts = {}) {
     item.replaceWith(p);
     return p;
   }
+  /* Смещение каретки ОТ НАЧАЛА блока (в символах текста), а не всего контента:
+     после переноса узлов точки отсчёта всего контента меняются, а границы
+     именно этого блока сохраняются. */
+  function caretOffsetIn(block) {
+    const sel = window.getSelection();
+    if (!sel?.rangeCount) return null;
+    const r = sel.getRangeAt(0);
+    if (r.startContainer !== block && !block.contains(r.startContainer)) return null;
+    const pre = r.cloneRange();
+    pre.selectNodeContents(block);
+    pre.setEnd(r.startContainer, r.startOffset);
+    return pre.toString().length;
+  }
+  /* Поставить каретку в начало текста метки — сразу справа от бокса.
+     Если задано смещение, сажаем каретку на тот же символ текста,
+     где она стояла до перестановки. */
+  function restoreCaretInLabel(lbl, off) {
+    let target = null, tOff = 0;
+    if (off != null) {
+      let left = off;
+      const walker = document.createTreeWalker(lbl, NodeFilter.SHOW_TEXT);
+      let n;
+      while ((n = walker.nextNode())) {
+        if (left <= n.nodeValue.length) { target = n; tOff = left; break; }
+        left -= n.nodeValue.length;
+      }
+    }
+    const r = document.createRange();
+    if (target) r.setStart(target, tOff);
+    else { r.selectNodeContents(lbl); r.collapse(true); }
+    r.collapse(true);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r);
+    savedRange = r.cloneRange();
+  }
   function insertChecklist() {
     runFormat(() => {
       const sel = window.getSelection();
@@ -1361,6 +1402,11 @@ export function openEditor(id, opts = {}) {
            иначе блок не найдётся и получится пустой новый пункт. */
         ensureCaretBlock();
       }
+      /* Позицию каретки в блоке запоминаем ДО перестановки узлов: потом
+         браузер теряет её привязку и «сажает» фокус на бокс — следующий тап
+         по нему промахивается, а каретка налазит на галочку. */
+      const caretBlockEl = sel?.isCollapsed ? caretBlock() : null;
+      const caretOff = caretBlockEl ? caretOffsetIn(caretBlockEl) : null;
       const blocks = targetBlocks().filter(b => b.isConnected && !b.classList?.contains('check-item'));
       if (!blocks.length) {
         /* Собирать нечего — добавляем пустой пункт в конец заметки. */
@@ -1378,9 +1424,9 @@ export function openEditor(id, opts = {}) {
         block.replaceWith(item);
         if (!firstLbl) firstLbl = lbl;
       });
-      /* Перенос узлов мог «потерять» каретку — возвращаем её в текст пункта. */
-      const s = window.getSelection();
-      if (firstLbl && (!s?.anchorNode || !content.contains(s.anchorNode))) placeCaretIn(firstLbl);
+      /* Каретку возвращаем в текст пункта — сразу справа от бокса, на том же
+         символе, где она стояла до вставки. */
+      if (firstLbl) restoreCaretInLabel(firstLbl, caretOff);
     });
   }
 
@@ -1449,11 +1495,31 @@ export function openEditor(id, opts = {}) {
     try { cur = (document.queryCommandValue('formatBlock') || '').toLowerCase(); } catch (e) {}
     return cur;
   }
+  /* Тег блока под кареткой меняем САМИ, а не через execCommand('formatBlock'):
+     внутри blockquote браузеры перестраивают саму цитату — «жёлтая полоса»
+     обрывается на куски, или команда вовсе не срабатывает. Меняется только
+     тег текущего блока, обёртка цитаты остаётся целой. */
+  function replaceBlockTag(block, tag) {
+    const el = document.createElement(tag);
+    while (block.firstChild) el.appendChild(block.firstChild);
+    /* Сохраняем выравнивание и отступы, заданные на самом блоке. */
+    if (block.style.textAlign) el.style.textAlign = block.style.textAlign;
+    if (block.style.paddingLeft) el.style.paddingLeft = block.style.paddingLeft;
+    if (block.style.paddingRight) el.style.paddingRight = block.style.paddingRight;
+    block.replaceWith(el);
+    /* Текстовые узлы переехали вместе с кареткой, но у пустого блока
+       привязка могла потеряться — возвращаем каретку в новый блок. */
+    const sel = window.getSelection();
+    const n = sel?.anchorNode;
+    if (!n || !el.contains(n)) placeCaretIn(el);
+    return el;
+  }
   function toggleBlock(tag) {
     const b = caretBlock();
     let inside = !!b && b.tagName.toLowerCase() === tag.toLowerCase();
     /* Блока рядом нет (курсор на пустом месте, выделен весь текст) — смотрим у редактора. */
     if (!b) inside = currentBlockTag() === tag.toLowerCase();
+    if (b) { replaceBlockTag(b, inside ? 'div' : tag); return; }
     document.execCommand('formatBlock', false, inside ? 'div' : tag);
   }
   /* Снять цитату: убрать тег blockquote, сохранив абзацы внутри него. */
@@ -1592,7 +1658,7 @@ export function openEditor(id, opts = {}) {
     });
   }
   const FMT_ACTIONS = {
-    p: () => document.execCommand('formatBlock', false, 'div'),
+    p: () => { const b = caretBlock(); if (b) replaceBlockTag(b, 'div'); else document.execCommand('formatBlock', false, 'div'); },
     h1: () => toggleBlock('h1'),
     h2: () => toggleBlock('h2'),
     h3: () => toggleBlock('h3'),
