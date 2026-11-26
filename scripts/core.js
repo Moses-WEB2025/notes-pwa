@@ -60,12 +60,25 @@ export function htmlToPlain(html){
 
 /* ---------- IndexedDB ---------- */
 const DB='notes-app';let dbp=null;
-function open(){if(dbp)return dbp;dbp=new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{const db=r.result;
+/* Открытие БД не должно висеть вечно: иначе первая же ошибка (например, дисковое
+   хранилище занято/заблокировано) «замораживала» приложение — все сохранения
+   уходили в вечный pending. При сбое сбрасываем dbp и следующая попытка
+   откроет соединение заново; таймаут страхует от зависшего запроса. */
+function open(){if(dbp)return dbp;let settled=false;
+dbp=new Promise((res,rej)=>{
+  const guard=(fn)=>{if(settled)return;settled=true;clearTimeout(t);fn();};
+  const t=setTimeout(()=>guard(()=>{dbp=null;rej(new Error('open timeout'));}),4000);
+  const r=indexedDB.open(DB,1);
+  r.onupgradeneeded=()=>{const db=r.result;
   if(!db.objectStoreNames.contains('notes')){const s=db.createObjectStore('notes',{keyPath:'id'});s.createIndex('folderId','folderId');}
   if(!db.objectStoreNames.contains('folders'))db.createObjectStore('folders',{keyPath:'id'});
   if(!db.objectStoreNames.contains('blobs'))db.createObjectStore('blobs',{keyPath:'id'});
   if(!db.objectStoreNames.contains('settings'))db.createObjectStore('settings',{keyPath:'key'});
-};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});return dbp;}
+};
+  r.onsuccess=()=>guard(()=>res(r.result));
+  r.onerror=()=>guard(()=>{dbp=null;rej(r.error);});
+  r.onblocked=()=>guard(()=>{dbp=null;rej(new Error('open blocked'));});
+});return dbp;}
 function req(r){return new Promise((res,rej)=>{r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 
 export const Store={

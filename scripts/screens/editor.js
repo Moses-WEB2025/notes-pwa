@@ -331,7 +331,7 @@ export function openEditor(id, opts = {}) {
         r.collapse(true);
         const sel = window.getSelection();
         sel.removeAllRanges(); sel.addRange(r);
-        savedRange = r.cloneRange();
+        rememberRange(r);
         return;
       }
       acc += len;
@@ -388,6 +388,12 @@ export function openEditor(id, opts = {}) {
      холст «улетал» в самый низ. Гасим default на всех трёх событиях, а
      прокрутку дополнительно блокируем на 0.45 с (lastBoxTap). */
   let lastBoxTap = 0;
+  let lastScrollAt = 0;
+  /* Во время перестановок узлов (цитаты/списки) Chromium сам коллапсит live
+     выделение и шлёт selectionchange — обработчик успевал переписать
+     savedRange «схлопнутой» кареткой, и повторный тап по ковычкам терял
+     выделение (страница/цитаты «ломались»). Пока идёт хирургия — молчим. */
+  let domBusy = 0;
   const boxFromEvent = e => {
     const t = e.target;
     if (!t || t.nodeType !== 1) return null;
@@ -604,6 +610,16 @@ export function openEditor(id, opts = {}) {
     /* Тап по боксу чек-листа не двигает каретку — автодосдвиг холста не нужен.
        Страховка на случай, если браузер всё-таки «увёл» каретку в конец. */
     if (performance.now() - lastBoxTap < 450) return;
+    /* Во время растягивания выделения (drag) автодосдвиг НЕ трогаем: он каждый
+       раз возвращал scrollTop под каретку, из-за чего страница не скроллилась
+       пальцем и «прыгала», а тулбар дёргался. Досдвиг уместен только для
+       стоящей каретки. */
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount && !sel.isCollapsed) return;
+    /* Пользователь сам недавно крутил холст (touchmove/колесо) — не воюем с
+       ним автодосдвигом, иначе получается «погоня»: палец скроллит, а мы
+       возвращаем scrollTop обратно. */
+    if (performance.now() - lastScrollAt < 350) return;
     const r = caretRect();
     if (!r) return;
     /* Панель и меню занимают один слот, поэтому берём высоту видимой полосы. */
@@ -639,7 +655,10 @@ export function openEditor(id, opts = {}) {
   }
   const scheduleSave = debounce(async () => {
     saveContent();
-    await Store.saveNoteRaw(note);
+    /* Сбой базы (нет места, заблокировано хранилище) не должен ронять или
+       вешать редактор: текст остаётся в DOM и уйдёт при следующей попытке. */
+    try { await Store.saveNoteRaw(note); }
+    catch (e) {}
   }, 450);
   /* Пауза перед перерисовкой главной — ровно столько, сколько длится переход
      экрана (--dur-3 + запас). Так сетка перестраивается уже после анимации и
@@ -652,8 +671,14 @@ export function openEditor(id, opts = {}) {
     const sig = signature();
     if (sig === baseline) return;
     const empty = !note.title && !(content.textContent || '').trim() && !note.audio && !(note.content || '').includes('<img') && !(note.content || '').includes('data-drawing');
-    if (empty && isNew) { await Store.delNote(note.id); }
-    else { await Store.saveNote(note); }
+    try {
+      if (empty && isNew) { await Store.delNote(note.id); }
+      else { await Store.saveNote(note); }
+    } catch (e) {
+      /* База недоступна — не блокируем закрытие и не вешаем экран. baseline
+         не трогаем: повторный вход попробует записать снова. */
+      return;
+    }
     baseline = sig;
     /* Главную перерисовываем, когда анимация закрытия уже доехала: иначе
        перестройка сетки попадала в кадры анимации и «дёргала» её. */
@@ -789,23 +814,88 @@ export function openEditor(id, opts = {}) {
   folderChip.addEventListener('click', folderSheet);
 
   /* ---------- Тулбар: selection + вставка (не терять каретку при тапе по кнопкам) ---------- */
-  let savedRange = null;
+  /* Снимок выделения текстовыми смещениями от начала холста. Живой Range (и его
+     клон!) браузер сам «схлопывает»/переносит при перестановке узлов (перенос
+     списка или блоков в цитату), поэтому единственный надёжный носитель
+     выделения — смещения по тексту: узлы мы не пересоздаём, а только переносим. */
+  let savedOffsets = null;
+
+  function textOffsetOf(node, offset) {
+    try {
+      if (node === content || !content.contains(node)) {
+        let len = 0;
+        for (let i = 0; i < offset && i < content.childNodes.length; i++) len += (content.childNodes[i].textContent || '').length;
+        return len;
+      }
+      const pre = document.createRange();
+      pre.selectNodeContents(content);
+      pre.setEnd(node, offset);
+      return pre.toString().length;
+    } catch (e) { return null; }
+  }
+  function rangeFromOffsets(start, end) {
+    const pointAt = (off) => {
+      let left = off;
+      const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+      let n;
+      while ((n = walker.nextNode())) {
+        if (left <= n.nodeValue.length) return [n, left];
+        left -= n.nodeValue.length;
+      }
+      return [content, content.childNodes.length];
+    };
+    const [sn, so] = pointAt(start);
+    const [en, eo] = pointAt(end);
+    const r = document.createRange();
+    try { r.setStart(sn, so); r.setEnd(en, eo); }
+    catch (e) { r.selectNodeContents(content); r.collapse(false); }
+    return r;
+  }
+  /* Запомнить выделение как смещения по тексту — единственная точка записи. */
+  function rememberRange(r) {
+    if (!r) return;
+    const a = textOffsetOf(r.startContainer, r.startOffset);
+    const b = textOffsetOf(r.endContainer, r.endOffset);
+    if (a != null && b != null) savedOffsets = { start: a, end: b };
+  }
 
   function saveSelection() {
+    /* Во время правки DOM выделение браузера — мусор (схлопнутая каретка);
+       не даём ему затереть выделение, с которым работает пользователь. */
+    if (domBusy) return;
     const sel = window.getSelection();
     if (!sel?.rangeCount) return;
     const n = sel.anchorNode;
     if (!n || !content.contains(n)) return;
-    savedRange = sel.getRangeAt(0).cloneRange();
+    const r = sel.getRangeAt(0);
+    /* Вырожденная каретка «в корне» холста — артефакт браузера после
+       перестановок узлов или тапа по панели. Она не должна затирать рабочее
+       сохранённое выделение, иначе повторный тап по инструменту теряет выбор. */
+    if (r.collapsed && r.startContainer === content) return;
+    rememberRange(r);
   }
 
   function restoreSelection() {
-    if (!savedRange) return false;
-    if (!content.contains(savedRange.startContainer)) return false;
+    if (!savedOffsets) return false;
+    const r = rangeFromOffsets(savedOffsets.start, savedOffsets.end);
+    if (!r) return false;
     const sel = window.getSelection();
     sel.removeAllRanges();
-    sel.addRange(savedRange);
+    sel.addRange(r);
     return true;
+  }
+  /* Живое выделение бывает «схлопнуто» браузером в корне холста после
+     перестановки узлов (перенос списка/блоков в цитату). Из-за этого повторный
+     тап по инструменту не видел выделения пользователя и лишь портил структуру.
+     Если живое выделение непригодно — собираем его по сохранённым смещениям. */
+  function activeRange() {
+    const sel = window.getSelection();
+    const r = (sel && sel.rangeCount) ? sel.getRangeAt(0) : null;
+    const liveOk = r && content.contains(r.startContainer) &&
+      !(r.collapsed && r.startContainer === content);
+    if (liveOk) return r;
+    if (savedOffsets) return rangeFromOffsets(savedOffsets.start, savedOffsets.end);
+    return r;
   }
 
   function placeCaretIn(node) {
@@ -815,7 +905,7 @@ export function openEditor(id, opts = {}) {
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(r);
-    savedRange = r.cloneRange();
+    rememberRange(r);
   }
 
   /* Каретка как смещение по тексту: переживает перестановку узлов, которую
@@ -851,19 +941,20 @@ export function openEditor(id, opts = {}) {
     r.collapse(true);
     sel.removeAllRanges();
     sel.addRange(r);
-    savedRange = r.cloneRange();
+    rememberRange(r);
   }
 
   function focusEditor() {
     content.focus({ preventScroll: true });
     if (!restoreSelection()) {
+      /* Восстановить нечего (пустой холст) — ставим каретку в конец. */
       const r = document.createRange();
       r.selectNodeContents(content);
       r.collapse(false);
       const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(r);
-      savedRange = r.cloneRange();
+      rememberRange(r);
     }
   }
 
@@ -893,7 +984,7 @@ export function openEditor(id, opts = {}) {
         range.collapse(false);
         sel.removeAllRanges();
         sel.addRange(range);
-        savedRange = range.cloneRange();
+        rememberRange(range);
       } else {
         content.insertAdjacentHTML('beforeend', html);
       }
@@ -1131,7 +1222,7 @@ export function openEditor(id, opts = {}) {
      же слову поднимает выделение на ступень выше, тап по другому слову
      начинает заново. Работает и мышью, и пальцем. */
   const WORD_CH = /[\p{L}\p{N}_'’\-]/u;
-  const BLOCK_TAGS = /^(DIV|P|H1|H2|H3|LI|BLOCKQUOTE)$/;
+  const BLOCK_TAGS = /^(DIV|P|H1|H2|H3|LI|BLOCKQUOTE|UL|OL)$/;
   let tapDownPt = null, tapLastAt = 0, tapLastPt = null;
   let dtWord = null, dtLevel = 0, dtLastAt = 0;
 
@@ -1233,7 +1324,7 @@ export function openEditor(id, opts = {}) {
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(r);
-    savedRange = r.cloneRange();
+    rememberRange(r);
     if (fmtOpen) syncFormatState();
   }
   function onTapUp(e) {
@@ -1284,13 +1375,24 @@ export function openEditor(id, opts = {}) {
   });
 
   function runFormat(mutate, key) {
-    ensureBlock();
-    focusEditor();
-    if (INLINE_TOOLS.has(key)) { expandToSentence(); trimSelection(); }
-    mutate();
-    if (INLINE_TOOLS.has(key)) stripSpaceDecoration();
-    /* Оформление могло разобрать <a> на куски — возвращаем ссылки на место. */
-    linkifyContent();
+    /* domBusy — счётчик: инструмент может вызвать вложенную правку (например,
+       цитату), и «замолчать» сохранение выделения нужно до самого конца. */
+    domBusy++;
+    try {
+      ensureBlock();
+      focusEditor();
+      if (INLINE_TOOLS.has(key)) { expandToSentence(); trimSelection(); }
+      mutate();
+      if (INLINE_TOOLS.has(key)) stripSpaceDecoration();
+      /* Оформление могло разобрать <a> на куски — возвращаем ссылки на место. */
+      linkifyContent();
+    } finally {
+      domBusy--;
+    }
+    /* Перестановки узлов и «подчистка» ссылок схлопывают каретку в начало
+       блока. Возвращаем выделение, с которым работал пользователь, — иначе
+       повторный тап по инструменту (вторые ковычки) срабатывал «в никуда». */
+    restoreSelection();
     saveSelection();
     commit();
     scheduleSave();
@@ -1304,6 +1406,7 @@ export function openEditor(id, opts = {}) {
     /* Тап по боксу чек-листа не должен ни переписывать сохранённую каретку,
        ни тянуть за собой холст — на время тапа просто молчим. */
     if (performance.now() - lastBoxTap < 450) return;
+    if (domBusy) return;
     const sel = window.getSelection();
     if (sel?.anchorNode && content.contains(sel.anchorNode)) {
       saveSelection(); ensureCaretClear();
@@ -1382,7 +1485,7 @@ export function openEditor(id, opts = {}) {
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(r);
-    savedRange = r.cloneRange();
+    rememberRange(r);
   }
   function insertChecklist() {
     runFormat(() => {
@@ -1537,44 +1640,95 @@ export function openEditor(id, opts = {}) {
     bq.replaceWith(div);
     return div;
   }
-  /* Находится ли курсор/выделение внутри цитаты (цитата может быть выше
-     текущего блока, поэтому проверяем предков, а не сам блок). */
-  function selectionInQuote() {
-    const blocks = targetBlocks();
-    if (blocks.length) return blocks.some(b => !!b.closest('blockquote'));
-    return !!caretBlock()?.closest?.('blockquote');
+  /* Блоки под выделением, поднятые до «оборачиваемого» уровня: отдельные <li>
+     списка заменяются на их <ul>/<ol> целиком. Иначе перенос <li> внутрь цитаты
+     давал битый HTML (пункт без списка) и ломал логику ковычек. */
+  function expandBlocks(blocks) {
+    const out = [];
+    blocks.forEach(b => {
+      if (b.tagName === 'LI' || b.tagName === 'DIV' || b.tagName === 'P') {
+        const list = b.closest('ul,ol');
+        if (list) { if (!out.includes(list)) out.push(list); }
+        else if (!out.includes(b)) out.push(b);
+        return;
+      }
+      if (!out.includes(b)) out.push(b);
+    });
+    return out;
+  }
+  /* Блоки вне цитаты доносим в существующую цитату: идущие до неё — в начало,
+     идущие после — в конец. Порядок следования сохраняется. */
+  function mergeIntoQuote(bq, blocks) {
+    const before = [], after = [];
+    blocks.forEach(b => {
+      if (b.compareDocumentPosition(bq) & Node.DOCUMENT_POSITION_FOLLOWING) before.push(b);
+      else after.push(b);
+    });
+    for (let i = before.length - 1; i >= 0; i--) { const b = before[i]; if (b.isConnected) bq.insertBefore(b, bq.firstChild); }
+    after.forEach(b => { if (b.isConnected) bq.appendChild(b); });
   }
   /* Поставить цитату: вложить блоки ВНУТРЬ blockquote, а не заменять их тег.
      Иначе formatBlock менял, например, h1 на blockquote — формат текста
      внутри цитаты «сбрасывался». */
   function wrapQuote() {
-    const blocks = targetBlocks();
-    if (!blocks.length) { document.execCommand('formatBlock', false, 'blockquote'); return; }
-    /* Соседние блоки с одним родителем объединяем в одну цитату. */
-    const groups = [];
-    blocks.forEach(b => {
-      const g = groups.find(g => g.parent === b.parentNode && g.last.nextSibling === b);
-      if (g) g.last = b; else groups.push({ parent: b.parentNode, first: b, last: b });
-    });
-    groups.forEach(g => {
-      const bq = document.createElement('blockquote');
-      g.first.replaceWith(bq);
-      let n = g.first;
-      while (n) { const next = n === g.last ? null : n.nextSibling; bq.appendChild(n); n = next; }
-    });
-    /* Узлы не пересоздавались — каретка осталась валидной, возвращаем её. */
-    restoreSelection();
+    domBusy++;
+    try {
+      const blocks = expandBlocks(targetBlocks());
+      const outside = blocks.filter(b => !b.closest('blockquote'));
+      if (!outside.length) {
+        /* Все блоки уже в цитате (или их нет) — добавлять нечего. */
+        if (blocks.length) return;
+        document.execCommand('formatBlock', false, 'blockquote');
+        return;
+      }
+      const inside = blocks.filter(b => b.closest('blockquote'));
+      const bqs = new Set(inside.map(b => b.closest('blockquote')));
+      if (bqs.size === 1) {
+        /* Одна существующая цитата — доносим внешние блоки в неё, чтобы весь
+           выделенный текст оказался под одними ковычками. */
+        mergeIntoQuote(bqs.values().next().value, outside);
+        restoreSelection();
+        return;
+      }
+      /* Соседние блоки с одним родителем объединяем в одну цитату. */
+      const groups = [];
+      outside.forEach(b => {
+        const g = groups.find(g => g.parent === b.parentNode && g.last.nextSibling === b);
+        if (g) g.last = b; else groups.push({ parent: b.parentNode, first: b, last: b });
+      });
+      groups.forEach(g => {
+        const bq = document.createElement('blockquote');
+        g.first.replaceWith(bq);
+        let n = g.first;
+        while (n) { const next = n === g.last ? null : n.nextSibling; bq.appendChild(n); n = next; }
+      });
+      /* Узлы не пересоздавались — каретка осталась валидной, возвращаем её. */
+      restoreSelection();
+    } finally {
+      domBusy--;
+    }
   }
-  /* Цитата — переключатель: повторный тап снимает её. */
+  /* Цитата — переключатель: повторный тап снимает её ТОЛЬКО когда всё выделение
+     внутри неё. При смешанном выделении (часть в цитате, часть снаружи) — наоборот,
+     доносим внешние блоки под те же ковычки, а не рушим существующую цитату. */
   function toggleQuote() {
-    if (!selectionInQuote()) { wrapQuote(); return; }
-    const bqs = new Set();
-    targetBlocks().forEach(b => { const q = b.closest('blockquote'); if (q) bqs.add(q); });
-    if (!bqs.size) { const q = content.querySelector('blockquote'); if (q) bqs.add(q); }
-    if (!bqs.size) return;
-    let first = null;
-    Array.from(bqs).forEach(q => { const n = unwrapQuote(q); if (!first) first = n; });
-    if (first) placeCaretAtEnd(first);
+    domBusy++;
+    try {
+      const blocks = expandBlocks(targetBlocks());
+      if (!blocks.length) { wrapQuote(); return; }
+      const inside = blocks.filter(b => b.closest('blockquote'));
+      if (inside.length === blocks.length) {
+        const bqs = new Set();
+        blocks.forEach(b => { const q = b.closest('blockquote'); if (q) bqs.add(q); });
+        let first = null;
+        Array.from(bqs).forEach(q => { const n = unwrapQuote(q); if (!first) first = n; });
+        if (first) placeCaretAtEnd(first);
+        return;
+      }
+      wrapQuote();
+    } finally {
+      domBusy--;
+    }
   }
   function placeCaretAtEnd(node) {
     const r = document.createRange();
@@ -1583,7 +1737,7 @@ export function openEditor(id, opts = {}) {
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(r);
-    savedRange = r.cloneRange();
+    rememberRange(r);
   }
   /* Повторный тап по активному выравниванию возвращает абзац к левому краю —
      так инструмент снимается повторным нажатием. */
@@ -1599,10 +1753,10 @@ export function openEditor(id, opts = {}) {
      работают наоборот. «Уменьшить отступ» серая, пока отступа нет. */
   const INDENT_STEP = 28;
   function caretBlock() {
-    let node = window.getSelection()?.anchorNode;
+    let node = activeRange()?.startContainer;
     if (node?.nodeType === 3) node = node.parentElement;
     while (node && node !== content) {
-      if (node.nodeType === 1 && /^(DIV|P|H1|H2|H3|BLOCKQUOTE|LI)$/.test(node.tagName)) return node;
+      if (node.nodeType === 1 && /^(DIV|P|H1|H2|H3|BLOCKQUOTE|LI|UL|OL)$/.test(node.tagName)) return node;
       node = node.parentElement;
     }
     return null;
@@ -1638,13 +1792,15 @@ export function openEditor(id, opts = {}) {
   /* Блоки, которых касается выделение. Без выделения — блок под кареткой.
      Отступ применяем ко всем выделенным абзацам, а не только к одному. */
   function targetBlocks() {
-    const sel = window.getSelection();
-    if (!sel || !sel.rangeCount) return [];
-    const r = sel.getRangeAt(0);
+    const r = activeRange();
+    if (!r) return [];
     if (r.collapsed) { const b = caretBlock(); return b ? [b] : []; }
     const all = [];
-    content.querySelectorAll('div,p,h1,h2,h3,blockquote,li').forEach(b => {
-      if (r.intersectsNode(b)) all.push(b);
+    content.querySelectorAll('div,p,h1,h2,h3,blockquote,li,ul,ol').forEach(b => {
+      /* <ul>/<ol> — только как «контейнеры» для expandBlocks(): отдельные
+         <li> поднимаются до своего списка, иначе цитата получала пункт без
+         списка и HTML ломался. */
+      if (b.tagName !== 'UL' && b.tagName !== 'OL' && r.intersectsNode(b)) all.push(b);
     });
     return all.filter(b => !all.some(o => o !== b && b.contains(o)));
   }
@@ -2258,7 +2414,11 @@ export function openEditor(id, opts = {}) {
   bodyWrap.addEventListener('touchstart', e => {
     swipeFrom = e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
   }, { passive: true });
+  bodyWrap.addEventListener('wheel', () => {
+    lastScrollAt = performance.now();
+  }, { passive: true });
   bodyWrap.addEventListener('touchmove', e => {
+    lastScrollAt = performance.now();
     if (!swipeFrom) return;
     const t = e.touches[0]; if (!t) return;
     if (Math.hypot(t.clientX - swipeFrom.x, t.clientY - swipeFrom.y) > 18) {
@@ -2290,7 +2450,7 @@ export function openEditor(id, opts = {}) {
     r.collapse(true);
     sel.removeAllRanges();
     sel.addRange(r);
-    savedRange = r.cloneRange();
+    rememberRange(r);
   }
 
   bodyWrap.addEventListener('scroll', positionImageTools, { passive: true });

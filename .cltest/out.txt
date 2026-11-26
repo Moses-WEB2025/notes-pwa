@@ -1,0 +1,143 @@
+﻿OK   T1 вставка: каретка в .lbl того же символа (8)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at placeCaretIn (http://127.0.0.1:8131/scripts/screens/editor.js:915:5)
+    at toggleCheckItem (http://127.0.0.1:8131/scripts/screens/editor.js:412:14)
+    at HTMLDivElement.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:430:5)
+    at eval (eval at evaluate (:290:30), <anonymous>:3:7)
+    at UtilityScript.evaluate (<anonymous>:292:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+OK   T2 тап по боксу: галочка вкл (checked+aria)
+OK   T2 тап по боксу: каретка в начале .lbl (offset 0)  | off=0 inLbl=true class=lbl html=<div class="check-item checked"><span class="box" contenteditable="false" role="checkbox" aria-checked="true"></span><span class="lbl">пункт
+OK   T3 вставка в пустой абзац: каретка в начале .lbl (offset 0)  | off=0 inLbl=true class=lbl html=<div class="check-item checked"><span class="box" contenteditable="false" role="checkbox" aria-checked="true"></span><span class="lbl">пункт
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at placeCaretIn (http://127.0.0.1:8131/scripts/screens/editor.js:915:5)
+    at replaceBlockTag (http://127.0.0.1:8131/scripts/screens/editor.js:1613:32)
+    at toggleBlock (http://127.0.0.1:8131/scripts/screens/editor.js:1621:14)
+    at h2 (http://127.0.0.1:8131/scripts/screens/editor.js:1822:15)
+    at runFormat (http://127.0.0.1:8131/scripts/screens/editor.js:1388:5)
+    at HTMLDivElement.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1868:30)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at saveSelection (http://127.0.0.1:8131/scripts/screens/editor.js:877:5)
+    at runFormat (http://127.0.0.1:8131/scripts/screens/editor.js:1392:5)
+    at HTMLDivElement.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1868:30)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at saveSelection (http://127.0.0.1:8131/scripts/screens/editor.js:877:5)
+    at HTMLDocument.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1408:7)
+OK   T4 H2 внутри цитаты: блок h2 внутри ЕДИНОЙ цитаты  | blockTag=H2 inQuote=true quotes=1 html=<blockquote><h2>первая строка цитаты</h2><div>вторая строка цитаты</div></blockquote><div>обычный абзац вне цитаты</div>
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at saveSelection (http://127.0.0.1:8131/scripts/screens/editor.js:877:5)
+    at HTMLDivElement.keepFocus (http://127.0.0.1:8131/scripts/screens/editor.js:1414:48)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at saveSelection (http://127.0.0.1:8131/scripts/screens/editor.js:877:5)
+    at HTMLDivElement.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1866:5)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at restoreSelection (http://127.0.0.1:8131/scripts/screens/editor.js:890:5)
+    at focusEditor (http://127.0.0.1:8131/scripts/screens/editor.js:956:10)
+    at runFormat (http://127.0.0.1:8131/scripts/screens/editor.js:1386:5)
+    at HTMLDivElement.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1868:30)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at placeCaretIn (http://127.0.0.1:8131/scripts/screens/editor.js:915:5)
+    at replaceBlockTag (http://127.0.0.1:8131/scripts/screens/editor.js:1613:32)
+    at toggleBlock (http://127.0.0.1:8131/scripts/screens/editor.js:1621:14)
+    at h2 (http://127.0.0.1:8131/scripts/screens/editor.js:1822:15)
+    at runFormat (http://127.0.0.1:8131/scripts/screens/editor.js:1388:5)
+    at HTMLDivElement.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1868:30)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at saveSelection (http://127.0.0.1:8131/scripts/screens/editor.js:877:5)
+    at runFormat (http://127.0.0.1:8131/scripts/screens/editor.js:1392:5)
+    at HTMLDivElement.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1868:30)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at saveSelection (http://127.0.0.1:8131/scripts/screens/editor.js:877:5)
+    at HTMLDocument.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1408:7)
+OK   T5 повторное H2: возврат к div, цитата цела  | blockTag=DIV inQuote=true quotes=1 html=<blockquote><div>первая строка цитаты</div><div>вторая строка цитаты</div></blockquote><div>обычный абзац вне цитаты</div>
+OK   T6 H2 вне цитаты: <h2> на месте, без blockquote  | blockTag=H2 inQuote=false quotes=1 html=<blockquote><div>первая строка цитаты</div><div>вторая строка цитаты</div></blockquote><h2>обычный абзац вне цитаты</h2>
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at saveSelection (http://127.0.0.1:8131/scripts/screens/editor.js:877:5)
+    at HTMLDocument.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1408:7)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at saveSelection (http://127.0.0.1:8131/scripts/screens/editor.js:877:5)
+    at HTMLDivElement.keepFocus (http://127.0.0.1:8131/scripts/screens/editor.js:1414:48)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at saveSelection (http://127.0.0.1:8131/scripts/screens/editor.js:877:5)
+    at HTMLDivElement.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1866:5)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at restoreSelection (http://127.0.0.1:8131/scripts/screens/editor.js:890:5)
+    at focusEditor (http://127.0.0.1:8131/scripts/screens/editor.js:956:10)
+    at runFormat (http://127.0.0.1:8131/scripts/screens/editor.js:1386:5)
+    at HTMLDivElement.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1868:30)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at placeCaretIn (http://127.0.0.1:8131/scripts/screens/editor.js:915:5)
+    at replaceBlockTag (http://127.0.0.1:8131/scripts/screens/editor.js:1613:32)
+    at p (http://127.0.0.1:8131/scripts/screens/editor.js:1820:47)
+    at runFormat (http://127.0.0.1:8131/scripts/screens/editor.js:1388:5)
+    at HTMLDivElement.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1868:30)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at saveSelection (http://127.0.0.1:8131/scripts/screens/editor.js:877:5)
+    at runFormat (http://127.0.0.1:8131/scripts/screens/editor.js:1392:5)
+    at HTMLDivElement.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1868:30)
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at saveSelection (http://127.0.0.1:8131/scripts/screens/editor.js:877:5)
+    at HTMLDocument.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1408:7)
+OK   T7 «Обычный текст» в цитате: div внутри ЕДИНОЙ цитаты  | blockTag=DIV inQuote=true quotes=1 html=<blockquote><div>первая строка цитаты</div><div>вторая строка цитаты</div></blockquote><h2>обычный абзац вне цитаты</h2>
+  [fdbg] TK live=range atRoot=false sr=true/false so={"start":0,"end":10} ar=range:txt blocks=UL
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at restoreSelection (http://127.0.0.1:8131/scripts/screens/editor.js:890:5)
+    at wrapQuote (http://127.0.0.1:8131/scripts/screens/editor.js:1702:7)
+    at toggleQuote (http://127.0.0.1:8131/scripts/screens/editor.js:1731:7)
+    at quote (http://127.0.0.1:8131/scripts/screens/editor.js:1832:18)
+    at runFormat (http://127.0.0.1:8131/scripts/screens/editor.js:1388:5)
+    at HTMLDivElement.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1868:30)
+OK   T8 список под цитату: весь <ul> внутри ЕДИНОЙ цитаты  | quotes=1 html=<blockquote><ul><li>один</li><li>два</li><li>три</li></ul></blockquote><div>абзац после списка</div>
+  [fdbg] zero-range
+Error
+    at rememberRange (http://127.0.0.1:8131/scripts/screens/editor.js:862:67)
+    at restoreSelection (http://127.0.0.1:8131/scripts/screens/editor.js:890:5)
+    at focusEditor (http://127.0.0.1:8131/scripts/screens/editor.js:956:10)
+    at runFormat (http://127.0.0.1:8131/scripts/screens/editor.js:1386:5)
+    at HTMLDivElement.<anonymous> (http://127.0.0.1:8131/scripts/screens/editor.js:1868:30)
+  [fdbg] TK live=collapsed atRoot=true sr=true/true so={"start":0,"end":0} ar=coll:DIV blocks=
+BAD  T8b повторный тап: цитата снята, список не повреждён  | quotes=1 html=<blockquote><ul><li>один</li><li>два</li><li>три</li></ul></blockquote><div>абзац после списка</div>
+  [fdbg] TK live=collapsed atRoot=false sr=true/true so={"start":5,"end":5} ar=coll:txt blocks=UL
+BAD  T9 каретка в пункте: цитата накрыла весь список  | quotes=0 html=<ul><li>один</li><li>два</li><li>три</li></ul><div>абзац после списка</div>
+  [fdbg] TK live=range atRoot=false sr=true/false so={"start":0,"end":26} ar=range:txt blocks=DIV,DIV
+OK   T10 смешанное выделение: оба абзаца под ОДНИМИ ковычками  | quotes=1 html=<blockquote><div>цитата внутри</div><div>абзац снаружи</div></blockquote>
+  [fdbg] TK live=range atRoot=false sr=true/false so={"start":0,"end":26} ar=range:txt blocks=DIV,DIV
+OK   T10b повторный тап: цитата снята, абзацы целы  | quotes=0 html=<div>цитата внутри</div><div>абзац снаружи</div>
+
+Итог: OK=11 BAD=2

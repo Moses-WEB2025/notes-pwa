@@ -28,6 +28,7 @@ const context = await browser.newContext({
 });
 const page = await context.newPage();
 page.on('pageerror', e => console.log('  [pageerror]', e.message));
+page.on('console', m => { if (m.text().startsWith('[fdbg]')) console.log('  ' + m.text()); });
 await page.route('**/sw.js', r => r.abort());
 await page.addInitScript(() => { try { Object.defineProperty(window, 'PublicKeyCredential', { value: undefined, configurable: true }); } catch (e) {} });
 await page.goto('http://127.0.0.1:8131/', { waitUntil: 'load' });
@@ -38,6 +39,8 @@ await page.evaluate(async () => {
   const now = Date.now();
   await Store.saveNote({ id: 'ck', title: 'Чек', content: '<div class="check-item"><span class="box" contenteditable="false" role="checkbox" aria-checked="false"></span><span class="lbl">пункт один</span></div><div>обычный абзац для вставки чек-листа</div><div><br></div>', color: null, createdAt: now, updatedAt: now, pinned: false, hidden: false });
   await Store.saveNote({ id: 'bq', title: 'Цитата', content: '<blockquote><div>первая строка цитаты</div><div>вторая строка цитаты</div></blockquote><div>обычный абзац вне цитаты</div>', color: null, createdAt: now, updatedAt: now, pinned: false, hidden: false });
+  await Store.saveNote({ id: 'lst', title: 'Список', content: '<ul><li>один</li><li>два</li><li>три</li></ul><div>абзац после списка</div>', color: null, createdAt: now, updatedAt: now, pinned: false, hidden: false });
+  await Store.saveNote({ id: 'mix', title: 'Смесь', content: '<blockquote><div>цитата внутри</div></blockquote><div>абзац снаружи</div>', color: null, createdAt: now, updatedAt: now, pinned: false, hidden: false });
 });
 
 async function openEditor(id) {
@@ -215,6 +218,94 @@ await page.waitForTimeout(300);
 {
   const st = await caretState();
   check('T7 «Обычный текст» в цитате: div внутри ЕДИНОЙ цитаты', /<blockquote><div>/.test(st.html) && st.quotes === 1 && st.blockTag === 'DIV' && st.inQuote, `blockTag=${st.blockTag} inQuote=${st.inQuote} quotes=${st.quotes} html=${st.html.slice(0, 180)}`);
+}
+
+// ===== T8: выделение списка → ЦИТАТА целиком (ul внутри blockquote, без битых li) =====
+await closeTop();
+await openEditor('lst');
+await setCaret(() => {
+  const c = document.querySelector('.note-content-input');
+  const ul = c.querySelector('ul');
+  const r = document.createRange();
+  r.setStart(ul.firstChild.firstChild, 0);
+  const lastT = ul.querySelector('li:last-child').firstChild;
+  r.setEnd(lastT, lastT.nodeValue.length);
+  const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+});
+await page.click('[data-tool="format"]');
+await page.waitForTimeout(200);
+await page.click('[data-fmt="quote"]');
+await page.waitForTimeout(300);
+{
+  const st = await caretState();
+  const ok = st.quotes === 1 && /^<blockquote><ul><li>один<\/li><li>два<\/li><li>три<\/li><\/ul><\/blockquote>/.test(st.html.trim());
+  check('T8 список под цитату: весь <ul> внутри ЕДИНОЙ цитаты', ok, `quotes=${st.quotes} html=${st.html.slice(0, 220)}`);
+}
+
+// ===== T8b: повторный тап → цитата снята, список цел =====
+await page.click('[data-fmt="quote"]');
+await page.waitForTimeout(300);
+{
+  const st = await caretState();
+  const ok = st.quotes === 0 && /<ul><li>один<\/li><li>два<\/li><li>три<\/li><\/ul>/i.test(st.html);
+  check('T8b повторный тап: цитата снята, список не повреждён', ok, `quotes=${st.quotes} html=${st.html.slice(0, 220)}`);
+}
+
+// ===== T9: каретка в одном пункте списка → цитата накрывает список целиком =====
+await setCaret(() => {
+  const c = document.querySelector('.note-content-input');
+  const li = c.querySelectorAll('ul li')[1];
+  const r = document.createRange();
+  r.setStart(li.firstChild, 1); r.collapse(true);
+  const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+});
+await page.click('[data-fmt="quote"]');
+await page.waitForTimeout(300);
+{
+  const st = await caretState();
+  const ok = st.quotes === 1 && /<blockquote><ul><li>/i.test(st.html);
+  check('T9 каретка в пункте: цитата накрыла весь список', ok, `quotes=${st.quotes} html=${st.html.slice(0, 220)}`);
+}
+
+// ===== T10: смешанное выделение (часть в цитате + часть снаружи) → ОДНА цитата =====
+await closeTop();
+await openEditor('mix');
+await setCaret(() => {
+  const c = document.querySelector('.note-content-input');
+  const qd = c.querySelector('blockquote div');
+  const od = c.querySelectorAll('div')[1];
+  const r = document.createRange();
+  r.setStart(qd.firstChild, 0);
+  r.setEnd(od.firstChild, od.firstChild.nodeValue.length);
+  const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+});
+await page.click('[data-tool="format"]');
+await page.waitForTimeout(200);
+await page.click('[data-fmt="quote"]');
+await page.waitForTimeout(300);
+{
+  const st = await caretState();
+  const oneBq = st.quotes === 1;
+  const bothIn = /<blockquote><div>цитата внутри<\/div><div>абзац снаружи<\/div><\/blockquote>/i.test(st.html);
+  check('T10 смешанное выделение: оба абзаца под ОДНИМИ ковычками', oneBq && bothIn, `quotes=${st.quotes} html=${st.html.slice(0, 240)}`);
+}
+
+// ===== T10b: повторный тап со всем выделением → цитата снята целиком =====
+await setCaret(() => {
+  const c = document.querySelector('.note-content-input');
+  const bq = c.querySelector('blockquote');
+  const r = document.createRange();
+  r.selectNodeContents(bq.firstChild.firstChild);
+  const bqD = bq.querySelectorAll('div');
+  r.setEnd(bqD[bqD.length - 1].firstChild, bqD[bqD.length - 1].firstChild.nodeValue.length);
+  const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+});
+await page.click('[data-fmt="quote"]');
+await page.waitForTimeout(300);
+{
+  const st = await caretState();
+  const ok = st.quotes === 0 && /<div>цитата внутри<\/div><div>абзац снаружи<\/div>/i.test(st.html);
+  check('T10b повторный тап: цитата снята, абзацы целы', ok, `quotes=${st.quotes} html=${st.html.slice(0, 240)}`);
 }
 
 console.log(`\nИтог: OK=${pass} BAD=${fail}`);
