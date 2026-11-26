@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/palette_container"
+    android:clipChildren="false"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <com.miui.doodle.feature.color.ColorGroupPickerView
+        android:id="@+id/color_group_picker_view"
+        android:visibility="visible"
+        android:clipChildren="false"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/color_group_picker_view_height"
+        android:importantForAccessibility="no"
+        android:elevation="4dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+        <include
+            android:id="@+id/color_items_container"
+            android:visibility="visible"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/color_items_panel_height"
+            android:importantForAccessibility="no"
+            layout="@layout/pad_doodle_color_items_layout"/>
+    </com.miui.doodle.feature.color.ColorGroupPickerView>
+    <com.miui.doodle.feature.color.ColorGroupPickerBar
+        android:id="@+id/color_group_picker"
+        android:visibility="visible"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/color_pick_bar_height"
+        app:layout_constraintBottom_toBottomOf="@+id/color_group_picker_view"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

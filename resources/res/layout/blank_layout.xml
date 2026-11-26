@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<miuix.miuixbasewidget.widget.EmptyStateView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:icon="@drawable/note_blank_icon"
+    android:layout_gravity="center_horizontal"
+    android:orientation="vertical"
+    android:id="@+id/blankview_container"
+    android:visibility="visible"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/phone_note_blank_view_margin_top"
+    android:title="@string/data_empty_note"/>

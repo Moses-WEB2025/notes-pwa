@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:state_selected="true"
+        android:color="@color/action_bar_title_text_color"/>
+    <item android:color="@color/action_bar_tab_title_unselect_text_color"/>
+</selector>

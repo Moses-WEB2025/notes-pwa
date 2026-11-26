@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="@dimen/widget_mind_note_item_height_4x4"
+    android:width="@dimen/widget_mind_note_item_icon_width"
+    android:autoMirrored="true"
+    android:viewportWidth="24"
+    android:viewportHeight="68">
+    <path
+        android:fillColor="@color/widget_mind_note_map_left_icon_color"
+        android:pathData="M2,44.5C2,39.2533 6.2533,35 11.5,35H15.5C16.3284,35 17,35.6716 17,36.5C17,37.3284 16.3284,38 15.5,38H11.5C7.9102,38 5,40.9101 5,44.5V50C4.5,50 4.3284,50 3.5,50C2.6716,50 2.5,50 2,50V44.5Z"
+        android:fillType="evenOdd"/>
+    <path
+        android:fillColor="@color/widget_mind_note_map_left_icon_color"
+        android:pathData="M2,50h3v18h-3z"/>
+</vector>

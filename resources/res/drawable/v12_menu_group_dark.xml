@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="@dimen/miuix_appcompat_action_button_height"
+    android:width="@dimen/miuix_appcompat_action_button_width"
+    android:viewportWidth="74"
+    android:viewportHeight="74">
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M32.19,23.8C31.3,23.8 30.52,23.22 30.27,22.37L29.49,19.72C29.36,19.29 28.97,19 28.53,19H19C18.45,19 18,19.45 18,20L18,52C18,52.55 18.45,53 19,53H54.83C55.38,53 55.83,52.55 55.83,52V24.8C55.83,24.25 55.38,23.8 54.83,23.8H32.19ZM56.67,18.8H34.43L33.84,16.82C33.45,15.49 32.15,14 30.28,14H17.16C14.86,14 13,15.88 13,18.2L13,53.8C13,56.12 14.86,58 17.16,58H56.67C58.96,58 60.83,56.12 60.83,53.8V23C60.83,20.68 58.96,18.8 56.67,18.8Z"
+        android:strokeAlpha="0.8"
+        android:fillAlpha="0.8"
+        android:fillType="evenOdd"/>
+</vector>

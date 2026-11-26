@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="miuix_search_container_margin_start">30.22dp</dimen>
+    <dimen name="miuix_search_list_padding_horizontal">30.22dp</dimen>
+    <dimen name="miuix_search_recommendation_item_del_margin">7.11dp</dimen>
+    <dimen name="miuix_search_recommendation_item_del_padding">23.11dp</dimen>
+</resources>

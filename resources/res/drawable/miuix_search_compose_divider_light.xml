@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:gravity="center_vertical"
+        android:height="@dimen/miuix_search_compose_divider_width">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/miuix_search_divider_line_color_light"/>
+        </shape>
+    </item>
+    <item android:height="@dimen/miuix_search_compose_divider_height">
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent"/>
+        </shape>
+    </item>
+</layer-list>

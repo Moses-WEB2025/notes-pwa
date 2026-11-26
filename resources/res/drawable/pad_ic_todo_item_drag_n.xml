@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="@dimen/todo_item_drag_size"
+    android:width="@dimen/todo_item_drag_size"
+    android:viewportWidth="62"
+    android:viewportHeight="62">
+    <path
+        android:fillColor="@color/todo_item_drag_color"
+        android:pathData="M10,18C10,16.3431 11.3431,15 13,15H49C50.6569,15 52,16.3431 52,18C52,19.6569 50.6569,21 49,21H13C11.3431,21 10,19.6569 10,18ZM10,31C10,29.3431 11.3431,28 13,28H49C50.6569,28 52,29.3431 52,31C52,32.6569 50.6569,34 49,34H13C11.3431,34 10,32.6569 10,31ZM13,41C11.3431,41 10,42.3431 10,44C10,45.6569 11.3431,47 13,47H49C50.6569,47 52,45.6569 52,44C52,42.3431 50.6569,41 49,41H13Z"
+        android:fillType="evenOdd"/>
+</vector>

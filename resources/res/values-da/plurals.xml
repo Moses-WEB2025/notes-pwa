@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="a_hour_ago">
+        <item quantity="one">1 time siden</item>
+        <item quantity="other">1 time siden</item>
+    </plurals>
+    <plurals name="abbrev_a_hour_ago">
+        <item quantity="one">%d time siden</item>
+        <item quantity="other">%d time siden</item>
+    </plurals>
+    <plurals name="abbrev_half_hour_ago">
+        <item quantity="one">En halv time siden</item>
+        <item quantity="other">En halv time siden</item>
+    </plurals>
+    <plurals name="abbrev_in_a_hour">
+        <item quantity="one">Om %d time</item>
+        <item quantity="other">Om %d timer</item>
+    </plurals>
+    <plurals name="abbrev_in_half_hour">
+        <item quantity="one">Om en halv time</item>
+        <item quantity="other">Om en halv time</item>
+    </plurals>
+    <plurals name="abbrev_in_less_than_one_minute">
+        <item quantity="one">Omgående</item>
+        <item quantity="other">Omgående</item>
+    </plurals>
+    <plurals name="abbrev_in_num_minutes">
+        <item quantity="one">Om %d min</item>
+        <item quantity="other">Om %d min</item>
+    </plurals>
+    <plurals name="abbrev_less_than_one_minute_ago">
+        <item quantity="one">Lige nu</item>
+        <item quantity="other">Lige nu</item>
+    </plurals>
+    <plurals name="abbrev_num_minutes_ago">
+        <item quantity="one">%d min siden</item>
+        <item quantity="other">%d min siden</item>
+    </plurals>
+    <plurals name="ai_cannot_add_content_toast_text">
+        <item quantity="one">Hver note må ikke overskride %1$s tegn. Kan ikke tilføje mere indhold.</item>
+        <item quantity="other">Hver note må ikke overskride %1$s tegn. Kan ikke tilføje mere indhold.</item>
+    </plurals>
+    <plurals name="ai_cannot_useAI_toast_text">
+        <item quantity="one">Kan ikke bruge AI-skrivning til noter over %1$s tegn</item>
+        <item quantity="other">Kan ikke bruge AI-skrivning til noter over %1$s tegn</item>
+    </plurals>
+    <plurals name="ai_content_exceeded_warn">
+        <item quantity="one">Denne notes indhold overskrider AI-behandlingsgrænsen. Indtast op til %1$s tegn, og prøv igen.</item>
+        <item quantity="other">Denne notes indhold overskrider AI-behandlingsgrænsen. Indtast op til %1$s tegn, og prøv igen.</item>
+    </plurals>
+    <plurals name="ai_correct_mistakes">
+        <item quantity="one">Rettede %1$s fejl</item>
+        <item quantity="other">Rettede %1$s fejl</item>
+    </plurals>
+    <plurals name="ai_tag_words_more_than">
+        <item quantity="one">%1$s+ tegn</item>
+        <item quantity="other">%1$s+ tegn</item>
+    </plurals>
+    <plurals name="ai_word_count_exceed_title">
+        <item quantity="one">Kan ikke generere indhold over %1$s tegn</item>
+        <item quantity="other">Kan ikke generere indhold over %1$s tegn</item>
+    </plurals>
+    <plurals name="alert_message_delete">
+        <item quantity="one">Slet %1$s element?</item>
+        <item quantity="other">Slet %1$s elementer?</item>
+    </plurals>
+    <plurals name="cloud_state_unsynced_count">
+        <item quantity="one">%1$s element er ikke blevet synkroniseret</item>
+        <item quantity="other">%1$s elementer er ikke blevet synkroniseret</item>
+    </plurals>
+    <plurals name="corrected_title">
+        <item quantity="one">%1$s rettelse</item>
+        <item quantity="other">%1$s rettelser</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_limit_mm">
+        <item quantity="one">Højden må ikke overstige %1$d millimeter. Indtast igen.</item>
+        <item quantity="other">Højden må ikke overstige %1$d millimeter. Indtast igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_limit_px">
+        <item quantity="one">Højden må ikke overstige %1$d pixel. Indtast igen.</item>
+        <item quantity="other">Højden må ikke overstige %1$d pixel. Indtast igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_lower_limit_mm">
+        <item quantity="one">Højden skal være mindst %1$d millimeter. Indtast igen.</item>
+        <item quantity="other">Højden skal være mindst %1$d millimeter. Indtast igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_lower_limit_px">
+        <item quantity="one">Højden skal være mindst %1$d pixel. Indtast igen.</item>
+        <item quantity="other">Højden skal være mindst %1$d pixel. Indtast igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_limit_mm">
+        <item quantity="one">Bredden må ikke overstige %1$d millimeter. Indtast igen.</item>
+        <item quantity="other">Bredden må ikke overstige %1$d millimeter. Indtast igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_limit_px">
+        <item quantity="one">Bredden må ikke overstige %1$d pixel. Indtast igen.</item>
+        <item quantity="other">Bredden må ikke overstige %1$d pixel. Indtast igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_lower_limit_mm">
+        <item quantity="one">Bredden skal være mindst %1$d millimeter. Indtast igen.</item>
+        <item quantity="other">Bredden skal være mindst %1$d millimeter. Indtast igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_lower_limit_px">
+        <item quantity="one">Bredden skal være mindst %1$d pixel. Indtast igen.</item>
+        <item quantity="other">Bredden skal være mindst %1$d pixel. Indtast igen.</item>
+    </plurals>
+    <plurals name="date_calculate_days_after">
+        <item quantity="one">%1$d dag efter</item>
+        <item quantity="other">%1$d dage efter</item>
+    </plurals>
+    <plurals name="date_calculate_days_ago">
+        <item quantity="one">%1$d dag før</item>
+        <item quantity="other">%1$d dage før</item>
+    </plurals>
+    <plurals name="format_move_notes_out_folder">
+        <item quantity="one">Fjernet %1$s kommentar fra mappen</item>
+        <item quantity="other">Fjernet %1$s kommentarer fra mappen</item>
+    </plurals>
+    <plurals name="format_move_notes_to_folder">
+        <item quantity="one">Flyttet %1$s kommentar til %2$s</item>
+        <item quantity="other">Flyttet %1$s kommentarer til %2$s</item>
+    </plurals>
+    <plurals name="half_hour_ago">
+        <item quantity="one">En halv time siden</item>
+        <item quantity="other">En halv time siden</item>
+    </plurals>
+    <plurals name="in_a_hour">
+        <item quantity="one">Om 1 time</item>
+        <item quantity="other">Om 1 time</item>
+    </plurals>
+    <plurals name="in_half_hour">
+        <item quantity="one">Om en halv time</item>
+        <item quantity="other">Om en halv time</item>
+    </plurals>
+    <plurals name="in_less_than_one_minute">
+        <item quantity="one">Omgående</item>
+        <item quantity="other">Omgående</item>
+    </plurals>
+    <plurals name="in_num_minutes">
+        <item quantity="one">om 1 minut</item>
+        <item quantity="other">om %d minutter</item>
+    </plurals>
+    <plurals name="less_than_one_minute_ago">
+        <item quantity="one">Lige nu</item>
+        <item quantity="other">Lige nu</item>
+    </plurals>
+    <plurals name="miuix_appcompat_items_selected">
+        <item quantity="one">%d element valgt</item>
+        <item quantity="other">%d elementer valgt</item>
+    </plurals>
+    <plurals name="mtrl_badge_content_description">
+        <item quantity="one">%d ny notifikation</item>
+        <item quantity="other">%d nye notifikationer</item>
+    </plurals>
+    <plurals name="num_minutes_ago">
+        <item quantity="one">1 minut siden</item>
+        <item quantity="other">%d minutter siden</item>
+    </plurals>
+    <plurals name="pc_notes_search_result">
+        <item quantity="one">Fandt %1$s note</item>
+        <item quantity="other">Fandt %1$s noter</item>
+    </plurals>
+    <plurals name="pc_todo_search_result">
+        <item quantity="one">Fandt %1$s opgave</item>
+        <item quantity="other">Fandt %1$s opgaver</item>
+    </plurals>
+    <plurals name="record_last_ten_seconds_reminder">
+        <item quantity="one">%d sekund tilbage</item>
+        <item quantity="other">%d sekunder tilbage</item>
+    </plurals>
+    <plurals name="toast_notes_unhidden_count">
+        <item quantity="one">Vis %1$s kommentar</item>
+        <item quantity="other">Vis %1$s kommentarer</item>
+    </plurals>
+    <plurals name="todo_N_days_after">
+        <item quantity="one">Om %1$d dag</item>
+        <item quantity="other">Om %1$d dage</item>
+    </plurals>
+    <plurals name="todo_N_days_ago">
+        <item quantity="one">%1$d dag siden</item>
+        <item quantity="other">%1$d dage siden</item>
+    </plurals>
+    <plurals name="todo_alert_message_delete">
+        <item quantity="one">Slet %1$s opgave?</item>
+        <item quantity="other">Slet %1$s opgaver?</item>
+    </plurals>
+    <plurals name="todo_event_description_days_ago">
+        <item quantity="one">%1$d dag siden</item>
+        <item quantity="other">%1$d dage siden</item>
+    </plurals>
+    <plurals name="todo_event_description_days_later">
+        <item quantity="one">Om %1$d dag</item>
+        <item quantity="other">Om %1$d dage</item>
+    </plurals>
+    <plurals name="todo_terms">
+        <item quantity="one">%1$s opgave</item>
+        <item quantity="other">%1$s opgaver</item>
+    </plurals>
+    <plurals name="word_count">
+        <item quantity="one">%d tegn</item>
+        <item quantity="other">%d tegn</item>
+    </plurals>
+</resources>

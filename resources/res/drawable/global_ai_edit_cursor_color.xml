@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <size
+        android:height="@dimen/ai_recommend_layout_ai_edit_line_height"
+        android:width="@dimen/ai_recommend_layout_ai_edit_line_width"/>
+    <corners android:radius="@dimen/ai_recommend_layout_ai_edit_line_corner_radius"/>
+    <solid android:color="@color/ai_recommend_edit_cursor_color"/>
+    <padding
+        android:top="-1dp"
+        android:bottom="-1dp"/>
+</shape>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:recording_progress="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/edit_audio_record"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/note_edit_toolbar_content_height">
+    <com.miui.common.view.RecordingWaveView
+        android:id="@+id/record_wave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:importantForAccessibility="no"
+        recording_progress:defaultColor="@color/warn_color_red"
+        recording_progress:indicatorColor="@color/theme_main_color"
+        recording_progress:indicatorMaxHeight="@dimen/wave_max_height"
+        recording_progress:indicatorNum="27"
+        recording_progress:indicatorWidth="@dimen/wave_width"
+        recording_progress:interval="@dimen/wave_interval"/>
+</RelativeLayout>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/pad_ic_20px_size"/>
+            <solid android:color="@color/pad_note_audio_mode_switch_bg_color"/>
+        </shape>
+    </item>
+    <item
+        android:gravity="center"
+        android:height="@dimen/pad_ic_44px_size"
+        android:width="@dimen/pad_ic_44px_size"
+        android:drawable="@drawable/ic_btn_ch_en_trans_n"/>
+</layer-list>

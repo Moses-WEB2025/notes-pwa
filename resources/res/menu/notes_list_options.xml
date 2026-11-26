@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:icon="@drawable/miui_ic_secret"
+        android:id="@+id/hide"
+        android:title="@string/menu_hide"
+        android:contentDescription="@string/menu_hide_talkback"
+        android:showAsAction="withText|always"/>
+    <item
+        android:icon="?attr/actionBarRenameIcon"
+        android:id="@+id/rename"
+        android:title="@string/folder_operation_rename"
+        android:showAsAction="withText|always"/>
+    <item
+        android:icon="@drawable/miui_ic_stick"
+        android:id="@+id/stick"
+        android:title="@string/menu_stick"
+        android:contentDescription="@string/menu_pin_talkback"
+        android:showAsAction="withText|always"/>
+    <item
+        android:icon="@drawable/miui_ic_move"
+        android:id="@+id/move"
+        android:title="@string/menu_move_to"
+        android:contentDescription="@string/menu_move_to_talkback"
+        android:showAsAction="withText|always"/>
+    <item
+        android:icon="@drawable/v12_menu_group"
+        android:id="@+id/group"
+        android:title="@string/menu_group"
+        android:showAsAction="withText|always"/>
+    <item
+        android:icon="@drawable/miui_ic_delete"
+        android:id="@+id/delete"
+        android:title="@string/menu_delete"
+        android:contentDescription="@string/delete_talkback"
+        android:showAsAction="withText|always"/>
+</menu>

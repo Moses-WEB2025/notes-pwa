@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="attachment_chooser">
+        <item>Kamera</item>
+        <item>Galeria</item>
+    </array>
+    <array name="big_screen_layouts">
+        <item>@string/setting_big_screen_layout_columns</item>
+        <item>@string/setting_big_screen_layout_flat</item>
+    </array>
+    <array name="contact_entries">
+        <item>Emri</item>
+        <item>Nofka</item>
+        <item>Telefoni</item>
+        <item>Adresa e emailit</item>
+        <item>Kompania</item>
+        <item>IM</item>
+        <item>Telefon SIP</item>
+        <item>Ditëlindja</item>
+        <item>Faqja e internetit</item>
+        <item>Adresa</item>
+        <item>Shënim</item>
+    </array>
+    <array name="font_size_names">
+        <item>I vogël</item>
+        <item>I mesëm</item>
+        <item>I madh</item>
+        <item>Shumë i madh</item>
+    </array>
+    <array name="note_sort_way">
+        <item>Sipas datës së krijimit</item>
+        <item>Sipas datës së modifikimit</item>
+    </array>
+    <array name="passport_account_user_gender_name">
+        <item>Mashkull</item>
+        <item>Femër</item>
+    </array>
+    <array name="setting_phone_note_layout_way">
+        <item>@string/action_mode_switcher_list_description</item>
+        <item>@string/action_mode_switcher_grid_description</item>
+    </array>
+</resources>

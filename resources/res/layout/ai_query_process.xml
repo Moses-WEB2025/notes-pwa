@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <com.miui.notes.feature.notelist.DatabaseConstructionHintView
+        android:orientation="horizontal"
+        android:id="@+id/progress_id"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/ai_query_process_view_padding_h"
+        android:layout_marginVertical="@dimen/ai_query_process_view_padding_v"
+        gravity="center">
+        <TextView
+            android:textSize="13sp"
+            android:textColor="@color/database_construction_progress_text_color"
+            android:gravity="center"
+            android:id="@+id/hint_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/note_ai_search_database_building_progress"/>
+        <ImageView
+            android:id="@+id/hint_image"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/database_construction_hint_icon"
+            android:contentDescription="@string/notice_for_ai_search_tips"/>
+    </com.miui.notes.feature.notelist.DatabaseConstructionHintView>
+</LinearLayout>

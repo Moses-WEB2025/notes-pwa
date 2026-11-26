@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.miui.notes.ai.ui.material.MaterialEffectContainer xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    app:material_blend_colors="@array/ai_panel_widget_blend_colors"
+    app:material_blend_modes="@array/ai_panel_widget_blend_modes"
+    app:material_corner_radius="@dimen/ai_circle_tab_corner_radius"
+    app:material_default_bg_color="@color/ai_widget_default_bg_color"
+    app:material_shadow_color="@color/ai_widget_shadow_color_default"
+    app:material_shadow_radius="50"
+    app:material_shadow_y="15"
+    app:material_stroke_colors="@array/ai_button_gradient_border_colors"
+    app:material_stroke_width="@dimen/ai_widget_border_width"/>

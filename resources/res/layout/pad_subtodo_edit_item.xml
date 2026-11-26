@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="start|center_vertical"
+    android:orientation="horizontal"
+    android:background="@null"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <RelativeLayout
+        android:id="@+id/check_group"
+        android:layout_width="@dimen/pad_sub_todo_checkbox_group_size"
+        android:layout_height="@dimen/pad_sub_todo_checkbox_group_size">
+        <CheckBox
+            android:theme="@style/NoteTheme.List"
+            android:id="@+id/cb_subtodo"
+            android:layout_centerVertical="true"
+            style="@style/Todo.Pad.EditCheckBox"/>
+    </RelativeLayout>
+    <com.miui.todo.feature.todolist.SubTodoRichEditor
+        android:textSize="@dimen/pad_todo_edit_subtodo_text_size"
+        android:textColor="@color/todo_item_content_text_common_color"
+        android:gravity="start|center_vertical"
+        android:autoLink="all"
+        android:linksClickable="false"
+        android:id="@+id/editor"
+        android:background="@null"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:singleLine="true"
+        android:inputType="textImeMultiLine"
+        android:imeOptions="flagNoFullscreen|actionDone"
+        android:textCursorDrawable="@drawable/todo_editor_cursor"
+        android:layout_marginStart="@dimen/todo_edit_text_margin_start"/>
+</LinearLayout>

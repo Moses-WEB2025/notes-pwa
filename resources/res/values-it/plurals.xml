@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="a_hour_ago">
+        <item quantity="one">1 ora fa</item>
+        <item quantity="other">1 ora fa</item>
+    </plurals>
+    <plurals name="abbrev_a_hour_ago">
+        <item quantity="one">%d ora fa</item>
+        <item quantity="other">%d ora fa</item>
+    </plurals>
+    <plurals name="abbrev_half_hour_ago">
+        <item quantity="one">Mezz&apos;ora fa</item>
+        <item quantity="other">Mezz&apos;ora fa</item>
+    </plurals>
+    <plurals name="abbrev_in_a_hour">
+        <item quantity="one">Fra %d ora</item>
+        <item quantity="other">Fra %d ora</item>
+    </plurals>
+    <plurals name="abbrev_in_half_hour">
+        <item quantity="one">Tra mezz&apos;ora</item>
+        <item quantity="other">Tra mezz&apos;ora</item>
+    </plurals>
+    <plurals name="abbrev_in_less_than_one_minute">
+        <item quantity="one">Adesso</item>
+        <item quantity="other">Adesso</item>
+    </plurals>
+    <plurals name="abbrev_in_num_minutes">
+        <item quantity="one">Fra %d min</item>
+        <item quantity="other">Fra %d min</item>
+    </plurals>
+    <plurals name="abbrev_less_than_one_minute_ago">
+        <item quantity="one">Poco fa</item>
+        <item quantity="other">Poco fa</item>
+    </plurals>
+    <plurals name="abbrev_num_minutes_ago">
+        <item quantity="one">%d min fa</item>
+        <item quantity="other">%d min fa</item>
+    </plurals>
+    <plurals name="ai_cannot_add_content_toast_text">
+        <item quantity="one">Ogni nota non può superare %1$s carattere. Non è possibile aggiungere altro contenuto.</item>
+        <item quantity="other">Ogni nota non può superare %1$s caratteri. Non è possibile aggiungere altro contenuto.</item>
+    </plurals>
+    <plurals name="ai_cannot_useAI_toast_text">
+        <item quantity="one">Non è possibile utilizzare Scrittura AI per note di dimensioni superiori a %1$s carattere</item>
+        <item quantity="other">Non è possibile utilizzare Scrittura AI per note di dimensioni superiori a %1$s caratteri</item>
+    </plurals>
+    <plurals name="ai_content_exceeded_warn">
+        <item quantity="one">Il contenuto di questa nota supera i limiti di elaborazione dell&apos;IA. Inserisci fino a %1$s carattere e riprova.</item>
+        <item quantity="other">Il contenuto di questa nota supera i limiti di elaborazione dell&apos;IA. Inserisci fino a %1$s caratteri e riprova.</item>
+    </plurals>
+    <plurals name="ai_correct_mistakes">
+        <item quantity="one">%1$s errore corretto</item>
+        <item quantity="other">%1$s errori corretti</item>
+    </plurals>
+    <plurals name="ai_tag_words_more_than">
+        <item quantity="one">Più di %1$s carattere</item>
+        <item quantity="other">Più di %1$s caratteri</item>
+    </plurals>
+    <plurals name="ai_word_count_exceed_title">
+        <item quantity="one">Impossibile generare contenuti oltre %1$s carattere</item>
+        <item quantity="other">Impossibile generare contenuti oltre %1$s caratteri</item>
+    </plurals>
+    <plurals name="alert_message_delete">
+        <item quantity="one">Eliminare %1$s elemento?</item>
+        <item quantity="other">Eliminare %1$s elementi?</item>
+    </plurals>
+    <plurals name="cloud_state_unsynced_count">
+        <item quantity="one">%1$s elemento non sincronizzato</item>
+        <item quantity="other">%1$s elementi non sincronizzati</item>
+    </plurals>
+    <plurals name="corrected_title">
+        <item quantity="one">%1$s correzione</item>
+        <item quantity="other">%1$s correzioni</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_limit_mm">
+        <item quantity="one">L&apos;altezza non può superare %1$d millimetro. Digita nuovamente.</item>
+        <item quantity="other">L&apos;altezza non può superare %1$d millimetri. Digita nuovamente.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_limit_px">
+        <item quantity="one">L&apos;altezza non può superare %1$d pixel. Digita nuovamente.</item>
+        <item quantity="other">L&apos;altezza non può superare %1$d pixel. Digita nuovamente.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_lower_limit_mm">
+        <item quantity="one">L&apos;altezza deve essere di almeno %1$d millimetro. Digita nuovamente.</item>
+        <item quantity="other">L&apos;altezza deve essere di almeno %1$d millimetri. Digita nuovamente.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_lower_limit_px">
+        <item quantity="one">L&apos;altezza deve essere di almeno %1$d pixel. Digita nuovamente.</item>
+        <item quantity="other">L&apos;altezza deve essere di almeno %1$d pixel. Digita nuovamente.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_limit_mm">
+        <item quantity="one">La larghezza non può superare %1$d millimetro. Digita nuovamente.</item>
+        <item quantity="other">La larghezza non può superare %1$d millimetri. Digita nuovamente.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_limit_px">
+        <item quantity="one">La larghezza non può superare %1$d pixel. Digita nuovamente.</item>
+        <item quantity="other">La larghezza non può superare %1$d pixel. Digita nuovamente.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_lower_limit_mm">
+        <item quantity="one">La larghezza deve essere di almeno %1$d millimetro. Digita nuovamente.</item>
+        <item quantity="other">La larghezza deve essere di almeno %1$d millimetri. Digita nuovamente.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_lower_limit_px">
+        <item quantity="one">La larghezza deve essere di almeno %1$d pixel. Digita nuovamente.</item>
+        <item quantity="other">La larghezza deve essere di almeno %1$d pixel. Digita nuovamente.</item>
+    </plurals>
+    <plurals name="date_calculate_days_after">
+        <item quantity="one">%1$d giorno dopo</item>
+        <item quantity="other">%1$d giorni dopo</item>
+    </plurals>
+    <plurals name="date_calculate_days_ago">
+        <item quantity="one">%1$d giorno prima</item>
+        <item quantity="other">%1$d giorni prima</item>
+    </plurals>
+    <plurals name="format_move_notes_out_folder">
+        <item quantity="one">%1$s nota rimossa dalla cartella</item>
+        <item quantity="other">%1$s note rimosse dalla cartella</item>
+    </plurals>
+    <plurals name="format_move_notes_to_folder">
+        <item quantity="one">%1$s nota spostata in %2$s</item>
+        <item quantity="other">%1$s note spostate in %2$s</item>
+    </plurals>
+    <plurals name="half_hour_ago">
+        <item quantity="one">Mezz&apos;ora fa</item>
+        <item quantity="other">Mezz&apos;ora fa</item>
+    </plurals>
+    <plurals name="in_a_hour">
+        <item quantity="one">Tra 1 ora</item>
+        <item quantity="other">Tra 1 ora</item>
+    </plurals>
+    <plurals name="in_half_hour">
+        <item quantity="one">Tra mezz&apos;ora</item>
+        <item quantity="other">Tra mezz&apos;ora</item>
+    </plurals>
+    <plurals name="in_less_than_one_minute">
+        <item quantity="one">Adesso</item>
+        <item quantity="other">Adesso</item>
+    </plurals>
+    <plurals name="in_num_minutes">
+        <item quantity="one">tra 1 minuto</item>
+        <item quantity="other">tra %d minuti</item>
+    </plurals>
+    <plurals name="less_than_one_minute_ago">
+        <item quantity="one">Poco fa</item>
+        <item quantity="other">Poco fa</item>
+    </plurals>
+    <plurals name="miuix_appcompat_items_selected">
+        <item quantity="one">%d elemento selezionato</item>
+        <item quantity="other">%d elementi selezionati</item>
+    </plurals>
+    <plurals name="mtrl_badge_content_description">
+        <item quantity="one">%d nuova notifica</item>
+        <item quantity="other">%d nuove notifiche</item>
+    </plurals>
+    <plurals name="num_minutes_ago">
+        <item quantity="one">1 minuto fa</item>
+        <item quantity="other">%d minuti fa</item>
+    </plurals>
+    <plurals name="pc_notes_search_result">
+        <item quantity="one">%1$s nota trovata</item>
+        <item quantity="other">%1$s note trovate</item>
+    </plurals>
+    <plurals name="pc_todo_search_result">
+        <item quantity="one">%1$s attività trovata</item>
+        <item quantity="other">%1$s attività trovate</item>
+    </plurals>
+    <plurals name="record_last_ten_seconds_reminder">
+        <item quantity="one">%d secondo rimanente</item>
+        <item quantity="other">%d secondi rimanenti</item>
+    </plurals>
+    <plurals name="toast_notes_unhidden_count">
+        <item quantity="one">%1$s nota mostrata correttamente</item>
+        <item quantity="other">%1$s note mostrate correttamente</item>
+    </plurals>
+    <plurals name="todo_N_days_after">
+        <item quantity="one">Fra %1$d giorno</item>
+        <item quantity="other">Fra %1$d giorni</item>
+    </plurals>
+    <plurals name="todo_N_days_ago">
+        <item quantity="one">%1$d giorno fa</item>
+        <item quantity="other">%1$d giorni fa</item>
+    </plurals>
+    <plurals name="todo_alert_message_delete">
+        <item quantity="one">Eliminare %1$s attività?</item>
+        <item quantity="other">Eliminare %1$s attività?</item>
+    </plurals>
+    <plurals name="todo_event_description_days_ago">
+        <item quantity="one">%1$d giorno fa</item>
+        <item quantity="other">%1$d giorni fa</item>
+    </plurals>
+    <plurals name="todo_event_description_days_later">
+        <item quantity="one">Fra %1$d giorno</item>
+        <item quantity="other">Fra %1$d giorni</item>
+    </plurals>
+    <plurals name="todo_terms">
+        <item quantity="one">%1$s attività</item>
+        <item quantity="other">%1$s attività</item>
+    </plurals>
+    <plurals name="word_count">
+        <item quantity="one">%d carattere</item>
+        <item quantity="other">%d caratteri</item>
+    </plurals>
+</resources>

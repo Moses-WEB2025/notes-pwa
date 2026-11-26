@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="@dimen/widget_mind_note_item_height_4x4"
+    android:width="@dimen/widget_mind_note_item_icon_width"
+    android:viewportWidth="24"
+    android:viewportHeight="68">
+    <path
+        android:fillColor="@color/widget_mind_note_map_left_icon_color"
+        android:pathData="M2,36.5C2,35.6716 2.6716,35 3.5,35H15.5C16.3284,35 17,35.6716 17,36.5C17,37.3284 16.3284,38 15.5,38H3.5C2.6716,38 2,37.3284 2,36.5Z"/>
+</vector>

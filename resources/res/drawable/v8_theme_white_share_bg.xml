@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <padding
+        android:left="@dimen/note_share_theme_default_frame_horizontal_space"
+        android:top="@dimen/theme_white_share_frame_top_space"
+        android:right="@dimen/note_share_theme_default_frame_horizontal_space"
+        android:bottom="@dimen/theme_white_share_frame_bottom_space"/>
+</shape>

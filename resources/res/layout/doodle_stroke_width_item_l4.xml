@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/brush_stroke_item_group"
+    android:clipChildren="false"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:contentDescription="@string/doodle_pencil_stroke_4">
+    <View
+        android:id="@+id/brush_stroke_item_select_bg"
+        android:background="@drawable/doodle_brush_stroke_bg"
+        android:layout_width="@dimen/stroke_item_bg_level_4"
+        android:layout_height="@dimen/stroke_item_bg_level_4"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+    <View
+        android:id="@+id/brush_stroke_item_content"
+        android:layout_width="@dimen/stroke_item_level_4"
+        android:layout_height="@dimen/stroke_item_level_4"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

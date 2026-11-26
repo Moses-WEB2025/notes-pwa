@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:icon="?attr/actionBarRemoveBlacklistIcon"
+        android:id="@+id/restore"
+        android:title="@string/menu_restore"
+        android:showAsAction="withText|always"/>
+    <item
+        android:icon="@drawable/miui_ic_delete"
+        android:id="@+id/delete_forever"
+        android:title="@string/menu_delete_forever"
+        android:showAsAction="withText|always"/>
+</menu>

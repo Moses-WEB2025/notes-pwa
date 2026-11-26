@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:start="1dp">
+        <bitmap
+            android:src="@drawable/miuix_appcompat_text_select_handle_right_mtrl_alpha"
+            android:tint="@color/theme_main_color"/>
+    </item>
+</layer-list>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:focusable="false"
+    android:focusableInTouchMode="false"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <ImageView
+        android:id="@+id/float_background"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+    <com.miui.handwriting.common.view.colorpicker.FloatingPicker
+        android:layout_gravity="center"
+        android:id="@+id/float_picker"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:layout_width="@dimen/creation_color_picker_floating_picker_border_width_height"
+        android:layout_height="@dimen/creation_color_picker_floating_picker_border_width_height"
+        android:contentDescription="@string/color_pick_pen_talkback"
+        android:importantForAccessibility="yes"/>
+</FrameLayout>

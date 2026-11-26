@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:ordering="together">
+    <objectAnimator
+        android:interpolator="@drawable/_three_dots__2_res_0x7f0800a8"
+        android:duration="259"
+        android:startOffset="0"
+        android:repeatCount="infinite"
+        android:valueFrom="0.3"
+        android:valueTo="0.9"
+        android:valueType="floatType"
+        android:propertyName="fillAlpha"/>
+    <objectAnimator
+        android:interpolator="@drawable/_three_dots__3_res_0x7f0800b3"
+        android:duration="351"
+        android:startOffset="259"
+        android:repeatCount="infinite"
+        android:valueFrom="0.9"
+        android:valueTo="0.3"
+        android:valueType="floatType"
+        android:propertyName="fillAlpha"/>
+</set>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:background="@null"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/pc_sub_todo_item_height">
+    <RelativeLayout
+        android:id="@+id/check_group"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+        <CheckBox
+            android:theme="@style/NoteTheme.List"
+            android:id="@+id/cb_subtodo"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+            android:clickable="false"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="3dp"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="14dp"
+            style="@style/Todo.Pc.SubTodoCheckBox"/>
+    </RelativeLayout>
+    <com.miui.common.view.StrikeTextView.StrikeTextView
+        android:textSize="@dimen/pc_subtodo_item_text_size"
+        android:textColor="@color/pc_todo_item_content_text_common_color"
+        android:ellipsize="end"
+        android:gravity="start|center_vertical"
+        android:id="@+id/tv_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:singleLine="true"
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@+id/check_group"/>
+</RelativeLayout>

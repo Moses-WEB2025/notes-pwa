@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<level-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <miuix.smooth.SmoothContainerDrawable android:radius="22dp">
+            <child>
+                <shape android:shape="rectangle">
+                    <padding android:right="22dp"/>
+                </shape>
+            </child>
+        </miuix.smooth.SmoothContainerDrawable>
+    </item>
+</level-list>

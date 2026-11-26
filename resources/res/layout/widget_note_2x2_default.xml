@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:background="@drawable/ic_widget_bg_2x2"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="vertical"
+        android:paddingTop="@dimen/widget_note_root_padding_vertical_2x2"
+        android:paddingBottom="@dimen/widget_note_root_padding_vertical_2x2"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingStart="@dimen/widget_note_root_padding_horizontal_2x2"
+        android:paddingEnd="@dimen/widget_note_root_padding_horizontal_2x2">
+        <include layout="@layout/widget_title_include_default"/>
+        <TextView
+            android:textAppearance="@style/V13.TextAppearance.Widget.Snippet_2x"
+            android:textColor="@color/widget_note_text_hint_color"
+            android:ellipsize="end"
+            android:id="@+id/widget_text_default"
+            android:visibility="visible"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/widget_content_margin_top"
+            android:text="@string/widget_empty_content"
+            android:maxLines="3"
+            android:lineSpacingExtra="@dimen/widget_content_line_spacing_extra"/>
+    </LinearLayout>
+</FrameLayout>

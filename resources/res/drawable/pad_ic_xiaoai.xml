@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="@dimen/pad_ic_48px_size"
+    android:width="@dimen/pad_ic_48px_size"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <group>
+        <clip-path android:pathData="M8,8.9414h31.9999v30.1175h-31.9999z"/>
+        <path
+            android:fillColor="#00000000"
+            android:pathData="M21.2019,30.2597C25.2491,32.4561 26.3766,36.9924 31.7017,36.9924C36.0691,36.9924 39.5546,31.7033 37.2864,27.7878M21.2019,30.2597C20.0224,31.7378 18.2352,34.1322 17.136,35.3575C16.0368,36.5829 13.598,37.8342 11.3369,36.2669C9.2352,34.4 10.1292,32.053 10.5747,31.0039C11.0201,29.9548 19.2552,15.0921 19.7933,14.1293C20.3314,13.1666 21.783,11 24.5267,11C27.2703,11 28.6429,13.1666 29.2601,14.1293C29.6716,14.7712 35.0182,23.8724 37.2864,27.7878M21.2019,30.2597C22.3813,28.7815 25.9295,24.7074 31.0958,24.6761C32.9235,24.665 35.8065,25.2506 37.2864,27.7878"
+            android:strokeColor="@color/audio_bubble_xiaoai_color"
+            android:strokeWidth="3"/>
+    </group>
+</vector>

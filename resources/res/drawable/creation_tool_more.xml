@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="40dp"
+    android:width="40dp"
+    android:viewportWidth="40"
+    android:viewportHeight="40">
+    <path
+        android:fillColor="@color/creation_action_button_color"
+        android:pathData="M20,21.405C19.224,21.405 18.595,20.776 18.595,20C18.595,19.224 19.224,18.594 20,18.594C20.776,18.594 21.405,19.224 21.405,20C21.405,20.776 20.776,21.405 20,21.405Z"/>
+    <path
+        android:fillColor="@color/creation_action_button_color"
+        android:pathData="M20,28.432C19.224,28.432 18.595,27.803 18.595,27.027C18.595,26.251 19.224,25.621 20,25.621C20.776,25.621 21.405,26.251 21.405,27.027C21.405,27.803 20.776,28.432 20,28.432Z"/>
+    <path
+        android:fillColor="@color/creation_action_button_color"
+        android:pathData="M20,14.378C19.224,14.378 18.595,13.749 18.595,12.973C18.595,12.197 19.224,11.567 20,11.567C20.776,11.567 21.405,12.197 21.405,12.973C21.405,13.749 20.776,14.378 20,14.378Z"/>
+</vector>

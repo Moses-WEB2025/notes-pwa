@@ -1,0 +1,48 @@
+{
+  "raw-content": {
+    "configuration": {
+      "analyzer": {
+        "bundle": "raw-content2",
+        "name": "standard"
+      },
+      "math": {
+        "bundle": "math2",
+        "name": "standard"
+      }
+    },
+    "classification": {
+      "types": [  "math","drawing"]
+    },
+    "recognition": {
+      "types": [  "math" ]
+    }
+  },
+  "math": {
+    "solver": {
+      "options": "algebraic",
+      "angle-unit": "rad",
+      "number-format": "decimal",
+      "numerical-computation": [
+        "at-right-of-equal-sign"
+      ],
+      "enable-syntactic-correction": false,
+      "display-implicit-multiply": false,
+      "auto-variable-management": {
+        "enable": true,
+        "scoping-policy": "closest"
+      }
+    }
+  },
+
+  "export": {
+    "jiix": {
+      "bounding-box": true,
+      "strokes": false,
+      "glyphs": false,
+      "primitives": false,
+      "ids": true,
+      "math": {
+        "result": true
+      }
+    }
+  }}

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="ai_input_send_shawdow_radius">100</dimen>
+    <dimen name="ai_input_send_shawdow_y">50</dimen>
+    <dimen name="ai_tag_cose_shadow_radius">20dp</dimen>
+    <dimen name="ai_tag_input_send_shadow_dy">50dp</dimen>
+    <dimen name="ai_tag_pop_blur_radius">28.79</dimen>
+    <dimen name="ai_tag_pop_list_blur_radius">28.79</dimen>
+    <dimen name="ai_tag_pop_shadow_radius">13dp</dimen>
+    <dimen name="ai_tag_shadow_radius">100dp</dimen>
+    <dimen name="ai_tag_top_pop_list_shadow_radius">100</dimen>
+    <dimen name="ai_tag_top_pop_shadow_radius">100</dimen>
+</resources>

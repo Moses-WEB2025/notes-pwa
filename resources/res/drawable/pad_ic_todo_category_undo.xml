@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="@dimen/pad_ic_36px_size"
+    android:width="@dimen/pad_ic_36px_size"
+    android:viewportWidth="36"
+    android:viewportHeight="36">
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M8,4L28,4A4,4 0,0 1,32 8L32,28A4,4 0,0 1,28 32L8,32A4,4 0,0 1,4 28L4,8A4,4 0,0 1,8 4z"
+        android:strokeColor="@color/pad_todo_list_check_box_color"
+        android:strokeWidth="2"/>
+</vector>

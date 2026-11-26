@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners
+        android:topLeftRadius="@dimen/creation_paint_round_corner_region_size"
+        android:topRightRadius="@dimen/creation_paint_round_corner_region_size"/>
+    <solid android:color="@color/creation_paint_scale_bg"/>
+</shape>

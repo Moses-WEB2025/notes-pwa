@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <corners android:radius="@dimen/folder_list_item_bg_radius"/>
+    <solid android:color="@color/common_folder_dialog_create_folder_mask_bg_color"/>
+</shape>

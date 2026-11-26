@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <com.miui.support.cardview.CardView
+        android:id="@+id/cv_toast"
+        android:paddingTop="@dimen/mirror_drop_down_padding_top_bottom"
+        android:paddingBottom="@dimen/mirror_drop_down_padding_top_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="50px"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardCornerRadius="@dimen/mirror_navigation_icon_radius"
+        app:cardElevation="20px">
+        <TextView
+            android:textSize="@dimen/mirror_toast_text_size"
+            android:textColor="@color/pc_text_common_color"
+            android:id="@+id/tv_toast"
+            android:paddingTop="@dimen/mirror_toast_padding_top"
+            android:paddingBottom="@dimen/mirror_toast_padding_top"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxWidth="@dimen/mirror_toast_max_width"
+            android:paddingStart="@dimen/mirror_toast_padding_start"
+            android:paddingEnd="@dimen/mirror_toast_padding_start"/>
+    </com.miui.support.cardview.CardView>
+</FrameLayout>

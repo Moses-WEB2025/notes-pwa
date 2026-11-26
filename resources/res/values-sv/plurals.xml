@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="a_hour_ago">
+        <item quantity="one">1 timme sedan</item>
+        <item quantity="other">1 timme sedan</item>
+    </plurals>
+    <plurals name="abbrev_a_hour_ago">
+        <item quantity="one">%d timma sedan</item>
+        <item quantity="other">%d timmar sedan</item>
+    </plurals>
+    <plurals name="abbrev_half_hour_ago">
+        <item quantity="one">En halvtimme sedan</item>
+        <item quantity="other">En halvtimme sedan</item>
+    </plurals>
+    <plurals name="abbrev_in_a_hour">
+        <item quantity="one">Om %d timma</item>
+        <item quantity="other">Om %d timmar</item>
+    </plurals>
+    <plurals name="abbrev_in_half_hour">
+        <item quantity="one">Om en halvtimma</item>
+        <item quantity="other">Om en halvtimma</item>
+    </plurals>
+    <plurals name="abbrev_in_less_than_one_minute">
+        <item quantity="one">Omedelbart</item>
+        <item quantity="other">Omedelbart</item>
+    </plurals>
+    <plurals name="abbrev_in_num_minutes">
+        <item quantity="one">Om %d minut</item>
+        <item quantity="other">Om %d minuter</item>
+    </plurals>
+    <plurals name="abbrev_less_than_one_minute_ago">
+        <item quantity="one">Nyss</item>
+        <item quantity="other">Nyss</item>
+    </plurals>
+    <plurals name="abbrev_num_minutes_ago">
+        <item quantity="one">%d minut sedan</item>
+        <item quantity="other">%d minuter sedan</item>
+    </plurals>
+    <plurals name="ai_cannot_add_content_toast_text">
+        <item quantity="one">En enskild anteckning får inte överskrida %1$s tecken. Kan inte lägga till mer innehåll.</item>
+        <item quantity="other">En enskild anteckning får inte överskrida %1$s tecken. Kan inte lägga till mer innehåll.</item>
+    </plurals>
+    <plurals name="ai_cannot_useAI_toast_text">
+        <item quantity="one">Kan inte använda AI-skrivning för anteckningar över %1$s tecken</item>
+        <item quantity="other">Kan inte använda AI-skrivning för anteckningar över %1$s tecken</item>
+    </plurals>
+    <plurals name="ai_content_exceeded_warn">
+        <item quantity="one">Den här anteckningens innehåll överskrider AI-behandlingens gränser. Ange upp till %1$s tecken och försök igen.</item>
+        <item quantity="other">Den här anteckningens innehåll överskrider AI-behandlingens gränser. Ange upp till %1$s tecken och försök igen.</item>
+    </plurals>
+    <plurals name="ai_correct_mistakes">
+        <item quantity="one">Korrigerat %1$s fel</item>
+        <item quantity="other">Korrigerat %1$s fel</item>
+    </plurals>
+    <plurals name="ai_tag_words_more_than">
+        <item quantity="one">%1$s+ tecken</item>
+        <item quantity="other">%1$s+ tecken</item>
+    </plurals>
+    <plurals name="ai_word_count_exceed_title">
+        <item quantity="one">Kan inte generera innehåll över %1$s tecken</item>
+        <item quantity="other">Kan inte generera innehåll över %1$s tecken</item>
+    </plurals>
+    <plurals name="alert_message_delete">
+        <item quantity="one">Ta bort %1$s objekt?</item>
+        <item quantity="other">Ta bort %1$s objekt?</item>
+    </plurals>
+    <plurals name="cloud_state_unsynced_count">
+        <item quantity="one">%1$s objekt har inte synkroniserats</item>
+        <item quantity="other">%1$s objekt har inte synkroniserats</item>
+    </plurals>
+    <plurals name="corrected_title">
+        <item quantity="one">%1$s korrigering</item>
+        <item quantity="other">%1$s korrigeringar</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_limit_mm">
+        <item quantity="one">Höjden kan inte överskrida %1$d millimeter. Ange igen.</item>
+        <item quantity="other">Höjden kan inte överskrida %1$d millimeter. Ange igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_limit_px">
+        <item quantity="one">Höjden kan inte överskrida %1$d pixel. Ange igen.</item>
+        <item quantity="other">Höjden kan inte överskrida %1$d pixlar. Ange igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_lower_limit_mm">
+        <item quantity="one">Höjden måste vara minst %1$d millimeter. Ange igen.</item>
+        <item quantity="other">Höjden måste vara minst %1$d millimeter. Ange igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_lower_limit_px">
+        <item quantity="one">Höjden måste vara minst %1$d pixel. Ange igen.</item>
+        <item quantity="other">Höjden måste vara minst %1$d pixlar. Ange igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_limit_mm">
+        <item quantity="one">Bredden kan inte överskrida %1$d millimeter. Ange igen.</item>
+        <item quantity="other">Bredden kan inte överskrida %1$d millimeter. Ange igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_limit_px">
+        <item quantity="one">Bredden kan inte överskrida %1$d pixel. Ange igen.</item>
+        <item quantity="other">Bredden kan inte överskrida %1$d pixlar. Ange igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_lower_limit_mm">
+        <item quantity="one">Bredden måste vara minst %1$d millimeter. Ange igen.</item>
+        <item quantity="other">Bredden måste vara minst %1$d millimeter. Ange igen.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_lower_limit_px">
+        <item quantity="one">Bredden måste vara minst %1$d pixel. Ange igen.</item>
+        <item quantity="other">Bredden måste vara minst %1$d pixlar. Ange igen.</item>
+    </plurals>
+    <plurals name="date_calculate_days_after">
+        <item quantity="one">%1$d dag efter</item>
+        <item quantity="other">%1$d dagar efter</item>
+    </plurals>
+    <plurals name="date_calculate_days_ago">
+        <item quantity="one">%1$d dag före</item>
+        <item quantity="other">%1$d dagar före</item>
+    </plurals>
+    <plurals name="format_move_notes_out_folder">
+        <item quantity="one">Tog bort %1$s anteckning från mappen</item>
+        <item quantity="other">Tog bort %1$s anteckningar från mappen</item>
+    </plurals>
+    <plurals name="format_move_notes_to_folder">
+        <item quantity="one">Flyttade %1$s anteckning till %2$s</item>
+        <item quantity="other">Flyttade %1$s anteckningar till %2$s</item>
+    </plurals>
+    <plurals name="half_hour_ago">
+        <item quantity="one">En halvtimme sedan</item>
+        <item quantity="other">En halvtimme sedan</item>
+    </plurals>
+    <plurals name="in_a_hour">
+        <item quantity="one">Om 1 timme</item>
+        <item quantity="other">Om 1 timme</item>
+    </plurals>
+    <plurals name="in_half_hour">
+        <item quantity="one">Om en halvtimma</item>
+        <item quantity="other">Om en halvtimma</item>
+    </plurals>
+    <plurals name="in_less_than_one_minute">
+        <item quantity="one">Omedelbart</item>
+        <item quantity="other">Omedelbart</item>
+    </plurals>
+    <plurals name="in_num_minutes">
+        <item quantity="one">om 1 minut</item>
+        <item quantity="other">om %d minuter</item>
+    </plurals>
+    <plurals name="less_than_one_minute_ago">
+        <item quantity="one">Nyss</item>
+        <item quantity="other">Nyss</item>
+    </plurals>
+    <plurals name="miuix_appcompat_items_selected">
+        <item quantity="one">%d objekt valt</item>
+        <item quantity="other">%d objekt valda</item>
+    </plurals>
+    <plurals name="mtrl_badge_content_description">
+        <item quantity="one">%d ny avisering</item>
+        <item quantity="other">%d nya aviseringar</item>
+    </plurals>
+    <plurals name="num_minutes_ago">
+        <item quantity="one">1 minut sedan</item>
+        <item quantity="other">%d minuter sedan</item>
+    </plurals>
+    <plurals name="pc_notes_search_result">
+        <item quantity="one">Hittade %1$s anteckning</item>
+        <item quantity="other">Hittade %1$s anteckningar</item>
+    </plurals>
+    <plurals name="pc_todo_search_result">
+        <item quantity="one">Hittade %1$s uppgift</item>
+        <item quantity="other">Hittade %1$s uppgifter</item>
+    </plurals>
+    <plurals name="record_last_ten_seconds_reminder">
+        <item quantity="one">%d andra vänster</item>
+        <item quantity="other">%d andra vänster</item>
+    </plurals>
+    <plurals name="toast_notes_unhidden_count">
+        <item quantity="one">Visade %1$s anteckning</item>
+        <item quantity="other">Visade %1$s anteckningar</item>
+    </plurals>
+    <plurals name="todo_N_days_after">
+        <item quantity="one">Om %1$d dag</item>
+        <item quantity="other">Om %1$d dagar</item>
+    </plurals>
+    <plurals name="todo_N_days_ago">
+        <item quantity="one">%1$d dag sedan</item>
+        <item quantity="other">%1$d dagar sedan</item>
+    </plurals>
+    <plurals name="todo_alert_message_delete">
+        <item quantity="one">Ta bort %1$s uppgift?</item>
+        <item quantity="other">Ta bort %1$s uppgifter?</item>
+    </plurals>
+    <plurals name="todo_event_description_days_ago">
+        <item quantity="one">%1$d dag sedan</item>
+        <item quantity="other">%1$d dagar sedan</item>
+    </plurals>
+    <plurals name="todo_event_description_days_later">
+        <item quantity="one">Om %1$d dag</item>
+        <item quantity="other">Om %1$d dagar</item>
+    </plurals>
+    <plurals name="todo_terms">
+        <item quantity="one">%1$s uppgift</item>
+        <item quantity="other">%1$s uppgifter</item>
+    </plurals>
+    <plurals name="word_count">
+        <item quantity="one">%d tecken</item>
+        <item quantity="other">%d tecken</item>
+    </plurals>
+</resources>

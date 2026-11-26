@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_gravity="center"
+    android:orientation="vertical"
+    android:id="@+id/blankview_container"
+    android:visibility="visible"
+    android:layout_width="118px"
+    android:layout_height="118px"
+    android:contentDescription="@string/data_empty_todo">
+    <ImageView
+        android:layout_gravity="top|center_horizontal"
+        android:id="@+id/icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/pc_ic_todo_content_blank_light"
+        android:importantForAccessibility="no"/>
+    <TextView
+        android:textSize="16px"
+        android:textColor="#33000000"
+        android:gravity="center"
+        android:layout_gravity="bottom"
+        android:id="@+id/content"
+        android:visibility="visible"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/data_empty_todo"
+        android:importantForAccessibility="no"/>
+</LinearLayout>

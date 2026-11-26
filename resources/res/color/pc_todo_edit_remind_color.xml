@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:state_selected="false"
+        android:color="@color/pc_todo_edit_remind_w_color"
+        android:state_activated="true"/>
+    <item
+        android:state_selected="true"
+        android:color="@color/pc_todo_edit_remind_s_color"/>
+    <item android:color="@color/pc_todo_edit_remind_n_color"/>
+</selector>

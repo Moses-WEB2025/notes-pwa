@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Lockscreen version="1" screenWidth="1080" frameRate="40">
+	<ExternalCommands>
+		<Trigger action="init,resume">
+			<ExternCommand command="animationState" numPara="0" />
+			<VariableCommand name="loopAn_start" expression="0" />
+			<AnimationCommand target="leafRot_an" command="play" />
+			<AnimationCommand target="alphaAll_an" command="play" />
+			<ExternCommand command="animationState" numPara="1" />
+			<AnimationCommand target="loop_an" command="play(0,0)" />
+		</Trigger>
+		<!--这个是点亮的那一下动画-->
+		<Trigger action="play" condition="#animationState == 0">
+			<AnimationCommand target="leafRot_an" command="play" />
+			<AnimationCommand target="alphaAll_an" command="play" />
+			<ExternCommand command="animationState" numPara="1" />
+		</Trigger>
+		<Trigger action="pause">
+			<!-- 之前讨论过，这个DEMO在执行pause回到init态 -->
+			<ExternCommand command="animationState" numPara="0" />
+			<AnimationCommand target="loop_an" command="play(0,0)" />
+			<AnimationCommand target="alphaAll_an"  command="play(0,0)" />
+			<VariableCommand name="touchRecoverA" expression="0" />
+			<AnimationCommand target="touchRecover_an" command="play(0,0)" />
+			<AnimationCommand target="leafRot_an" command="play(0,0)" />
+		</Trigger>
+		<Trigger action="resume">
+			<!-- <AnimationCommand target="leafRot_an" command="play" />
+			<AnimationCommand target="alphaAll_an" command="play" />
+			<ExternCommand command="animationState" numPara="1" /> -->
+		</Trigger>
+		<Trigger action="finish">
+			<!-- 最后一帧 -->
+		</Trigger>
+	</ExternalCommands>
+	<!--  -->
+	<Var name="leafRot_an">
+		<VariableAnimation  initPause="true" loop="false">
+			<Item value="0" time="0" easeType="QuadEaseOut" />
+			<Item value="1" time="800" />
+			<Triggers>
+				<Trigger action="end" condition="#leafRot_an == 1">
+					<AnimationCommand target="loop_an" command="play" condition="#loopAn_start == 0" />
+					<AnimationCommand target="loop_an" command="resume" condition="#loopAn_start == 1" />
+					<VariableCommand name="loopAn_start" expression="1" />
+				</Trigger>
+			</Triggers>
+		</VariableAnimation>
+	</Var>
+	<Var name="loop_an">
+		<VariableAnimation initPause="true" loop="true">
+			<Item value="0" time="0" easeType="QuadEaseInOut" />
+			<Item value="1" time="2000" easeType="QuadEaseInOut" />
+			<Item value="0" time="4000" />
+		</VariableAnimation>
+	</Var>
+	<Var name="alphaAll_an">
+		<VariableAnimation  initPause="true" loop="false">
+			<Item value="0" time="0" />
+			<Item value="120" time="200" easeType="SineEaseOut" />
+			<Item value="255" time="600" />
+		</VariableAnimation>
+	</Var>
+	<!-- MAML++切图插件自动生成 -->
+	<Group alpha="#alphaAll_an">
+		<!-- MAML++切图插件自动生成 -->
+		<Image x="0" y="0" w="#view_width" h="#view_height" src="bg.webp" />
+		<Image x="400 +(#leafRot_an-1)*80+#coefficient*50" y="-100" pivotX="153" pivotY="0" scale = "2" rotation="6*(1-#leafRot_an)-8*#coefficient-#loop_an / 2" src="leaf1.png" />
+		<Image x="#view_width + 54 +(#leafRot_an-1)*50+#coefficient*50" y="#view_height + 722 +(#view_height } 2340)*(#view_height-2340)" pivotX="#view_width" pivotY="#view_height"  scale = "2" rotation="4*(#leafRot_an-1)+5*#coefficient-#loop_an/ 2" src="leaf2.png" />
+		<Image x="0" y="0" w="#view_width" h="#view_height" src="mask.webp" />
+	</Group>
+	<Var name="coefficient" type="number" expression="max(-1,min(1,#coefficient_num/4+#touchRecover_an))" />
+	<Button x="0" y="0" w="1080" h="#screen_height-300">
+		<Triggers>
+			<Trigger action="down">
+				<AnimationCommand target="loop_an" command="pause" />
+				<VariableCommand name="coefficient_num" expression="0" />
+				<VariableCommand name="touchRecoverA" expression="0" />
+				<AnimationCommand target="touchRecover_an" command="pause" />
+				<VariableCommand name="xySW" expression="8888" />
+			</Trigger>
+			<Trigger action="move">
+				
+				<VariableCommand name="moveXnum" expression="(#touch_x-#touch_begin_x)/1080" />
+				<VariableCommand name="moveYnum" expression="-(#touch_y-#touch_begin_y)/2340" />
+				<VariableCommand name="xySW" expression="(abs(#moveXnum) } abs(#moveYnum))*2-1" condition="#xySW == 8888" />
+				<VariableCommand name="coefficient_num" expression="#moveXnum" condition="#xySW" />
+				<VariableCommand name="coefficient_num" expression="#moveYnum" condition="!#xySW" />
+			</Trigger>
+			<Trigger action="cancel,up">
+				<AnimationCommand target="loop_an" command="resume" condition="#coefficient == 0" />
+				<MultiCommand condition="#coefficient != 0">
+					<VariableCommand name="touchRecoverA" expression="#coefficient" />
+					<AnimationCommand target="touchRecover_an" command="play" />
+					<VariableCommand name="coefficient_num" expression="0" />
+				</MultiCommand>
+			</Trigger>
+		</Triggers>
+	</Button>
+	<Var name="touchRecover_an">
+		<VariableAnimation initPause="true" loop="false">
+			<Item value="#touchRecoverA" time="0" easeType="QuadEaseOut" />
+			<Item value="0.001" time="1000" />
+			<Triggers>
+				<Trigger action="end" condition="#touchRecover_an == 0.001">
+					<AnimationCommand target="loop_an" command="resume" />
+				</Trigger>
+			</Triggers>
+		</VariableAnimation>
+	</Var>
+</Lockscreen>

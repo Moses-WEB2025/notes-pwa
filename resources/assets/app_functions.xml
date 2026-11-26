@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<appfunctions>
+    <appfunction>
+        <function_id>com.miui.notes.action.provider.NoteAppFunction#createNote</function_id>
+        <schema_category>notes</schema_category>
+        <schema_name>createNote</schema_name>
+        <schema_version>1</schema_version>
+        <enabled_by_default>true</enabled_by_default>
+    </appfunction>
+    <appfunction>
+        <function_id>com.miui.notes.action.provider.NoteAppFunction#findNotes</function_id>
+        <schema_category>notes</schema_category>
+        <schema_name>findNotes</schema_name>
+        <schema_version>1</schema_version>
+        <enabled_by_default>true</enabled_by_default>
+    </appfunction>
+    <appfunction>
+        <function_id>com.miui.notes.action.provider.NoteAppFunction#getNotes</function_id>
+        <schema_category>notes</schema_category>
+        <schema_name>getNotes</schema_name>
+        <schema_version>1</schema_version>
+        <enabled_by_default>true</enabled_by_default>
+    </appfunction>
+    <appfunction>
+        <function_id>com.miui.notes.action.provider.NoteAppFunction#showNote</function_id>
+        <schema_category>notes</schema_category>
+        <schema_name>showNote</schema_name>
+        <schema_version>1</schema_version>
+        <enabled_by_default>true</enabled_by_default>
+    </appfunction>
+</appfunctions>
+

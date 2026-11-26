@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="@dimen/pad_ic_50px_size"
+    android:width="@dimen/pad_ic_50px_size"
+    android:viewportWidth="68"
+    android:viewportHeight="68">
+    <path
+        android:fillColor="@color/audio_bubble_play_status_bg_color"
+        android:pathData="M34,0L34,0A34,34 0,0 1,68 34L68,34A34,34 0,0 1,34 68L34,68A34,34 0,0 1,0 34L0,34A34,34 0,0 1,34 0z"/>
+    <path
+        android:fillColor="@color/audio_bubble_play_status_content_color"
+        android:pathData="M44.7057,32.3697C45.8277,33.167 45.8277,34.833 44.7057,35.6303L30.6585,45.612C29.3343,46.553 27.5,45.6062 27.5,43.9817L27.5,24.0183C27.5,22.3938 29.3343,21.447 30.6585,22.388L44.7057,32.3697Z"/>
+</vector>

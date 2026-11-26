@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <EditText
+        android:id="@+id/et_folder_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/doodle_tool_text_dialog_hint"
+        android:selectAllOnFocus="true"
+        android:maxLength="100"
+        android:layout_marginStart="@dimen/miuix_appcompat_dialog_button_panel_horizontal_margin"
+        android:layout_marginEnd="@dimen/miuix_appcompat_dialog_button_panel_horizontal_margin"/>
+</FrameLayout>

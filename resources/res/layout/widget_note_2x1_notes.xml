@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:background="@color/widget_note_background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <include
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="52dp"
+        layout="@layout/widget_note_2x1_text"/>
+    <ImageButton
+        android:id="@+id/content_add"
+        android:background="@drawable/ic_content_add_background"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:src="@drawable/ic_widget_content_add"
+        android:scaleType="fitXY"
+        android:layout_centerVertical="true"
+        android:contentDescription="@string/app_widget_name_create_note"
+        android:layout_marginEnd="8dp"
+        android:layout_alignParentEnd="true"/>
+</RelativeLayout>

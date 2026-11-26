@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="36dp"
+    android:width="36dp"
+    android:viewportWidth="37"
+    android:viewportHeight="37">
+    <path
+        android:fillColor="?attr/actionBottomButtonColor"
+        android:pathData="M7.151,15.065L7.831,15.065A0.56,0.56 0,0 1,8.391 15.625L8.391,20.505A0.56,0.56 0,0 1,7.831 21.065L7.151,21.065A0.56,0.56 0,0 1,6.591 20.505L6.591,15.625A0.56,0.56 0,0 1,7.151 15.065z"/>
+    <path
+        android:fillColor="?attr/actionBottomButtonColor"
+        android:pathData="M10.851,11.565L11.531,11.565A0.56,0.56 0,0 1,12.091 12.125L12.091,24.005A0.56,0.56 0,0 1,11.531 24.565L10.851,24.565A0.56,0.56 0,0 1,10.291 24.005L10.291,12.125A0.56,0.56 0,0 1,10.851 11.565z"/>
+    <path
+        android:fillColor="?attr/actionBottomButtonColor"
+        android:pathData="M14.551,13.065L15.231,13.065A0.56,0.56 0,0 1,15.791 13.625L15.791,22.505A0.56,0.56 0,0 1,15.231 23.065L14.551,23.065A0.56,0.56 0,0 1,13.991 22.505L13.991,13.625A0.56,0.56 0,0 1,14.551 13.065z"/>
+    <path
+        android:fillColor="?attr/actionBottomButtonColor"
+        android:pathData="M18.251,29.065L18.931,29.065A0.56,0.56 135,0 0,19.491 28.505L19.491,7.625A0.56,0.56 135,0 0,18.931 7.065L18.251,7.065A0.56,0.56 135,0 0,17.691 7.625L17.691,28.505A0.56,0.56 135,0 0,18.251 29.065z"/>
+    <path
+        android:fillColor="?attr/actionBottomButtonColor"
+        android:pathData="M21.951,24.565L22.631,24.565A0.56,0.56 135,0 0,23.191 24.005L23.191,12.125A0.56,0.56 135,0 0,22.631 11.565L21.951,11.565A0.56,0.56 135,0 0,21.391 12.125L21.391,24.005A0.56,0.56 135,0 0,21.951 24.565z"/>
+    <path
+        android:fillColor="?attr/actionBottomButtonColor"
+        android:pathData="M25.651,22.065L26.331,22.065A0.56,0.56 135,0 0,26.891 21.505L26.891,14.625A0.56,0.56 135,0 0,26.331 14.065L25.651,14.065A0.56,0.56 135,0 0,25.091 14.625L25.091,21.505A0.56,0.56 135,0 0,25.651 22.065z"/>
+    <path
+        android:fillColor="?attr/actionBottomButtonColor"
+        android:pathData="M29.351,20.565L30.031,20.565A0.56,0.56 135,0 0,30.591 20.005L30.591,16.125A0.56,0.56 135,0 0,30.031 15.565L29.351,15.565A0.56,0.56 135,0 0,28.791 16.125L28.791,20.005A0.56,0.56 135,0 0,29.351 20.565z"/>
+</vector>

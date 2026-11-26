@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Lockscreen version="1" screenWidth="1080" frameRate="40">
+	<ExternalCommands>
+		<Trigger action="init,resume">
+			<ExternCommand command="animationState" numPara="0" />
+			<MethodCommand target="triggersContainer" method="performAction" paramTypes="String" params="'play'" />
+			<ExternCommand command="animationState" numPara="1" />
+		</Trigger>
+		<Trigger action="play">
+			<MethodCommand target="triggersContainer" method="performAction" paramTypes="String" params="'play'" />
+			<ExternCommand command="animationState" numPara="1" />
+		</Trigger>
+		<Trigger action="pause">
+			<!-- 之前讨论过，这个DEMO在执行pause回到init态 -->
+			<MethodCommand target="triggersContainer" method="performAction" paramTypes="String" params="'init'" />
+			<ExternCommand command="animationState" numPara="0" />
+		</Trigger>
+	</ExternalCommands>
+	<Group name="triggersContainer">
+		<Triggers>
+			<Trigger action="play">
+				<AnimationCommand target="alpha1_an" command="play" />
+				<AnimationCommand target="alpha2_an" command="play" />
+				<AnimationCommand target="alpha3_an" command="play" />
+				<AnimationCommand target="alpha4_an" command="play" />
+				<AnimationCommand target="rot_an" command="play" />
+			</Trigger>
+			<Trigger action="init">
+				<AnimationCommand target="alpha1_an" command="play(0,0)" />
+				<AnimationCommand target="alpha2_an" command="play(0,0)" />
+				<AnimationCommand target="alpha3_an" command="play(0,0)" />
+				<AnimationCommand target="alpha4_an" command="play(0,0)" />
+				<AnimationCommand target="rot_an" command="play(0,0)" />
+			</Trigger>
+		</Triggers>
+	</Group>
+	<Var name="alpha1_an">
+		<VariableAnimation initPause="true" loop="true">
+			<Item value="0" time="0" />
+			<Item value="255" time="1000" />
+			<Item value="0" time="2000" />
+		</VariableAnimation>
+	</Var>
+	<Var name="alpha2_an">
+		<VariableAnimation initPause="true" loop="true">
+			<Item value="60" time="0" />
+			<Item value="255" time="764" />
+			<Item value="0" time="1764" />
+			<Item value="60" time="2000" />
+		</VariableAnimation>
+	</Var>
+	<Var name="alpha3_an">
+		<VariableAnimation initPause="true" loop="true">
+			<Item value="120" time="0" />
+			<Item value="255" time="529" />
+			<Item value="0" time="1529" />
+			<Item value="120" time="2000" />
+		</VariableAnimation>
+	</Var>
+	<Var name="alpha4_an">
+		<VariableAnimation initPause="true" loop="true">
+			<Item value="190" time="0" />
+			<Item value="255" time="254" />
+			<Item value="0" time="1254" />
+			<Item value="190" time="2000" />
+		</VariableAnimation>
+	</Var>
+	<Var name="rot_an">
+		<VariableAnimation initPause="true" loop="false">
+			<Item value="1" time="0" easeType="SineEaseOut" />
+			<Item value="0" time="1000" />
+		</VariableAnimation>
+	</Var>
+	<!-- MAML++切图插件自动生成 -->
+	<Rectangle  x="0" y="0" w="#view_width" h="#view_height">
+		<!--填充的着色器-->
+		<FillShaders>
+			<!--线性渐变-->
+			<LinearGradient x="0" y="0"  x1="1275" y1="950" tile="clamp">
+				<GradientStop color="#030943" position="0" />
+				<!-- <GradientStop color="#093271" position="0.5" /> -->
+				<GradientStop color="#018BD9" position="1" />
+			</LinearGradient>
+		</FillShaders>
+	</Rectangle>
+	<!-- <Image x="0" y="0" w="#view_width" h="#view_height" src="bg.webp"  /> -->
+	<Group pivotX="0" pivotY="0" rotation="#rot_an*5">
+		<Image x="72" y="323" scale = "2" src="star4.png" alpha="#alpha1_an" />
+		<Image x="38" y="108" scale = "2" src="star3.png" alpha="#alpha2_an" />
+		<Image x="544" y="251" scale = "2" src="star2.png" alpha="#alpha3_an" />
+		<Image x="64" y="251" scale = "2" src="star1.png" alpha="#alpha4_an" />
+	</Group>
+	<!--<Image x="0" y="0" src="bg.webp" />-->
+	<!--<Image x="72+(#starRot_an-1)*80+#coefficient*50" y="323" pivotX="153" pivotY="0" rotation="" src="star1.png" />
+	<Image x="181+(#starRot_an-1)*50+#coefficient*50" y="-202" pivotX="1379" pivotY="202" rotation="" src="star2.png" />
+	<Image x="783+(1-#starRot_an)*50+#coefficient*100" y="-56+#coefficient*30" pivotX="456" pivotY="0" rotation="" src="star3.png" />-->
+</Lockscreen>

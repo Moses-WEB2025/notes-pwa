@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:height="60dp"
+    android:width="60dp"
+    android:viewportWidth="60"
+    android:viewportHeight="60">
+    <path
+        android:fillColor="@drawable/_pc_ic_doodle_lock__0_res_0x7f080096"
+        android:pathData="M8,16C8,11.5817 11.5817,8 16,8H44C48.4183,8 52,11.5817 52,16V40C52,44.4183 48.4183,48 44,48H16C11.5817,48 8,44.4183 8,40V16Z"
+        android:strokeAlpha="0.5"
+        android:fillAlpha="0.5"/>
+    <path
+        android:fillColor="@drawable/_pc_ic_doodle_lock__1_res_0x7f080097"
+        android:pathData="M19.2028,38L41.2028,38A1,1 0,0 1,42.2028 39L42.2028,39A1,1 0,0 1,41.2028 40L19.2028,40A1,1 0,0 1,18.2028 39L18.2028,39A1,1 0,0 1,19.2028 38z"/>
+    <path
+        android:fillColor="@drawable/_pc_ic_doodle_lock__2_res_0x7f080098"
+        android:pathData="M33.5061,15.4142C34.2872,14.6332 35.5535,14.6332 36.3345,15.4142L41.9914,21.0711C42.7724,21.8521 42.7724,23.1184 41.9914,23.8995L26.9582,38.9327C26.6206,39.2703 26.1734,39.476 25.6974,39.5126L19.5691,39.984C18.3462,40.0781 17.3275,39.0594 17.4216,37.8365L17.893,31.7082C17.9296,31.2322 18.1353,30.785 18.4729,30.4474L33.5061,15.4142Z"/>
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M20.5708,37.9258C19.9451,37.9859 19.4198,37.4605 19.4798,36.8348L19.9333,32.112C19.9656,31.7754 20.3752,31.6283 20.6143,31.8674L25.5382,36.7913C25.7774,37.0304 25.6302,37.44 25.2936,37.4723L20.5708,37.9258Z"/>
+</vector>

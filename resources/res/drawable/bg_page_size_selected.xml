@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape>
+            <solid android:color="@color/spinner_item_checked_bg"/>
+        </shape>
+    </item>
+    <item
+        android:gravity="end|center_vertical"
+        android:height="27dp"
+        android:width="26dp"
+        android:drawable="@drawable/ic_page_size"
+        android:start="@dimen/creation_page_size_window_icon_margin_start"
+        android:end="@dimen/creation_page_size_window_icon_margin_end"/>
+</layer-list>

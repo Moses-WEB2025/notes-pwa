@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="24dp"
+    android:width="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/todo_fw_group_btn_color"
+        android:pathData="M16.6613,14.66C17.1129,14.2192 17.1129,13.5046 16.6613,13.0638L12.837,9.3306C12.5342,9.035 12.1052,8.9376 11.7193,9.0385C11.5154,9.0844 11.3219,9.185 11.163,9.34L7.3387,13.0732C6.8871,13.514 6.8871,14.2286 7.3387,14.6694C7.7902,15.1102 8.5223,15.1102 8.9738,14.6694L11.6556,12.0516C11.8498,11.862 12.1599,11.862 12.3541,12.0516L15.0262,14.66C15.4777,15.1008 16.2098,15.1008 16.6613,14.66Z"
+        android:fillType="evenOdd"/>
+</vector>

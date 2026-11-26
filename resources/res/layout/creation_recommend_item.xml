@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/item_root"
+    android:background="@drawable/creation_ai_recommend_unselect_bg"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/creation_ai_rv_item_margin"
+    android:layout_marginEnd="@dimen/creation_ai_rv_item_margin">
+    <TextView
+        android:textSize="14sp"
+        android:textColor="@color/creation_ai_text_unselect_bg"
+        android:gravity="center"
+        android:id="@+id/tv_content"
+        android:paddingTop="@dimen/creation_ai_rv_item_margin"
+        android:paddingBottom="@dimen/creation_ai_rv_item_margin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxLines="1"
+        android:fontFamily="mipro-regular"
+        android:paddingStart="@dimen/creation_ai_rv_item_padding"
+        android:paddingEnd="@dimen/creation_ai_rv_item_padding"/>
+</LinearLayout>

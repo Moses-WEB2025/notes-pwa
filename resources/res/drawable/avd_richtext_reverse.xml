@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:drawable="@drawable/_avd_richtext_reverse__0_res_0x7f080025">
+    <target
+        android:name="_"
+        android:animation="@drawable/_avd_richtext_reverse__1_res_0x7f080026"/>
+    <target
+        android:name="path"
+        android:animation="@drawable/_avd_richtext_reverse__5_res_0x7f08002c"/>
+    <target
+        android:name="i"
+        android:animation="@drawable/_avd_richtext_reverse__7_res_0x7f08002e"/>
+    <target
+        android:name="path_1"
+        android:animation="@drawable/_avd_richtext_reverse__10_res_0x7f080027"/>
+</animated-vector>

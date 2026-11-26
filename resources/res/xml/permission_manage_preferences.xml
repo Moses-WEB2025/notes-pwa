@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <miuix.preference.TextPreference
+        android:title="@string/pref_permission_manage_key_storage"
+        android:key="pref_permission_manage_key_storage"
+        android:summary="@string/permission_storage_desc_new_v12"/>
+    <miuix.preference.TextPreference
+        android:title="@string/pref_permission_manage_key_recording"
+        android:key="pref_permission_manage_key_recording"
+        android:summary="@string/permission_microphone_desc"/>
+    <miuix.preference.TextPreference
+        android:title="@string/pref_permission_manage_key_contact"
+        android:key="pref_permission_manage_key_contact"
+        android:summary="@string/permission_read_contact_desc"/>
+</PreferenceScreen>

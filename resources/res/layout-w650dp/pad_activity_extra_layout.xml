@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_gravity="bottom"
+    android:id="@+id/pad_activity_tool_layout_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <FrameLayout
+        android:id="@+id/record_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+    <FrameLayout
+        android:id="@+id/edit_note_tool_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <include layout="@layout/big_screen_mode_tool_group"/>
+    </FrameLayout>
+    <include layout="@layout/pad_mind_note_tool_group"/>
+    <View
+        android:id="@+id/annotate_placeholder"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/image_annotation_panel_height"/>
+    <include
+        android:layout_gravity="bottom"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/image_annotation_panel_height"
+        layout="@layout/image_annotate_layout"/>
+</FrameLayout>

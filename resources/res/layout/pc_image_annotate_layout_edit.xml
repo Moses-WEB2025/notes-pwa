@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/annotate_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:alpha="1">
+    <FrameLayout
+        android:id="@+id/annotate_group"
+        android:background="@android:color/white"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <EditText
+                android:textSize="@dimen/pc_image_annotation_edit_content_text_size"
+                android:textColor="@color/theme_common_secondary_color_light"
+                android:textColorHint="@color/empty_text_hint_light"
+                android:gravity="start"
+                android:id="@+id/edit_content"
+                android:background="@null"
+                android:paddingTop="0px"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:visibility="visible"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/pc_image_annotation_content_margin_top"
+                android:hint="@string/image_annotation_edit_hint"
+                android:maxLines="3"
+                android:singleLine="false"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"/>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </FrameLayout>
+</FrameLayout>

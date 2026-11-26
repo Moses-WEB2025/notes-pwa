@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:drawable="@drawable/_avd_skin__0_res_0x7f080034">
+    <target
+        android:name="group"
+        android:animation="@drawable/_avd_skin__1_res_0x7f080035"/>
+    <target
+        android:name="path_3"
+        android:animation="@drawable/_avd_skin__2_res_0x7f080036"/>
+    <target
+        android:name="path_2"
+        android:animation="@drawable/_avd_skin__3_res_0x7f080037"/>
+    <target
+        android:name="group_1"
+        android:animation="@drawable/_avd_skin__4_res_0x7f080038"/>
+    <target
+        android:name="skin"
+        android:animation="@drawable/_avd_skin__5_res_0x7f080039"/>
+</animated-vector>

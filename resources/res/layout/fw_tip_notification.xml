@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_gravity="top|center_horizontal"
+    android:orientation="vertical"
+    android:id="@+id/fw_tip_group"
+    android:background="@drawable/fw_toast_frame"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:elevation="15dp">
+    <TextView
+        android:textSize="14sp"
+        android:textColor="@color/title_primary_text"
+        android:layout_gravity="center_horizontal"
+        android:id="@android:id/message"
+        android:layout_width="160dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"/>
+</LinearLayout>

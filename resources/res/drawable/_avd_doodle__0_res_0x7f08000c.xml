@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:height="@dimen/v12_notes_edit_tool_ic_size"
+    android:width="@dimen/v12_notes_edit_tool_ic_size"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <group android:name="_R_G">
+        <group
+            android:name="_R_G_L_0_G"
+            android:translateX="50"
+            android:translateY="50">
+            <path
+                android:name="_R_G_L_0_G_D_0_P_0"
+                android:pathData=" M-27.75 11.23 C-9.25,-21.27 8.35,-28.73 13.75,-23.18 C22.25,-14.43 -5.82,6.09 -0.24,14.74 C5.25,20.73 16.95,6.39 23.25,11.23 C27.4,15.63 17.92,20.91 19.46,25.18 C20.75,28.73 27.75,27.23 27.75,27.23 "
+                android:strokeColor="?attr/actionBottomButtonColor"
+                android:strokeWidth="6"
+                android:trimPathStart="0"
+                android:trimPathEnd="1"
+                android:trimPathOffset="0"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round"
+                android:strokeAlpha="1"/>
+        </group>
+    </group>
+    <group android:name="time_group"/>
+</vector>

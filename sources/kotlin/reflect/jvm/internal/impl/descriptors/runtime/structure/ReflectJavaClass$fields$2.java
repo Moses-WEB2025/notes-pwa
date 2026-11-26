@@ -1,0 +1,23 @@
+package kotlin.reflect.jvm.internal.impl.descriptors.runtime.structure;
+
+import com.market.sdk.reflect.ReflectUtilsForMiui;
+import java.lang.reflect.Field;
+import kotlin.jvm.functions.Function1;
+import kotlin.jvm.internal.FunctionReferenceImpl;
+import kotlin.jvm.internal.Intrinsics;
+
+/* JADX INFO: compiled from: ReflectJavaClass.kt */
+/* JADX INFO: loaded from: classes5.dex */
+final /* synthetic */ class ReflectJavaClass$fields$2 extends FunctionReferenceImpl implements Function1<Field, ReflectJavaField> {
+    public static final ReflectJavaClass$fields$2 INSTANCE = new ReflectJavaClass$fields$2();
+
+    ReflectJavaClass$fields$2() {
+        super(1, ReflectJavaField.class, ReflectUtilsForMiui.OBJECT_CONSTRUCTOR, "<init>(Ljava/lang/reflect/Field;)V", 0);
+    }
+
+    @Override // kotlin.jvm.functions.Function1
+    public final ReflectJavaField invoke(Field p0) {
+        Intrinsics.checkNotNullParameter(p0, "p0");
+        return new ReflectJavaField(p0);
+    }
+}

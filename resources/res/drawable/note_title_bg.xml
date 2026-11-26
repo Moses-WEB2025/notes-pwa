@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/note_dir_indicator_bg_radius"/>
+            <stroke
+                android:width="0.5dp"
+                android:color="@color/note_dir_indicator_border_color_default"/>
+        </shape>
+    </item>
+    <item
+        android:left="0.5dp"
+        android:top="0.5dp"
+        android:right="0.5dp"
+        android:bottom="0.5dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/note_dir_indicator_bg_radius"/>
+            <solid android:color="@color/note_dir_indicator_bg_color_default"/>
+        </shape>
+    </item>
+</layer-list>

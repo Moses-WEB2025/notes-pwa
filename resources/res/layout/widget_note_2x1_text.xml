@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:background="@color/widget_note_background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/all_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="2dp"
+        android:layout_marginStart="@dimen/widget_2x1_title_margin_start"
+        style="@style/V13.TextAppearance.Widget.2x1_Title"/>
+    <TextView
+        android:textSize="10dp"
+        android:textColor="@color/widget_2x1_text"
+        android:id="@+id/numbers"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/all_title"
+        android:alpha="0.8"
+        android:layout_alignStart="@+id/all_title"/>
+</RelativeLayout>

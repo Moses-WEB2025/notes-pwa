@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/preview_item_root"
+    android:background="@drawable/creation_ai_preview_bg"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/creation_ai_small_preview_item_size">
+    <com.miui.handwriting.common.ai.PreviewImageView
+        android:id="@+id/iv_ai_preview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="8dp"
+        android:src="@drawable/creation_ai_preview_empty"
+        android:scaleType="centerCrop"/>
+    <LinearLayout
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <miuix.androidbasewidget.widget.ProgressBar
+            android:id="@+id/pb_load"
+            android:layout_width="@dimen/creation_ai_small_preview_progressbar_size"
+            android:layout_height="@dimen/creation_ai_small_preview_progressbar_size"/>
+        <TextView
+            android:textSize="@dimen/creation_ai_small_preview_text_size"
+            android:id="@+id/tv_load"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/creation_ai_load"/>
+    </LinearLayout>
+</FrameLayout>

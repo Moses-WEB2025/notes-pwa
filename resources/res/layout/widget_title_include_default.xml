@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/widget_note_title_height">
+    <ImageView
+        android:id="@+id/widget_note_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_widget_note_new"/>
+    <TextView
+        android:textAppearance="@style/V13.TextAppearance.Widget.Title"
+        android:textColor="@color/widget_note_text_hint_color"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:id="@+id/widget_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/edit_note_hint_title"
+        android:singleLine="true"
+        android:includeFontPadding="false"
+        android:layout_marginStart="@dimen/widget_note_title_margin_start"/>
+</LinearLayout>

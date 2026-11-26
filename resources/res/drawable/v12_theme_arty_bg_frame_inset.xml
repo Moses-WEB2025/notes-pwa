@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/v12_theme_arty_bg_frame"
+    android:insetLeft="@dimen/theme_arty_inset_padding_left_right"
+    android:insetRight="@dimen/theme_arty_inset_padding_left_right"
+    android:insetTop="@dimen/v8_theme_arty_fg_inset_top"
+    android:insetBottom="@dimen/v8_theme_arty_fg_inset_bottom"/>

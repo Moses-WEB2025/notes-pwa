@@ -1,0 +1,70 @@
+[
+  {
+    "name": "notes_read",
+    "description": "查询笔记列表及内容。当用户询问\"最近有什么笔记\"、\"某段时间的笔记\"、\"帮我看看笔记\"时调用。所有参数均可选：不传参数时返回最近 10 条；传 start_time/end_time 按最后修改时间过滤；limit 控制返回数量上限（默认 10）。返回笔记列表，每条包含 id、title、content 字段。如需编辑笔记，先调用此工具或 notes_find_id 获取笔记 id。",
+    "method": "readNotes",
+    "class": "com.miui.notes.tool.NotesToolService",
+    "paramCount": 3,
+    "params": [
+      {"name": "limit", "type": "integer", "description": "返回笔记列表数量上限，默认10，仅在不传note_id时生效", "required": false, "index": 0},
+      {"name": "start_time", "type": "string", "description": "起始时间，格式 yyyy-MM-dd 或 yyyy-MM-dd HH:mm，查询该时间之后修改的笔记", "required": false, "index": 1},
+      {"name": "end_time", "type": "string", "description": "结束时间，格式 yyyy-MM-dd 或 yyyy-MM-dd HH:mm，查询该时间之前修改的笔记", "required": false, "index": 2}
+    ]
+  },
+  {
+    "name": "notes_create",
+    "description": "创建一条纯文本笔记。当用户说\"帮我记一下...\"、\"新建一条笔记\"时调用。仅支持纯文本，若内容含图片请使用 notes_create_with_image。返回新建笔记的 id。",
+    "method": "createNote",
+    "class": "com.miui.notes.tool.NotesToolService",
+    "paramCount": 2,
+    "params": [
+      {"name": "content", "type": "string", "description": "笔记正文内容", "required": true, "index": 0},
+      {"name": "title", "type": "string", "description": "笔记标题", "required": false, "index": 1}
+    ]
+  },
+  {
+    "name": "notes_append_with_context",
+    "description": "向已有笔记末尾追加文字（不支持修改或删除原有内容）。当用户说\"在那条笔记里加上...\"、\"补充...\"时调用。必须先通过 notes_find_id 或 notes_read 获取目标笔记的 note_id。若用户想替换原有内容，此工具无法实现，需告知用户。",
+    "method": "editNoteWithContext",
+    "class": "com.miui.notes.tool.NotesToolService",
+    "paramCount": 2,
+    "params": [
+      {"name": "note_id", "type": "integer", "description": "要编辑的笔记ID", "required": true, "index": 0},
+      {"name": "append_content", "type": "string", "description": "要追加到笔记末尾的内容", "required": true, "index": 1}
+    ]
+  },
+  {
+    "name": "notes_append_with_image",
+    "description": "向已有笔记末尾追加一张图片（不支持修改或删除原有内容）。当用户说\"把这张图加到笔记里\"时调用。必须先通过 notes_find_id 或 notes_read 获取目标笔记的 note_id。image_uri 支持 content:// URI 或本地绝对路径。",
+    "method": "editNoteWithImage",
+    "class": "com.miui.notes.tool.NotesToolService",
+    "paramCount": 2,
+    "params": [
+      {"name": "note_id", "type": "integer", "description": "要编辑的笔记ID", "required": true, "index": 0},
+      {"name": "image_uri", "type": "string", "description": "要追加的图片URI或文件路径", "required": true, "index": 1}
+    ]
+  },
+  {
+    "name": "notes_create_with_image",
+    "description": "创建一条含图片的笔记。当用户说\"帮我记一下这张图\"、\"新建带图片的笔记\"时调用。image_uri 为必填，文字内容和标题可选。布局顺序为：文字在前、图片追加在文字后面。若只需纯文字，使用 notes_create。",
+    "method": "createNoteWithImage",
+    "class": "com.miui.notes.tool.NotesToolService",
+    "paramCount": 3,
+    "params": [
+      {"name": "image_uri", "type": "string", "description": "图片的URI地址", "required": true, "index": 0},
+      {"name": "content", "type": "string", "description": "笔记正文内容（可选，图片会追加在文字后面）", "required": false, "index": 1},
+      {"name": "title", "type": "string", "description": "笔记标题", "required": false, "index": 2}
+    ]
+  },
+  {
+    "name": "notes_find_id",
+    "description": "通过关键词查找笔记 id。当需要编辑某条笔记但用户未提供 id 时，先调用此工具定位。返回匹配的笔记 id 列表（按相关度排序）。找到后再调用 notes_edit_with_context 或 notes_edit_with_image。",
+    "method": "findNoteId",
+    "class": "com.miui.notes.tool.NotesToolService",
+    "paramCount": 2,
+    "params": [
+      {"name": "keyword", "type": "string", "description": "搜索关键词，匹配标题和正文内容", "required": true, "index": 0},
+      {"name": "limit", "type": "integer", "description": "返回数量上限，默认5", "required": false, "index": 1}
+    ]
+  }
+]

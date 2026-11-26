@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:id="@+id/data_folder_list_layout"
+    android:background="@drawable/data_folder_list_item_bg"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/pad_folder_list_item_height"
+    android:layerType="hardware"
+    android:paddingStart="@dimen/pad_folder_list_item_horizontal_padding"
+    android:paddingEnd="@dimen/pad_folder_list_item_horizontal_padding">
+    <TextView
+        android:textSize="@dimen/common_folder_list_item_text_size"
+        android:textColor="@color/data_folder_list_item_text_color_n"
+        android:ellipsize="end"
+        android:id="@+id/pad_folder_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxWidth="227dp"
+        android:singleLine="true"
+        android:includeFontPadding="false"
+        android:fontFamily="mipro-medium"/>
+    <ImageView
+        android:id="@+id/pad_folder_stick"
+        android:background="@drawable/ic_data_item_stick"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/common_folder_list_item_stick_margin_top"/>
+</LinearLayout>

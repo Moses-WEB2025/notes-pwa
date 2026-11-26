@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="a_hour_ago">
+        <item quantity="one">1 tund tagasi</item>
+        <item quantity="other">1 tund tagasi</item>
+    </plurals>
+    <plurals name="abbrev_a_hour_ago">
+        <item quantity="one">%d tund tagasi</item>
+        <item quantity="other">%d tundi tagasi</item>
+    </plurals>
+    <plurals name="abbrev_half_hour_ago">
+        <item quantity="one">Pool tundi tagasi</item>
+        <item quantity="other">Pool tundi tagasi</item>
+    </plurals>
+    <plurals name="abbrev_in_a_hour">
+        <item quantity="one">%d tunni pärast</item>
+        <item quantity="other">%d tunni pärast</item>
+    </plurals>
+    <plurals name="abbrev_in_half_hour">
+        <item quantity="one">Poole tunni pärast</item>
+        <item quantity="other">Poole tunni pärast</item>
+    </plurals>
+    <plurals name="abbrev_in_less_than_one_minute">
+        <item quantity="one">Otsekohe</item>
+        <item quantity="other">Otsekohe</item>
+    </plurals>
+    <plurals name="abbrev_in_num_minutes">
+        <item quantity="one">%d minuti pärast</item>
+        <item quantity="other">%d minuti pärast</item>
+    </plurals>
+    <plurals name="abbrev_less_than_one_minute_ago">
+        <item quantity="one">Just nüüd</item>
+        <item quantity="other">Just nüüd</item>
+    </plurals>
+    <plurals name="abbrev_num_minutes_ago">
+        <item quantity="one">%d minut tagasi</item>
+        <item quantity="other">%d minutit tagasi</item>
+    </plurals>
+    <plurals name="ai_cannot_add_content_toast_text">
+        <item quantity="one">Ükski märkus ei tohi ületada %1$s tähemärki. Rohkem sisu ei saa lisada.</item>
+        <item quantity="other">Ükski märkus ei tohi ületada %1$s tähemärki. Rohkem sisu ei saa lisada.</item>
+    </plurals>
+    <plurals name="ai_cannot_useAI_toast_text">
+        <item quantity="one">AI kirjutamist ei saa kasutada märkmete jaoks, mis on pikemad kui %1$s tähemärk</item>
+        <item quantity="other">AI kirjutamist ei saa kasutada märkmete jaoks, mis on pikemad kui %1$s tähemärki</item>
+    </plurals>
+    <plurals name="ai_content_exceeded_warn">
+        <item quantity="one">Selle märkme sisu ületab tehisintellekti töötlemise piiranguid. Sisesta kuni %1$s tähemärk ja proovi uuesti.</item>
+        <item quantity="other">Selle märkme sisu ületab tehisintellekti töötlemise piiranguid. Sisesta kuni %1$s tähemärki ja proovi uuesti.</item>
+    </plurals>
+    <plurals name="ai_correct_mistakes">
+        <item quantity="one">Parandatud %1$s viga</item>
+        <item quantity="other">Parandatud %1$s viga</item>
+    </plurals>
+    <plurals name="ai_tag_words_more_than">
+        <item quantity="one">%1$s+ tärki</item>
+        <item quantity="other">%1$s+ tärki</item>
+    </plurals>
+    <plurals name="ai_word_count_exceed_title">
+        <item quantity="one">Üle %1$s tähemärgi pikkust sisu ei saa luua</item>
+        <item quantity="other">Üle %1$s tähemärgi pikkust sisu ei saa luua</item>
+    </plurals>
+    <plurals name="alert_message_delete">
+        <item quantity="one">Kas kustutada %1$s üksus?</item>
+        <item quantity="other">Kas kustutada %1$s üksus?</item>
+    </plurals>
+    <plurals name="cloud_state_unsynced_count">
+        <item quantity="one">%1$s üksus ei ole sünkroniseeritud</item>
+        <item quantity="other">%1$s üksust ei ole sünkroniseeritud</item>
+    </plurals>
+    <plurals name="corrected_title">
+        <item quantity="one">%1$s parandus</item>
+        <item quantity="other">%1$s parandust</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_limit_mm">
+        <item quantity="one">Kõrgus ei tohi ületada %1$d millimeetrit. Sisestage uuesti.</item>
+        <item quantity="other">Kõrgus ei tohi ületada %1$d millimeetrit. Sisestage uuesti.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_limit_px">
+        <item quantity="one">Kõrgus ei tohi ületada %1$d pikslit. Sisestage uuesti.</item>
+        <item quantity="other">Kõrgus ei tohi ületada %1$d pikslit. Sisestage uuesti.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_lower_limit_mm">
+        <item quantity="one">Kõrgus peab olema vähemalt %1$d millimeeter. Sisestage uuesti.</item>
+        <item quantity="other">Kõrgus peab olema vähemalt %1$d millimeetrit. Sisestage uuesti.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_lower_limit_px">
+        <item quantity="one">Kõrgus peab olema vähemalt %1$d piksel. Sisestage uuesti.</item>
+        <item quantity="other">Kõrgus peab olema vähemalt %1$d pikslit. Sisestage uuesti.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_limit_mm">
+        <item quantity="one">Laius ei tohi ületada %1$d millimeetrit. Sisestage uuesti.</item>
+        <item quantity="other">Laius ei tohi ületada %1$d millimeetrit. Sisestage uuesti.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_limit_px">
+        <item quantity="one">Laius ei tohi ületada %1$d pikslit. Sisestage uuesti.</item>
+        <item quantity="other">Laius ei tohi ületada %1$d pikslit. Sisestage uuesti.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_lower_limit_mm">
+        <item quantity="one">Laius peab olema vähemalt %1$d millimeeter. Sisestage uuesti.</item>
+        <item quantity="other">Laius peab olema vähemalt %1$d millimeetrit. Sisestage uuesti.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_lower_limit_px">
+        <item quantity="one">Laius peab olema vähemalt %1$d piksel. Sisestage uuesti.</item>
+        <item quantity="other">Laius peab olema vähemalt %1$d pikslit. Sisestage uuesti.</item>
+    </plurals>
+    <plurals name="date_calculate_days_after">
+        <item quantity="one">%1$d päeva pärast</item>
+        <item quantity="other">%1$d päeva pärast</item>
+    </plurals>
+    <plurals name="date_calculate_days_ago">
+        <item quantity="one">%1$d päev enne</item>
+        <item quantity="other">%1$d päeva enne</item>
+    </plurals>
+    <plurals name="format_move_notes_out_folder">
+        <item quantity="one">Kaustast %1$s märge eemaldatud</item>
+        <item quantity="other">Kaustast %1$s märge eemaldatud</item>
+    </plurals>
+    <plurals name="format_move_notes_to_folder">
+        <item quantity="one">Ülekantud %1$s märge suunale %2$s</item>
+        <item quantity="other">Ülekantud %1$s märge suunale %2$s</item>
+    </plurals>
+    <plurals name="half_hour_ago">
+        <item quantity="one">Pool tundi tagasi</item>
+        <item quantity="other">Pool tundi tagasi</item>
+    </plurals>
+    <plurals name="in_a_hour">
+        <item quantity="one">1 tunni pärast</item>
+        <item quantity="other">1 tunni jooksul</item>
+    </plurals>
+    <plurals name="in_half_hour">
+        <item quantity="one">Poole tunni pärast</item>
+        <item quantity="other">Poole tunni pärast</item>
+    </plurals>
+    <plurals name="in_less_than_one_minute">
+        <item quantity="one">Kohe</item>
+        <item quantity="other">Kohe</item>
+    </plurals>
+    <plurals name="in_num_minutes">
+        <item quantity="one">1 minuti pärast</item>
+        <item quantity="other">%d minuti pärast</item>
+    </plurals>
+    <plurals name="less_than_one_minute_ago">
+        <item quantity="one">Just praegu</item>
+        <item quantity="other">Just praegu</item>
+    </plurals>
+    <plurals name="miuix_appcompat_items_selected">
+        <item quantity="one">%d üksus valitud</item>
+        <item quantity="other">%d üksust valitud</item>
+    </plurals>
+    <plurals name="num_minutes_ago">
+        <item quantity="one">1 minut tagasi</item>
+        <item quantity="other">%d minutit tagasi</item>
+    </plurals>
+    <plurals name="pc_notes_search_result">
+        <item quantity="one">Leitud %1$s märkus</item>
+        <item quantity="other">Leitud %1$s märkust</item>
+    </plurals>
+    <plurals name="pc_todo_search_result">
+        <item quantity="one">Leitud %1$s ülesanne</item>
+        <item quantity="other">Leitud %1$s ülesannet</item>
+    </plurals>
+    <plurals name="record_last_ten_seconds_reminder">
+        <item quantity="one">%d sekund jäänud</item>
+        <item quantity="other">%d sekundit jäänud</item>
+    </plurals>
+    <plurals name="toast_notes_unhidden_count">
+        <item quantity="one">Märge %1$s edukalt avatud</item>
+        <item quantity="other">Märge %1$s edukalt avatud</item>
+    </plurals>
+    <plurals name="todo_N_days_after">
+        <item quantity="one">%1$d päeva pärast</item>
+        <item quantity="other">%1$d päeva pärast</item>
+    </plurals>
+    <plurals name="todo_N_days_ago">
+        <item quantity="one">%1$d päev tagasi</item>
+        <item quantity="other">%1$d päev tagasi</item>
+    </plurals>
+    <plurals name="todo_alert_message_delete">
+        <item quantity="one">Kustutada %1$s ülesanne?</item>
+        <item quantity="other">Kustutada %1$s ülesannet?</item>
+    </plurals>
+    <plurals name="todo_event_description_days_ago">
+        <item quantity="one">%1$d päev tagasi</item>
+        <item quantity="other">%1$d päeva tagasi</item>
+    </plurals>
+    <plurals name="todo_event_description_days_later">
+        <item quantity="one">%1$d päeva pärast</item>
+        <item quantity="other">%1$d päeva pärast</item>
+    </plurals>
+    <plurals name="todo_terms">
+        <item quantity="one">%1$s ülesanne</item>
+        <item quantity="other">%1$s ülesanded</item>
+    </plurals>
+    <plurals name="word_count">
+        <item quantity="one">%d tähemärk</item>
+        <item quantity="other">%d tähemärki</item>
+    </plurals>
+</resources>

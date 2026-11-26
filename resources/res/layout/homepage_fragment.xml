@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fragment_content"
+    android:background="@color/homepage_primary_color"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.miui.notes.ui.view.HomepageSpringBackLayout
+        android:id="@+id/sbl_fragments"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:scrollOrientation="angle|horizontal"
+        app:scrollableView="@+id/vp_fragments">
+        <com.miui.notes.ui.widget.HomepageViewPager
+            android:id="@+id/vp_fragments"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </com.miui.notes.ui.view.HomepageSpringBackLayout>
+    <com.miui.notes.ui.widget.FloatingActionButton
+        android:layout_gravity="end|bottom"
+        android:id="@+id/content_add"
+        android:visibility="gone"
+        android:layout_width="@dimen/floating_action_button_size"
+        android:layout_height="@dimen/floating_action_button_size"
+        android:layout_marginBottom="@dimen/floating_action_bar_margin_bottom"
+        android:src="@drawable/ic_content_add"
+        android:contentDescription="@string/new_audio_create_talkback_des"
+        android:alpha="0"
+        android:layout_marginEnd="@dimen/floating_action_bar_margin_end"
+        app:fabShadowEnabled="true"
+        style="@style/Note.FloatingActionButton"/>
+</FrameLayout>

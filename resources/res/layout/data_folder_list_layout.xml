@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.miui.common.view.ShieldEventLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:id="@+id/folder_layout"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/miuix_theme_margin_base"
+    android:layout_marginBottom="8dp"
+    android:layout_marginStart="@dimen/miuix_theme_margin_horizontal_common"
+    android:layout_marginEnd="@dimen/miuix_theme_margin_horizontal_common">
+    <com.miui.common.view.ShallowLayout
+        android:id="@+id/folder_tag_parent"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1">
+        <com.miui.notes.feature.notelist.view.FolderRecyclerView
+            android:id="@+id/folder_rv"
+            android:fadingEdgeLength="20dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layerType="hardware"
+            android:requiresFadingEdge="horizontal"/>
+    </com.miui.common.view.ShallowLayout>
+</com.miui.common.view.ShieldEventLayout>

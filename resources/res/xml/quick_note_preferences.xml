@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.miui.notes.ui.AnimImagePreference
+        android:selectable="false"
+        android:key="pref_quick_note_guide"
+        android:summary="@string/pref_quick_note_desc"
+        android:defaultValue="1"/>
+    <androidx.preference.CheckBoxPreference
+        android:title="@string/pref_title_quick_note"
+        android:key="pref_enable_float_mode"/>
+    <androidx.preference.CheckBoxPreference
+        android:title="@string/pref_title_excerpt_remind"
+        android:key="pref_enable_excerpt_link_float"
+        android:summary="@string/pref_excerpt_link_float"
+        android:defaultValue="true"/>
+</PreferenceScreen>

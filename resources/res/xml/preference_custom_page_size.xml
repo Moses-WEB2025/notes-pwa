@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:background="@color/creation_property_seekbar_gary">
+    <com.miui.handwriting.common.view.custom.SizePreference android:key="size_preference"/>
+    <miuix.preference.DropDownPreference
+        android:title="@string/creation_page_size_custom_unit"
+        android:key="unit_preference"
+        android:defaultValue="@string/creation_page_size_custom_pixel"/>
+</PreferenceScreen>

@@ -1,0 +1,38 @@
+package com.pvporbit.freetype;
+
+import java.nio.ByteBuffer;
+
+/* JADX INFO: loaded from: classes4.dex */
+public class Bitmap extends Utils.Pointer {
+    public Bitmap(long j) {
+        super(j);
+    }
+
+    public int getWidth() {
+        return FreeType.FT_Bitmap_Get_width(this.pointer);
+    }
+
+    public int getRows() {
+        return FreeType.FT_Bitmap_Get_rows(this.pointer);
+    }
+
+    public int getPitch() {
+        return FreeType.FT_Bitmap_Get_pitch(this.pointer);
+    }
+
+    public short getNumGrays() {
+        return FreeType.FT_Bitmap_Get_num_grays(this.pointer);
+    }
+
+    public char getPaletteMode() {
+        return FreeType.FT_Bitmap_Get_palette_mode(this.pointer);
+    }
+
+    public char getPixelMode() {
+        return FreeType.FT_Bitmap_Get_pixel_mode(this.pointer);
+    }
+
+    public ByteBuffer getBuffer() {
+        return FreeType.FT_Bitmap_Get_buffer(this.pointer);
+    }
+}

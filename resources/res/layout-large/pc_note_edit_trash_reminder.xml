@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/reminder"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:orientation="horizontal"
+        android:background="@drawable/pc_note_trash_reminder_bg"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="10dp"
+        android:layerType="hardware"
+        android:layout_marginStart="44dp"
+        android:layout_marginEnd="44dp">
+        <TextView
+            android:textSize="12dp"
+            android:textColor="@color/pc_text_common_color"
+            android:gravity="center_vertical"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:text="@string/pc_note_trash_folder_remind"
+            android:layout_weight="1"
+            android:layout_marginStart="24dp"/>
+        <TextView
+            android:textSize="12dp"
+            android:textColor="#ffb005"
+            android:gravity="center_vertical"
+            android:id="@+id/restore"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="@string/option_menu_restore_note"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"/>
+    </LinearLayout>
+</FrameLayout>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <size
+        android:height="@dimen/todo_item_swipe_menu_size"
+        android:width="@dimen/todo_item_swipe_menu_size"/>
+    <solid android:color="@color/todo_item_menu_delete_color"/>
+</shape>

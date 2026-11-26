@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/group_item_group"
+    android:paddingTop="@dimen/todo_fw_item_group_padding_top"
+    android:paddingBottom="@dimen/todo_fw_item_group_padding_bottom"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="18dp">
+    <ImageView
+        android:id="@+id/iv_switch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_todo_fw_switch_for_group"
+        android:layout_marginStart="18dp"/>
+    <TextView
+        android:textSize="@dimen/list_section_title_size"
+        android:textColor="@color/todo_fw_group_btn_color"
+        android:gravity="start|center_vertical"
+        android:id="@+id/tv_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minHeight="24dp"
+        android:layout_alignBaseline="@+id/iv_switch"
+        android:layout_alignTop="@+id/iv_switch"
+        android:layout_marginStart="4dp"
+        android:layout_toEndOf="@+id/iv_switch"/>
+</RelativeLayout>

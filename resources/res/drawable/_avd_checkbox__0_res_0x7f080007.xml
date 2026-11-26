@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:name="todo"
+    android:height="@dimen/v12_notes_edit_tool_ic_size"
+    android:width="@dimen/v12_notes_edit_tool_ic_size"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <group
+        android:name="group"
+        android:pivotX="50"
+        android:pivotY="50">
+        <path
+            android:name="arrow"
+            android:pathData="M 24.6 37.3 L 46.6 59.9 L 68.8 37"
+            android:strokeColor="?attr/actionBottomButtonColor"
+            android:strokeWidth="5"
+            android:trimPathStart="0.314"
+            android:trimPathEnd="0.845"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:strokeMiterLimit="10"/>
+        <path
+            android:name="border"
+            android:pathData="M 70.2 75.4 L 30 75.4 C 27 75.4 24.5 72.9 24.5 69.9 L 24.5 29.8 C 24.5 26.8 27 24.3 30 24.3 L 70.1 24.3 C 73.1 24.3 75.6 26.8 75.6 29.8 L 75.6 70 C 75.6 73 73.2 75.4 70.2 75.4 Z"
+            android:strokeColor="?attr/actionBottomButtonColor"
+            android:strokeWidth="5"
+            android:trimPathOffset="0.4"
+            android:strokeLineCap="round"
+            android:strokeMiterLimit="10"/>
+    </group>
+</vector>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingStart="1px"
+    android:paddingEnd="1px">
+    <TextView
+        android:textSize="@dimen/text_title_size"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:id="@+id/remind_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/todo_time_picker_title"/>
+    <TextView
+        android:textSize="16sp"
+        android:textColor="@color/datepicker_sub_title_text"
+        android:gravity="center"
+        android:id="@+id/setting_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"/>
+</LinearLayout>

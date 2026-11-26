@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/color_item_group"
+    android:clipChildren="false"
+    android:layout_width="@dimen/color_item_parent_size"
+    android:layout_height="@dimen/color_item_parent_size">
+    <com.miui.support.cardview.CardView
+        android:id="@+id/color_item_select_bg"
+        android:visibility="visible"
+        android:layout_width="@dimen/color_item_bg_size"
+        android:layout_height="@dimen/color_item_bg_size"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardCornerRadius="@dimen/color_item_bg_radius"
+        app:contentPadding="@dimen/palette_panel_padding"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+    <View
+        android:id="@+id/color_item_content"
+        android:layout_width="@dimen/color_item_content_size"
+        android:layout_height="@dimen/color_item_content_size"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="60dp"
+    android:width="61dp"
+    android:autoMirrored="true"
+    android:viewportWidth="61"
+    android:viewportHeight="60">
+    <path
+        android:fillColor="?attr/actionButtonColorStateList"
+        android:pathData="M30.529,36.693C30.146,36.294 30.159,35.661 30.558,35.279L35.014,31L18.5,31C17.948,31 17.5,30.552 17.5,30C17.5,29.448 17.948,29 18.5,29L35.014,29L30.558,24.721C30.159,24.339 30.146,23.706 30.529,23.308C30.911,22.909 31.544,22.896 31.942,23.279L37.817,28.918C38.432,29.508 38.432,30.492 37.817,31.082L31.942,36.721C31.544,37.104 30.911,37.091 30.529,36.693ZM41.5,36C41.5,36.552 41.948,37 42.5,37C43.052,37 43.5,36.552 43.5,36V24C43.5,23.448 43.052,23 42.5,23C41.948,23 41.5,23.448 41.5,24L41.5,36Z"
+        android:fillType="evenOdd"/>
+</vector>

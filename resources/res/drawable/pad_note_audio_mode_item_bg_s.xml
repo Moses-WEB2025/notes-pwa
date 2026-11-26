@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/pad_note_audio_mode_item_bg_color_s"/>
+    <corners android:radius="@dimen/pad_ic_12px_size"/>
+</shape>

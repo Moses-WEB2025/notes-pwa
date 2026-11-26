@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="@dimen/widget_mind_note_item_icon_width"
+    android:layout_height="match_parent"
+    android:paddingStart="@dimen/widget_mind_note_item_line_padding"
+    android:paddingEnd="@dimen/widget_mind_note_item_line_padding"
+    android:layout_marginEnd="@dimen/widget_mind_note_out_line_item_lines_margin_end">
+    <TextView
+        android:background="@color/widget_mind_note_outline_line_color"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+</LinearLayout>

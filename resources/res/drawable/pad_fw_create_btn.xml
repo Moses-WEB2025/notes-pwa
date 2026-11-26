@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="@dimen/float_todo_add_icon_size"
+    android:width="@dimen/float_todo_add_icon_size"
+    android:viewportWidth="36"
+    android:viewportHeight="36">
+    <path
+        android:fillColor="@color/content_add_floating_action_button_color_n_light"
+        android:pathData="M18,0L18,0A18,18 0,0 1,36 18L36,18A18,18 0,0 1,18 36L18,36A18,18 0,0 1,0 18L0,18A18,18 0,0 1,18 0z"/>
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M11,17L25,17A1,1 0,0 1,26 18L26,18A1,1 0,0 1,25 19L11,19A1,1 0,0 1,10 18L10,18A1,1 0,0 1,11 17z"/>
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M11,17L25,17A1,1 0,0 1,26 18L26,18A1,1 0,0 1,25 19L11,19A1,1 0,0 1,10 18L10,18A1,1 0,0 1,11 17z"/>
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M11,17L25,17A1,1 0,0 1,26 18L26,18A1,1 0,0 1,25 19L11,19A1,1 0,0 1,10 18L10,18A1,1 0,0 1,11 17z"/>
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M19,11L19,25A1,1 0,0 1,18 26L18,26A1,1 0,0 1,17 25L17,11A1,1 0,0 1,18 10L18,10A1,1 0,0 1,19 11z"/>
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M19,11L19,25A1,1 0,0 1,18 26L18,26A1,1 0,0 1,17 25L17,11A1,1 0,0 1,18 10L18,10A1,1 0,0 1,19 11z"/>
+    <path
+        android:fillColor="#ffffff"
+        android:pathData="M19,11L19,25A1,1 0,0 1,18 26L18,26A1,1 0,0 1,17 25L17,11A1,1 0,0 1,18 10L18,10A1,1 0,0 1,19 11z"/>
+</vector>

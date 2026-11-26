@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="abc_config_prefDialogWidth">440dp</dimen>
+    <dimen name="abc_dialog_fixed_height_major">60%</dimen>
+    <dimen name="abc_dialog_fixed_height_minor">90%</dimen>
+    <dimen name="abc_dialog_fixed_width_major">60%</dimen>
+    <dimen name="abc_dialog_fixed_width_minor">90%</dimen>
+    <dimen name="abc_dialog_min_width_major">55%</dimen>
+    <dimen name="abc_dialog_min_width_minor">80%</dimen>
+    <dimen name="miuix_search_cancel_button_size">14sp</dimen>
+    <dimen name="miuix_search_cancel_padding_bottom">9.78dp</dimen>
+    <dimen name="miuix_search_compose_divider_height">41.78dp</dimen>
+    <dimen name="miuix_search_compose_divider_width">0.44dp</dimen>
+    <dimen name="miuix_search_container_input_icon_layout">18dp</dimen>
+    <dimen name="miuix_search_container_margin_start">23.11dp</dimen>
+    <dimen name="miuix_search_edit_text_size">13sp</dimen>
+    <dimen name="miuix_search_flexbox_height">36.44dp</dimen>
+    <dimen name="miuix_search_flexbox_item_marginEnd">13.33dp</dimen>
+    <dimen name="miuix_search_flexbox_margin_vertical">6.67dp</dimen>
+    <dimen name="miuix_search_flexbox_padding_horizontal">20.45dp</dimen>
+    <dimen name="miuix_search_flexbox_text_size">13.33dp</dimen>
+    <dimen name="miuix_search_history_item_padding">18.22dp</dimen>
+    <dimen name="miuix_search_history_item_text_size">17dp</dimen>
+    <dimen name="miuix_search_input_bg_height">42dp</dimen>
+    <dimen name="miuix_search_input_bg_radius">68dp</dimen>
+    <dimen name="miuix_search_list_padding_horizontal">23.11dp</dimen>
+    <dimen name="miuix_search_recommendation_group_title_text_size">@dimen/miuix_font_size_footnote2</dimen>
+    <dimen name="miuix_search_recommendation_item_del_height">22.22dp</dimen>
+    <dimen name="miuix_search_recommendation_item_del_margin">4.45dp</dimen>
+    <dimen name="miuix_search_recommendation_item_del_padding">18.67dp</dimen>
+    <dimen name="miuix_search_recommendation_item_del_width">22.22dp</dimen>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:state_enabled="true"
+        android:color="@color/todo_edit_done_a_color"/>
+    <item android:color="@color/todo_edit_done_d_color"/>
+</selector>

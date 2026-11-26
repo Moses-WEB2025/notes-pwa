@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<appfunctions>
+    <appfunction>
+        <id>com.miui.notes.action.provider.NoteAppFunction#createNote</id>
+        <enabledByDefault>true</enabledByDefault>
+        <parameters>
+            <dataTypeMetadata>
+                <dataTypeReference>com.google.android.appfunctions.schema.notes.v1.CreateNoteParams</dataTypeReference>
+                <id>unused</id>
+                <isNullable>false</isNullable>
+                <type>11</type>
+            </dataTypeMetadata>
+            <id>unused</id>
+            <isRequired>true</isRequired>
+            <name>createNoteParams</name>
+        </parameters>
+        <response>
+            <id>unused</id>
+            <valueType>
+                <dataTypeReference>com.google.android.appfunctions.schema.notes.v1.Note</dataTypeReference>
+                <id>unused</id>
+                <isNullable>false</isNullable>
+                <type>11</type>
+            </valueType>
+        </response>
+        <schemaCategory>notes</schemaCategory>
+        <schemaName>createNote</schemaName>
+        <schemaVersion>1</schemaVersion>
+        <functionId>com.miui.notes.action.provider.NoteAppFunction#createNote</functionId>
+    </appfunction>
+    <appfunction>
+        <id>com.miui.notes.action.provider.NoteAppFunction#findNotes</id>
+        <enabledByDefault>true</enabledByDefault>
+        <parameters>
+            <dataTypeMetadata>
+                <dataTypeReference>com.google.android.appfunctions.schema.notes.v1.FindNotesParams</dataTypeReference>
+                <id>unused</id>
+                <isNullable>false</isNullable>
+                <type>11</type>
+            </dataTypeMetadata>
+            <id>unused</id>
+            <isRequired>true</isRequired>
+            <name>findNotesParams</name>
+        </parameters>
+        <response>
+            <id>unused</id>
+            <valueType>
+                <id>unused</id>
+                <isNullable>false</isNullable>
+                <itemType>
+                    <dataTypeReference>com.google.android.appfunctions.schema.notes.v1.Note</dataTypeReference>
+                    <id>unused</id>
+                    <isNullable>false</isNullable>
+                    <type>11</type>
+                </itemType>
+                <type>10</type>
+            </valueType>
+        </response>
+        <schemaCategory>notes</schemaCategory>
+        <schemaName>findNotes</schemaName>
+        <schemaVersion>1</schemaVersion>
+        <functionId>com.miui.notes.action.provider.NoteAppFunction#findNotes</functionId>
+    </appfunction>
+    <appfunction>
+        <id>com.miui.notes.action.provider.NoteAppFunction#getNotes</id>
+        <enabledByDefault>true</enabledByDefault>
+        <parameters>
+            <dataTypeMetadata>
+                <id>unused</id>
+                <isNullable>false</isNullable>
+                <itemType>
+                    <id>unused</id>
+                    <isNullable>false</isNullable>
+                    <type>8</type>
+                </itemType>
+                <type>10</type>
+            </dataTypeMetadata>
+            <id>unused</id>
+            <isRequired>true</isRequired>
+            <name>noteIds</name>
+        </parameters>
+        <response>
+            <id>unused</id>
+            <valueType>
+                <id>unused</id>
+                <isNullable>false</isNullable>
+                <itemType>
+                    <dataTypeReference>com.google.android.appfunctions.schema.notes.v1.Note</dataTypeReference>
+                    <id>unused</id>
+                    <isNullable>false</isNullable>
+                    <type>11</type>
+                </itemType>
+                <type>10</type>
+            </valueType>
+        </response>
+        <schemaCategory>notes</schemaCategory>
+        <schemaName>getNotes</schemaName>
+        <schemaVersion>1</schemaVersion>
+        <functionId>com.miui.notes.action.provider.NoteAppFunction#getNotes</functionId>
+    </appfunction>
+    <appfunction>
+        <id>com.miui.notes.action.provider.NoteAppFunction#showNote</id>
+        <enabledByDefault>true</enabledByDefault>
+        <parameters>
+            <dataTypeMetadata>
+                <id>unused</id>
+                <isNullable>false</isNullable>
+                <type>8</type>
+            </dataTypeMetadata>
+            <id>unused</id>
+            <isRequired>true</isRequired>
+            <name>noteId</name>
+        </parameters>
+        <response>
+            <id>unused</id>
+            <valueType>
+                <id>unused</id>
+                <isNullable>false</isNullable>
+                <objectQualifiedName>android.app.PendingIntent</objectQualifiedName>
+                <type>13</type>
+            </valueType>
+        </response>
+        <schemaCategory>notes</schemaCategory>
+        <schemaName>showNote</schemaName>
+        <schemaVersion>1</schemaVersion>
+        <functionId>com.miui.notes.action.provider.NoteAppFunction#showNote</functionId>
+    </appfunction>
+    <AppFunctionComponentMetadataDocument>
+        <dataTypes>
+            <dataTypeMetadata>
+                <id>unused</id>
+                <isNullable>true</isNullable>
+                <objectQualifiedName>android.net.Uri</objectQualifiedName>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <type>8</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>uri</name>
+                </properties>
+                <required>uri</required>
+                <type>3</type>
+            </dataTypeMetadata>
+            <id>unused</id>
+            <name>android.net.Uri</name>
+        </dataTypes>
+        <dataTypes>
+            <dataTypeMetadata>
+                <id>unused</id>
+                <isNullable>true</isNullable>
+                <objectQualifiedName>com.google.android.appfunctions.schema.notes.v1.Attachment</objectQualifiedName>
+                <description>A file attached to the note. </description>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The display name of the attachment. </description>
+                        <type>8</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>displayName</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>true</isNullable>
+                        <description>The MIME type of the attachment. Format defined in RFC 6838. </description>
+                        <type>8</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>mimeType</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <dataTypeReference>android.net.Uri</dataTypeReference>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The URI of the attachment. </description>
+                        <type>11</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>uri</name>
+                </properties>
+                <required>displayName</required>
+                <required>uri</required>
+                <type>3</type>
+            </dataTypeMetadata>
+            <id>unused</id>
+            <name>com.google.android.appfunctions.schema.notes.v1.Attachment</name>
+        </dataTypes>
+        <dataTypes>
+            <dataTypeMetadata>
+                <id>unused</id>
+                <isNullable>true</isNullable>
+                <objectQualifiedName>com.google.android.appfunctions.schema.notes.v1.CreateNoteParams</objectQualifiedName>
+                <description>The parameters for creating a note. </description>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The title of the note. </description>
+                        <type>8</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>title</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>true</isNullable>
+                        <description>The content of the note. </description>
+                        <type>8</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>content</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <itemType>
+                            <dataTypeReference>com.google.android.appfunctions.schema.notes.v1.Attachment</dataTypeReference>
+                            <id>unused</id>
+                            <isNullable>false</isNullable>
+                            <type>11</type>
+                        </itemType>
+                        <description>The attachments of the note. </description>
+                        <type>10</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>attachments</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>true</isNullable>
+                        <description>
+ The ID of the folder the note is in, if any.
+
+ [androidx.appfunctions.AppFunctionElementNotFoundException] should be thrown when a folder with
+ the specified folderId doesn't exist.
+</description>
+                        <type>8</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>folderId</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>true</isNullable>
+                        <description>
+ An optional UUID for this note provided by the caller. If provided, the caller can use this
+ UUID as well as the returned [Note.id] to reference this specific note in subsequent requests,
+ such as a request to update the note that was just created.
+
+ To support [externalId], the application should maintain a mapping between the [externalId] and
+ the internal id of this note. This allows the application to retrieve the correct note when the
+ caller references it using the provided `externalId` in subsequent requests.
+
+ If the `externalId` is not provided by the caller in the creation request, the application
+ should expect subsequent requests from the caller to reference the note using the application
+ generated [Note.id].
+</description>
+                        <type>8</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>externalId</name>
+                </properties>
+                <required>title</required>
+                <type>3</type>
+            </dataTypeMetadata>
+            <id>unused</id>
+            <name>com.google.android.appfunctions.schema.notes.v1.CreateNoteParams</name>
+        </dataTypes>
+        <dataTypes>
+            <dataTypeMetadata>
+                <id>unused</id>
+                <isNullable>true</isNullable>
+                <objectQualifiedName>com.google.android.appfunctions.schema.notes.v1.FindNotesParams</objectQualifiedName>
+                <description>
+ The parameters for finding notes. A null value means that there is no restriction on the given
+ field. If all fields are null, it returns all the notes (up to [maxCount]).
+</description>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>true</isNullable>
+                        <description>
+ The search query to be processed. A null value means to query all notes with the remaining
+ parameters.
+
+ This parameter is analogous to the caller typing a query into a search box. The app providing
+ the app function has full control over how the query is interpreted and processed; for example
+ by name matching or semantic analysis.
+</description>
+                        <type>8</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>query</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <dataTypeReference>com.google.android.appfunctions.schema.types.v1.DateTime</dataTypeReference>
+                        <id>unused</id>
+                        <isNullable>true</isNullable>
+                        <description>
+ The [DateTime] on or after which a note must have been modified to be included in the results.
+
+ Acts as a lower bound for filtering notes based on their modification time. A `null` value
+ means no lower bound is applied.
+
+ If [startDate] is equal to [endDate], an empty list will be returned.
+
+ [androidx.appfunctions.AppFunctionInvalidArgumentException] should be thrown if [startDate] is
+ specified and is after [endDate].
+</description>
+                        <type>11</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>startDate</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <dataTypeReference>com.google.android.appfunctions.schema.types.v1.DateTime</dataTypeReference>
+                        <id>unused</id>
+                        <isNullable>true</isNullable>
+                        <description>
+ The [DateTime] before which a note must have been modified to be included in the results.
+
+ Acts as a strict upper bound for filtering notes based on their modification timestamp. A
+ `null` value means no upper bound is applied.
+
+ If [startDate] is equal to [endDate], an empty list will be returned.
+
+ [androidx.appfunctions.AppFunctionInvalidArgumentException] should be thrown if [startDate] is
+ specified and is after [endDate].
+</description>
+                        <type>11</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>endDate</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The maximum number of notes to return. </description>
+                        <type>7</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>maxCount</name>
+                </properties>
+                <required>maxCount</required>
+                <type>3</type>
+            </dataTypeMetadata>
+            <id>unused</id>
+            <name>com.google.android.appfunctions.schema.notes.v1.FindNotesParams</name>
+        </dataTypes>
+        <dataTypes>
+            <dataTypeMetadata>
+                <id>unused</id>
+                <isNullable>true</isNullable>
+                <objectQualifiedName>com.google.android.appfunctions.schema.notes.v1.Note</objectQualifiedName>
+                <description>A note entity. </description>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The ID of the note. </description>
+                        <type>8</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>id</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The title of the note. </description>
+                        <type>8</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>title</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>true</isNullable>
+                        <description>The content of the note. </description>
+                        <type>8</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>content</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <itemType>
+                            <dataTypeReference>com.google.android.appfunctions.schema.notes.v1.Attachment</dataTypeReference>
+                            <id>unused</id>
+                            <isNullable>false</isNullable>
+                            <type>11</type>
+                        </itemType>
+                        <description>The attachments of the note. </description>
+                        <type>10</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>attachments</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>true</isNullable>
+                        <description>The ID of the folder the note is in, if any. </description>
+                        <type>8</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>folderId</name>
+                </properties>
+                <required>id</required>
+                <required>title</required>
+                <type>3</type>
+            </dataTypeMetadata>
+            <id>unused</id>
+            <name>com.google.android.appfunctions.schema.notes.v1.Note</name>
+        </dataTypes>
+        <dataTypes>
+            <dataTypeMetadata>
+                <id>unused</id>
+                <isNullable>true</isNullable>
+                <objectQualifiedName>com.google.android.appfunctions.schema.types.v1.Date</objectQualifiedName>
+                <description>A date. </description>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The year. </description>
+                        <type>7</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>year</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The month. </description>
+                        <type>7</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>month</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The day. </description>
+                        <type>7</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>day</name>
+                </properties>
+                <required>year</required>
+                <required>month</required>
+                <required>day</required>
+                <type>3</type>
+            </dataTypeMetadata>
+            <id>unused</id>
+            <name>com.google.android.appfunctions.schema.types.v1.Date</name>
+        </dataTypes>
+        <dataTypes>
+            <dataTypeMetadata>
+                <id>unused</id>
+                <isNullable>true</isNullable>
+                <objectQualifiedName>com.google.android.appfunctions.schema.types.v1.DateTime</objectQualifiedName>
+                <description>A date and time. </description>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The time zone. Formatted as an IANA Time Zone Database name (e.g. "Europe/Zurich"). </description>
+                        <type>8</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>timeZone</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <dataTypeReference>com.google.android.appfunctions.schema.types.v1.Date</dataTypeReference>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The date. </description>
+                        <type>11</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>date</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <dataTypeReference>com.google.android.appfunctions.schema.types.v1.TimeOfDay</dataTypeReference>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The time. </description>
+                        <type>11</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>timeOfDay</name>
+                </properties>
+                <required>timeZone</required>
+                <required>date</required>
+                <required>timeOfDay</required>
+                <type>3</type>
+            </dataTypeMetadata>
+            <id>unused</id>
+            <name>com.google.android.appfunctions.schema.types.v1.DateTime</name>
+        </dataTypes>
+        <dataTypes>
+            <dataTypeMetadata>
+                <id>unused</id>
+                <isNullable>true</isNullable>
+                <objectQualifiedName>com.google.android.appfunctions.schema.types.v1.TimeOfDay</objectQualifiedName>
+                <description>A time of day. </description>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The hours. </description>
+                        <type>7</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>hours</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The minutes. </description>
+                        <type>7</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>minutes</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The seconds. </description>
+                        <type>7</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>seconds</name>
+                </properties>
+                <properties>
+                    <dataTypeMetadata>
+                        <id>unused</id>
+                        <isNullable>false</isNullable>
+                        <description>The nanoseconds. </description>
+                        <type>7</type>
+                    </dataTypeMetadata>
+                    <id>unused</id>
+                    <name>nanos</name>
+                </properties>
+                <required>hours</required>
+                <required>minutes</required>
+                <required>seconds</required>
+                <required>nanos</required>
+                <type>3</type>
+            </dataTypeMetadata>
+            <id>unused</id>
+            <name>com.google.android.appfunctions.schema.types.v1.TimeOfDay</name>
+        </dataTypes>
+        <id>unused</id>
+    </AppFunctionComponentMetadataDocument>
+</appfunctions>
+

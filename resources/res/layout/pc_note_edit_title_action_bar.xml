@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/title_action_bar"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:id="@+id/folder_name_group"
+        android:background="@drawable/note_title_bg"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/note_dir_indicator_bg_height"
+        android:layout_marginEnd="12dp"
+        app:layout_constraintEnd_toStartOf="@+id/more"
+        app:layout_constraintTop_toTopOf="parent">
+        <ImageView
+            android:layout_gravity="center"
+            android:id="@+id/folder_icon"
+            android:padding="3.5dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_note_dir_indicator"
+            android:layout_marginStart="28dp"/>
+        <TextView
+            android:textSize="12dp"
+            android:textColor="@color/note_dir_indicator_text_color_default"
+            android:id="@+id/folder_name"
+            android:paddingBottom="1dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/unclassfied_folder_name"
+            android:layout_marginStart="@dimen/note_dir_indicator_bg_margin"
+            android:layout_marginEnd="38dp"/>
+    </LinearLayout>
+    <ImageView
+        android:id="@+id/more"
+        android:background="@drawable/note_pad_toolbar_item_bg"
+        android:src="@drawable/ic_action_more"
+        android:contentDescription="@string/menu_more_description"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        style="@style/ActionBarIconStyle"/>
+</androidx.constraintlayout.widget.ConstraintLayout>

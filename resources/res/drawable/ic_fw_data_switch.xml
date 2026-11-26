@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="24dp"
+    android:width="24dp"
+    android:viewportWidth="25"
+    android:viewportHeight="25">
+    <group>
+        <clip-path android:pathData="M0,0.121h24v24h-24z"/>
+        <path
+            android:fillColor="@color/todo_fw_group_btn_color"
+            android:pathData="M13.273,9.946L16.552,13.225C16.77,13.443 16.77,13.798 16.552,14.017L16.071,14.498C15.852,14.716 15.497,14.716 15.279,14.498L12.142,11.361C12.064,11.282 11.937,11.282 11.859,11.361L8.722,14.497C8.503,14.716 8.149,14.716 7.93,14.497L7.449,14.016C7.231,13.798 7.231,13.443 7.449,13.224L10.727,9.946L11.293,9.381C11.684,8.99 12.317,8.99 12.707,9.381L13.273,9.946Z"
+            android:fillType="evenOdd"/>
+    </group>
+</vector>

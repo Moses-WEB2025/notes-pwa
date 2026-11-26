@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="@string/setting_layout">
+        <miuix.preference.DropDownPreference
+            android:entries="@array/big_screen_layouts"
+            android:title="@string/setting_big_screen_layout_title"
+            android:key="pref_key_note_homepage_array_way"/>
+        <com.miui.notes.ui.DoubleImagePreference
+            android:enabled="false"
+            android:key="pref_key_layout_demo"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/setting_cloud_service">
+        <com.miui.notes.preference.PreferenceMiCloud
+            android:title="@string/setting_micloud_sync_title"
+            android:key="pref_micloud"/>
+        <Preference
+            android:persistent="false"
+            android:title="@string/trash_folder_name_new"
+            android:key="pref_key_cloud_trash_bin"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/pref_title_note_style">
+        <miuix.preference.DropDownPreference
+            android:title="@string/pref_title_font_size"
+            android:key="pref_key_font_size"/>
+        <miuix.preference.DropDownPreference
+            android:entries="@array/note_sort_way"
+            android:title="@string/note_sort_way"
+            android:key="pref_key_note_sort_way"/>
+    </PreferenceCategory>
+    <PreferenceCategory
+        android:title="@string/pref_category_title_quick_func"
+        android:key="pref_quick_note_category">
+        <Preference
+            android:title="@string/pref_title_quick_note"
+            android:key="pref_quick_note"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/remind_title">
+        <androidx.preference.CheckBoxPreference
+            android:title="@string/pref_remind_type_title_new"
+            android:key="pref_remind_type"
+            android:summary="@string/pref_remind_type_summary_new"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="@string/setting_other">
+        <Preference
+            android:title="@string/setting_privacy"
+            android:key="privacy_policy"/>
+        <Preference
+            android:title="@string/user_agreement"
+            android:key="pref_user_agreement"/>
+        <Preference
+            android:title="@string/permission_data_shared_desc"
+            android:key="pref_key_data_sharing_statement"/>
+        <Preference
+            android:title="@string/pref_permission_manage"
+            android:key="pref_key_permission"/>
+        <Preference
+            android:title="@string/privacy_preference_title"
+            android:key="pref_key_privacy"
+            android:summary="@string/privacy_preference"/>
+        <Preference
+            android:title="@string/aig_register_preference_title"
+            android:key="pref_key_agi_register"
+            android:summary="@string/aig_register_preference"/>
+        <Preference
+            android:title="@string/llm_register_preference_title"
+            android:key="pref_key_llm_register"
+            android:summary="@string/llm_register_preference"/>
+    </PreferenceCategory>
+</PreferenceScreen>

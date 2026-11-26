@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:drawable="@drawable/_avd_checkbox__0_res_0x7f080007">
+    <target
+        android:name="border"
+        android:animation="@drawable/_avd_checkbox__1_res_0x7f080008"/>
+    <target
+        android:name="arrow"
+        android:animation="@drawable/_avd_checkbox__2_res_0x7f080009"/>
+    <target
+        android:name="group"
+        android:animation="@drawable/_avd_checkbox__3_res_0x7f08000a"/>
+    <target
+        android:name="todo"
+        android:animation="@drawable/_avd_checkbox__4_res_0x7f08000b"/>
+</animated-vector>

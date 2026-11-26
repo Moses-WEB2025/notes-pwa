@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<handoff-app>
+    <item
+        deviceTypes="phone"
+        packageName="com.miui.notes"
+        signature="7B6DC7079C34739CE81159719FB5EB61D2A03225"/>
+    <item
+        deviceTypes="pad"
+        packageName="com.miui.notes"
+        signature="7B6DC7079C34739CE81159719FB5EB61D2A03225"/>
+    <item
+        deviceTypes="pc"
+        packageName="com.miui.notes"
+        signature="7B6DC7079C34739CE81159719FB5EB61D2A03225"/>
+</handoff-app>

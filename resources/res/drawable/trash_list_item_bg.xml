@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/common_folder_dialog_item_bg_color"/>
+    <corners android:radius="@dimen/v12_grid_item_shape_radius"/>
+</shape>

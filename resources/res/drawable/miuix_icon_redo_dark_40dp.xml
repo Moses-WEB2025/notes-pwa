@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<drawable xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:symbolAutoMirroredCompat="true"
+    app:symbolDisabledAlpha="0.3"
+    app:symbolIconHeight="40dp"
+    app:symbolIconSize="21dp"
+    app:symbolIconWidth="40dp"
+    app:symbolNormalAlpha="0.8"
+    app:symbolPressedAlpha="0.5"
+    app:symbolText="��"
+    app:symbolTintColor="@color/miuix_default_color_action_icon_tint_dark"
+    class="miuix.theme.symbol.SymbolDrawable"/>

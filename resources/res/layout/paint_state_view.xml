@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+    <com.miui.handwriting.common.view.page.StateTextView
+        android:id="@+id/tv_page_index"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/creation_page_index_scale_margin_bottom"
+        android:layout_marginStart="@dimen/creation_page_index_margin_left"/>
+    <com.miui.handwriting.common.view.page.StateTextView
+        android:id="@+id/tv_scale"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/creation_page_index_scale_margin_bottom"
+        android:layout_marginStart="@dimen/creation_page_scale_margin_left"
+        android:layout_toEndOf="@+id/tv_page_index"/>
+    <TextView
+        android:textSize="@dimen/creation_page_index_text_size"
+        android:textColor="@color/creation_page_index_color"
+        android:id="@+id/tv_location"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/creation_page_index_scale_margin_bottom"
+        android:layout_marginStart="@dimen/creation_page_index_margin_left"
+        android:layout_toEndOf="@+id/tv_scale"/>
+</RelativeLayout>

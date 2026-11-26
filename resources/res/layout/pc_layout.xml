@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/pad_layout_view_bg_color"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="horizontal"
+        android:id="@+id/navigation_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginEnd="28dp">
+        <FrameLayout
+            android:id="@+id/left"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"/>
+        <View
+            android:layout_width="12dp"
+            android:layout_height="match_parent"/>
+        <com.miui.pc.frame.BaseRightLayout
+            android:id="@+id/right_container"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1">
+            <FrameLayout
+                android:id="@+id/right"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="12dp"/>
+        </com.miui.pc.frame.BaseRightLayout>
+    </LinearLayout>
+</FrameLayout>

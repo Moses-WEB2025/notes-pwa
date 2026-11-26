@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="end"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/passport_page_header_height">
+    <TextView
+        android:textColor="@color/passport_page_header_title"
+        android:gravity="center"
+        android:id="@+id/help"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:text="@string/passport_help"
+        android:layout_toStartOf="@+id/country_name"/>
+    <TextView
+        android:gravity="center"
+        android:id="@+id/country_name"
+        android:layout_height="match_parent"
+        android:text="中国大陆"
+        android:layout_marginStart="10dp"
+        style="@style/PassportWidget.HighlightText"/>
+</LinearLayout>

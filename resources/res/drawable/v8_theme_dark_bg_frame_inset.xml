@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/v8_theme_dark_bg_frame"
+    android:insetLeft="@dimen/theme_dark_out_padding_left"
+    android:insetRight="@dimen/theme_dark_out_padding_right"
+    android:insetTop="@dimen/v8_theme_dark_year_layer_inset"
+    android:insetBottom="@dimen/v8_theme_dark_padding_bottom"/>

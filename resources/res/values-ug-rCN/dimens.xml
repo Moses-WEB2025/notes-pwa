@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="global_ai_panel_edit_height_extra">28dp</dimen>
+    <dimen name="miuix_label_text_size_small">4.5dp</dimen>
+</resources>

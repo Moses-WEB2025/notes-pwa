@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:ordering="together">
+    <objectAnimator
+        android:interpolator="@drawable/_three_dots__5_res_0x7f0800b7"
+        android:duration="259"
+        android:startOffset="0"
+        android:repeatCount="infinite"
+        android:valueFrom="1"
+        android:valueTo="1.1"
+        android:valueType="floatType"
+        android:propertyName="scaleX"/>
+    <objectAnimator
+        android:interpolator="@drawable/_three_dots__6_res_0x7f0800b8"
+        android:duration="259"
+        android:startOffset="0"
+        android:repeatCount="infinite"
+        android:valueFrom="1"
+        android:valueTo="1.1"
+        android:valueType="floatType"
+        android:propertyName="scaleY"/>
+    <objectAnimator
+        android:interpolator="@drawable/_three_dots__7_res_0x7f0800b9"
+        android:duration="407"
+        android:startOffset="259"
+        android:repeatCount="infinite"
+        android:valueFrom="1.1"
+        android:valueTo="1"
+        android:valueType="floatType"
+        android:propertyName="scaleX"/>
+    <objectAnimator
+        android:interpolator="@drawable/_three_dots__8_res_0x7f0800ba"
+        android:duration="407"
+        android:startOffset="259"
+        android:repeatCount="infinite"
+        android:valueFrom="1.1"
+        android:valueTo="1"
+        android:valueType="floatType"
+        android:propertyName="scaleY"/>
+</set>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <com.miui.pc.view.SharpView
+        android:id="@+id/sharp_view"
+        android:background="@android:color/transparent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+    <LinearLayout
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:id="@+id/pop_menu_layout"
+        android:background="@drawable/pc_create_menu_background"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.miui.pc.view.CreateMenuView
+            android:id="@+id/create_note_view"
+            android:background="@drawable/pc_note_pop_menu_item_bg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+        <com.miui.pc.view.CreateMenuView
+            android:id="@+id/create_mind_view"
+            android:background="@drawable/pc_note_pop_menu_item_bg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+        <com.miui.pc.view.CreateMenuView
+            android:id="@+id/create_folder_view"
+            android:background="@drawable/pc_note_pop_menu_item_bg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+</LinearLayout>

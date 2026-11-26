@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:id="@+id/header"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <ImageView
+        android:id="@+id/home"
+        android:src="@drawable/phone_ic_handwrite_action_back_selector"
+        android:contentDescription="@string/actionbar_home_description"
+        style="@style/ActionBarIconStyle"/>
+    <View
+        android:layout_width="0dp"
+        android:layout_height="@dimen/v12_notes_edit_header_ic_size"
+        android:layout_weight="1"/>
+    <ImageView
+        android:id="@+id/share"
+        android:background="@drawable/phone_ic_handwrite_action_share_selector"
+        android:visibility="visible"
+        android:contentDescription="@string/toolbar_share_description"
+        style="@style/ActionBarIconStyle"/>
+    <ImageView
+        android:id="@+id/more"
+        android:background="@drawable/phone_ic_handwrite_action_more_selector"
+        android:visibility="visible"
+        android:contentDescription="@string/menu_more_description"
+        android:layout_marginStart="@dimen/v12_notes_edit_header_ic_margin"
+        style="@style/ActionBarIconStyle"/>
+</LinearLayout>

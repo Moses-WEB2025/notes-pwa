@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <paths>
+        <external-path
+            name="share"
+            path="."/>
+        <files-path
+            name="note_image"
+            path="attachment/"/>
+        <external-path
+            name="note_audio"
+            path="mp3/"/>
+        <files-path
+            name="handwritten_temp"
+            path="handwritten_temp/multi_handwrite_share/"/>
+        <files-path
+            name="handwrite_share"
+            path="handwritten_temp/handwrite_share/"/>
+        <cache-path
+            name="tapshare_preview"
+            path="."/>
+    </paths>
+</resources>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt" android:drawable="@drawable/_audio_wave_anim_short__0_res_0x7f080001">
+    <target
+        android:name="1_1"
+        android:animation="@drawable/_audio_wave_anim_short__1_res_0x7f080002"/>
+    <target
+        android:name="1_5"
+        android:animation="@drawable/_audio_wave_anim_short__2_res_0x7f080003"/>
+    <target
+        android:name="1_4"
+        android:animation="@drawable/_audio_wave_anim_short__3_res_0x7f080004"/>
+    <target
+        android:name="1_3"
+        android:animation="@drawable/_audio_wave_anim_short__4_res_0x7f080005"/>
+    <target
+        android:name="1_2"
+        android:animation="@drawable/_audio_wave_anim_short__5_res_0x7f080006"/>
+</animated-vector>

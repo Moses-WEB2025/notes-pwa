@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:id="@+id/rv_content"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/miuix_theme_margin_base"
+    android:layout_marginStart="@dimen/miuix_theme_margin_horizontal_common"
+    android:layout_marginEnd="@dimen/miuix_theme_margin_horizontal_common">
+    <com.miui.notes.ui.view.BaseNoteRecyclerView
+        android:id="@+id/fold_folder_dialog_rv"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:nestedScrollingEnabled="false"/>
+    <include
+        android:id="@+id/fold_folder_dialog_create_folder_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/miuix_theme_margin_horizontal_common"
+        android:layout_marginBottom="@dimen/miuix_theme_margin_horizontal_common"
+        layout="@layout/common_folder_dialog_item_foot"/>
+</LinearLayout>

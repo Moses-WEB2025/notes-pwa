@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <TextView
+        android:textSize="@dimen/search_tag_text_size"
+        android:textColor="@color/theme_common_secondary_color_light"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:id="@+id/folder_name"
+        android:background="@drawable/search_folder_tag_bg"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="37dp"
+        android:singleLine="true"/>
+</LinearLayout>

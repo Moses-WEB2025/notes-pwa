@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="creation_actionmode_dp_16">16dp</dimen>
+    <dimen name="creation_brush_half_color_half_width">185dp</dimen>
+    <dimen name="creation_brush_half_color_width">225dp</dimen>
+    <dimen name="creation_color_pick_popup_window_width">310dp</dimen>
+    <dimen name="creation_color_picker_popup_width">314dp</dimen>
+    <dimen name="creation_color_picker_popup_width_zero_point_eight">251.2dp</dimen>
+    <dimen name="creation_color_picker_popup_width_zero_point_nine">282.5938dp</dimen>
+    <dimen name="creation_color_picker_tab_button_width">152.5dp</dimen>
+    <dimen name="creation_color_picker_view_page_grid_panel_width">274dp</dimen>
+    <dimen name="creation_color_picker_view_page_grid_panel_width_zero_point_eight">219.2dp</dimen>
+    <dimen name="creation_color_picker_view_page_grid_panel_width_zero_point_nine">246.6dp</dimen>
+    <dimen name="creation_color_picker_view_page_slider_width">265dp</dimen>
+    <dimen name="creation_color_picker_view_page_slider_width_zero_point_eight">212dp</dimen>
+    <dimen name="creation_color_picker_view_page_slider_width_zero_point_nine">238.5dp</dimen>
+    <dimen name="creation_common_edit_popup_window_width">310dp</dimen>
+    <dimen name="creation_draw_paper_parent_item_margin">10dp</dimen>
+    <dimen name="creation_pen_set_popup_window_width">310dp</dimen>
+    <dimen name="creation_shortcut_padding_startend">20dp</dimen>
+    <dimen name="creation_tool_separate_margin_end">8dp</dimen>
+    <dimen name="creation_tool_separate_margin_mid">2dp</dimen>
+    <dimen name="creation_tool_separate_margin_start">10dp</dimen>
+</resources>

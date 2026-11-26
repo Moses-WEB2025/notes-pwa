@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/v12_theme_content_bg_color"/>
+    <corners
+        android:bottomLeftRadius="@dimen/v12_grid_item_shape_radius"
+        android:bottomRightRadius="@dimen/v12_grid_item_shape_radius"/>
+    <padding
+        android:left="@dimen/v12_item_grid_padding_start"
+        android:top="@dimen/v12_item_grid_padding_start"
+        android:right="@dimen/v12_item_grid_padding_end"
+        android:bottom="0dp"/>
+</shape>

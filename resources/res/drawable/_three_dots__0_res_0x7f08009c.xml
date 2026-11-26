@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:height="8dp"
+    android:width="30dp"
+    android:viewportWidth="30"
+    android:viewportHeight="8">
+    <group android:name="_R_G">
+        <group
+            android:name="_R_G_L_2_G"
+            android:scaleX="1"
+            android:scaleY="1"
+            android:translateX="4"
+            android:translateY="4">
+            <path
+                android:name="_R_G_L_2_G_D_0_P_0"
+                android:fillColor="@color/loading_flag_color"
+                android:pathData=" M0 -3 C1.66,-3 3,-1.66 3,0 C3,1.66 1.66,3 0,3 C-1.66,3 -3,1.66 -3,0 C-3,-1.66 -1.66,-3 0,-3c "
+                android:fillAlpha="0.3"
+                android:fillType="nonZero"/>
+        </group>
+        <group
+            android:name="_R_G_L_1_G"
+            android:scaleX="1"
+            android:scaleY="1"
+            android:translateX="15"
+            android:translateY="4">
+            <path
+                android:name="_R_G_L_1_G_D_0_P_0"
+                android:fillColor="@color/loading_flag_color"
+                android:pathData=" M0 -3 C1.66,-3 3,-1.66 3,0 C3,1.66 1.66,3 0,3 C-1.66,3 -3,1.66 -3,0 C-3,-1.66 -1.66,-3 0,-3c "
+                android:fillAlpha="0.3"
+                android:fillType="nonZero"/>
+        </group>
+        <group
+            android:name="_R_G_L_0_G"
+            android:scaleX="1"
+            android:scaleY="1"
+            android:translateX="26"
+            android:translateY="4">
+            <path
+                android:name="_R_G_L_0_G_D_0_P_0"
+                android:fillColor="@color/loading_flag_color"
+                android:pathData=" M0 -3 C1.66,-3 3,-1.66 3,0 C3,1.66 1.66,3 0,3 C-1.66,3 -3,1.66 -3,0 C-3,-1.66 -1.66,-3 0,-3c "
+                android:fillAlpha="0.3"
+                android:fillType="nonZero"/>
+        </group>
+    </group>
+    <group android:name="time_group"/>
+</vector>

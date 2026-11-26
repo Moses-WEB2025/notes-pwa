@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="20dp"
+    android:width="20dp"
+    android:viewportWidth="20"
+    android:viewportHeight="20">
+    <path
+        android:fillColor="@color/todo_edit_cancel_icon_color_press"
+        android:pathData="M5.6158,4.4843C5.3033,4.1719 4.7968,4.1719 4.4844,4.4843C4.172,4.7967 4.172,5.3033 4.4844,5.6157L8.8684,9.9997L4.4843,14.3838C4.1719,14.6962 4.1719,15.2028 4.4843,15.5152C4.7967,15.8276 5.3033,15.8276 5.6157,15.5152L9.9998,11.1311L14.3839,15.5152C14.6963,15.8276 15.2028,15.8276 15.5153,15.5152C15.8277,15.2028 15.8277,14.6962 15.5153,14.3838L11.1312,9.9997L15.5152,5.6157C15.8276,5.3033 15.8276,4.7967 15.5152,4.4843C15.2028,4.1719 14.6962,4.1719 14.3838,4.4843L9.9998,8.8683L5.6158,4.4843Z"
+        android:fillType="evenOdd"/>
+</vector>

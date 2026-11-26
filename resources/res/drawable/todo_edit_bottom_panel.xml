@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:top="1px">
+        <shape android:shape="rectangle">
+            <corners
+                android:topLeftRadius="@dimen/todo_item_bg_radius"
+                android:topRightRadius="@dimen/todo_item_bg_radius"/>
+            <solid android:color="@color/message_edit_bottom_panel_bg"/>
+        </shape>
+    </item>
+</layer-list>

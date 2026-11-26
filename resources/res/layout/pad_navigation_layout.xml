@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fragment_content"
+    android:background="@color/pad_homepage_note_list_bg"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.miui.notes.ui.view.HomepageSpringBackLayout
+        android:id="@+id/sbl_fragments"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:scrollOrientation="angle|horizontal"
+        app:scrollableView="@+id/vp_fragments">
+        <com.miui.notes.ui.widget.HomepageViewPager
+            android:id="@+id/vp_fragments"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </com.miui.notes.ui.view.HomepageSpringBackLayout>
+    <LinearLayout
+        android:gravity="center_horizontal"
+        android:orientation="horizontal"
+        android:id="@+id/navigation_editor_mask"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+</FrameLayout>

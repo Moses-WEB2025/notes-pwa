@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="24px"
+    android:width="24px"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="@color/todo_item_time_text_common_color"
+        android:pathData="M6.4189,13.0568H8.4338L5.3102,9.9332C5.1086,10.5865 5,11.2806 5,12.0001C5,15.8662 8.1341,19.0003 12.0001,19.0003C14.6414,19.0003 16.941,17.5375 18.1329,15.3778L17.151,14.3958C16.2474,16.3352 14.2807,17.6795 12.0001,17.6795C9.2246,17.6795 6.9141,15.6885 6.4189,13.0568Z"/>
+    <path
+        android:fillColor="@color/todo_item_time_text_common_color"
+        android:pathData="M15.5665,10.9435H17.5814C17.0862,8.3118 14.7757,6.3208 12.0001,6.3208C9.7195,6.3208 7.7529,7.665 6.8493,9.6044L5.8673,8.6225C7.0593,6.4628 9.3589,5 12.0001,5C15.8662,5 19.0003,8.1341 19.0003,12.0001C19.0003,12.7196 18.8917,13.4138 18.6901,14.0671L15.5665,10.9435Z"/>
+</vector>

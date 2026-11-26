@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="start|center_vertical"
+    android:orientation="horizontal"
+    android:background="@null"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/pc_sub_todo_item_height">
+    <RelativeLayout
+        android:id="@+id/check_group"
+        android:layout_width="32dp"
+        android:layout_height="match_parent"
+        android:layout_marginTop="4dp">
+        <CheckBox
+            android:theme="@style/NoteTheme.List"
+            android:id="@+id/cb_subtodo"
+            android:layout_centerVertical="true"
+            style="@style/Todo.Pc.SubTodoCheckBox"/>
+    </RelativeLayout>
+    <com.miui.richeditor.base.FloatingCompatEditText
+        android:textSize="@dimen/pc_todo_edit_text_size"
+        android:textColor="#80000000"
+        android:gravity="start|center_vertical"
+        android:autoLink="all"
+        android:linksClickable="false"
+        android:id="@+id/editor"
+        android:background="@null"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:inputType="textImeMultiLine"
+        android:imeOptions="flagNoFullscreen|actionDone"
+        android:textCursorDrawable="@drawable/pc_todo_editor_cursor"/>
+</LinearLayout>

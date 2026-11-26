@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/audio_create_group"
+    android:background="#20000000"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:clickable="true"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:gravity="center_horizontal"
+        android:orientation="horizontal"
+        android:id="@+id/edit_mask"
+        android:visibility="invisible"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+    <include
+        android:visibility="invisible"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="@dimen/audio_create_panel_height"
+        android:layout_alignParentBottom="true"
+        layout="@layout/audio_create_panel"/>
+    <com.miui.todo.view.FloatWindowActionButton
+        android:id="@+id/fake_menu_add"
+        android:layout_width="@dimen/floating_action_button_size"
+        android:layout_height="@dimen/floating_action_button_size"
+        android:layout_marginBottom="@dimen/floating_action_bar_margin_bottom"
+        android:src="@drawable/ic_content_add"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="@dimen/floating_action_bar_margin_end"
+        android:layout_alignParentEnd="true"
+        app:fabShadowEnabled="false"
+        style="@style/Note.FloatingActionButton"/>
+</RelativeLayout>

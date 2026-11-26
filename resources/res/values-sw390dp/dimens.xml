@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="creation_brush_color_full_width">270dp</dimen>
+    <dimen name="creation_brush_color_half_width">270dp</dimen>
+    <dimen name="creation_brush_container_left_margin">5dp</dimen>
+    <dimen name="creation_brush_half_color_half_width">185dp</dimen>
+    <dimen name="creation_brush_half_color_width">225dp</dimen>
+    <dimen name="creation_brush_select_margin_start">3dp</dimen>
+    <dimen name="creation_brush_separate_margin_mid">12dp</dimen>
+    <dimen name="creation_color_box_margin_start">2dp</dimen>
+    <dimen name="creation_color_margin_end">5dp</dimen>
+    <dimen name="creation_color_margin_mid">5dp</dimen>
+    <dimen name="creation_tool_bar_left_margin">0dp</dimen>
+    <dimen name="creation_tool_separate_margin_end">8dp</dimen>
+    <dimen name="creation_tool_separate_margin_mid">2dp</dimen>
+    <dimen name="creation_tool_separate_margin_start">10dp</dimen>
+</resources>

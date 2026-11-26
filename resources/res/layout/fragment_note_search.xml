@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/homepage_primary_color"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/search_result_list"
+        android:clipToPadding="false"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+    <miuix.miuixbasewidget.widget.EmptyStateView
+        android:icon="@drawable/note_blank_icon"
+        android:layout_gravity="center"
+        android:id="@+id/search_empty_view"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/data_empty_note"/>
+</FrameLayout>

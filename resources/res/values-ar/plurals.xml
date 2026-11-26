@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="a_hour_ago">
+        <item quantity="zero">منذ ساعة واحدة</item>
+        <item quantity="one">منذ ساعة واحدة</item>
+        <item quantity="two">منذ ساعة واحدة</item>
+        <item quantity="few">منذ ساعة واحدة</item>
+        <item quantity="many">منذ ساعة واحدة</item>
+        <item quantity="other">منذ ساعة واحدة</item>
+    </plurals>
+    <plurals name="abbrev_a_hour_ago">
+        <item quantity="zero">قبل %d ساعة</item>
+        <item quantity="one">قبل %d ساعة</item>
+        <item quantity="two">قبل %d ساعات</item>
+        <item quantity="few">قبل %d ساعات</item>
+        <item quantity="many">قبل %d ساعة</item>
+        <item quantity="other">قبل %d ساعة</item>
+    </plurals>
+    <plurals name="abbrev_half_hour_ago">
+        <item quantity="zero">منذ نصف ساعة</item>
+        <item quantity="one">منذ نصف ساعة</item>
+        <item quantity="two">منذ نصف ساعة</item>
+        <item quantity="few">منذ نصف ساعة</item>
+        <item quantity="many">منذ نصف ساعة</item>
+        <item quantity="other">منذ نصف ساعة</item>
+    </plurals>
+    <plurals name="abbrev_in_a_hour">
+        <item quantity="zero">بعد %d ساعة</item>
+        <item quantity="one">بعد %d ساعة</item>
+        <item quantity="two">بعد %d ساعات</item>
+        <item quantity="few">بعد %d ساعات</item>
+        <item quantity="many">بعد %d ساعة</item>
+        <item quantity="other">بعد %d ساعة</item>
+    </plurals>
+    <plurals name="abbrev_in_half_hour">
+        <item quantity="zero">في نصف ساعة</item>
+        <item quantity="one">في نصف ساعة</item>
+        <item quantity="two">في نصف ساعة</item>
+        <item quantity="few">في نصف ساعة</item>
+        <item quantity="many">في نصف ساعة</item>
+        <item quantity="other">في نصف ساعة</item>
+    </plurals>
+    <plurals name="abbrev_in_less_than_one_minute">
+        <item quantity="zero">فوراً</item>
+        <item quantity="one">فوراً</item>
+        <item quantity="two">فوراً</item>
+        <item quantity="few">فوراً</item>
+        <item quantity="many">فوراً</item>
+        <item quantity="other">فوراً</item>
+    </plurals>
+    <plurals name="abbrev_in_num_minutes">
+        <item quantity="zero">بعد %d دق</item>
+        <item quantity="one">بعد %d دق</item>
+        <item quantity="two">بعد %d دق</item>
+        <item quantity="few">بعد %d دق</item>
+        <item quantity="many">بعد %d دق</item>
+        <item quantity="other">بعد %d دق</item>
+    </plurals>
+    <plurals name="abbrev_less_than_one_minute_ago">
+        <item quantity="zero">الآن</item>
+        <item quantity="one">الآن</item>
+        <item quantity="two">الآن</item>
+        <item quantity="few">الآن</item>
+        <item quantity="many">الآن</item>
+        <item quantity="other">الآن</item>
+    </plurals>
+    <plurals name="abbrev_num_minutes_ago">
+        <item quantity="zero">قبل %d دقيقة</item>
+        <item quantity="one">قبل %d دقيقة</item>
+        <item quantity="two">قبل %d دقائق</item>
+        <item quantity="few">قبل %d دقائق</item>
+        <item quantity="many">قبل %d دقيقة</item>
+        <item quantity="other">قبل %d دقيقة</item>
+    </plurals>
+    <plurals name="ai_cannot_add_content_toast_text">
+        <item quantity="zero">لا يمكن أن تتجاوز كل ملاحظة %1$s أحرف. لا يمكن إضافة المزيد من المحتوى.</item>
+        <item quantity="one">لا يمكن أن تتجاوز كل ملاحظة %1$s حرف. لا يمكن إضافة المزيد من المحتوى.</item>
+        <item quantity="two">لا يمكن أن تتجاوز كل ملاحظة %1$s أحرف. لا يمكن إضافة المزيد من المحتوى.</item>
+        <item quantity="few">لا يمكن أن تتجاوز كل ملاحظة %1$s أحرف. لا يمكن إضافة المزيد من المحتوى.</item>
+        <item quantity="many">لا يمكن أن تتجاوز كل ملاحظة %1$s أحرف. لا يمكن إضافة المزيد من المحتوى.</item>
+        <item quantity="other">لا يمكن أن تتجاوز كل ملاحظة %1$s أحرف. لا يمكن إضافة المزيد من المحتوى.</item>
+    </plurals>
+    <plurals name="ai_cannot_useAI_toast_text">
+        <item quantity="zero">لا يمكن استخدام كتابة AI للملاحظات التي تزيد عن %1$s أحرف</item>
+        <item quantity="one">لا يمكن استخدام كتابة AI للملاحظات التي تزيد عن %1$s حرف</item>
+        <item quantity="two">لا يمكن استخدام كتابة AI للملاحظات التي تزيد عن %1$s أحرف</item>
+        <item quantity="few">لا يمكن استخدام كتابة AI للملاحظات التي تزيد عن %1$s أحرف</item>
+        <item quantity="many">لا يمكن استخدام كتابة AI للملاحظات التي تزيد عن %1$s أحرف</item>
+        <item quantity="other">لا يمكن استخدام كتابة AI للملاحظات التي تزيد عن %1$s أحرف</item>
+    </plurals>
+    <plurals name="ai_content_exceeded_warn">
+        <item quantity="zero">يتجاوز محتوى هذه الملاحظة حدود معالجة الذكاء الاصطناعي. أدخل ما يصل إلى %1$s حروف وحاول مرة أخرى.</item>
+        <item quantity="one">يتجاوز محتوى هذه الملاحظة حدود معالجة الذكاء الاصطناعي. أدخل ما يصل إلى %1$s حرف وحاول مرة أخرى.</item>
+        <item quantity="two">يتجاوز محتوى هذه الملاحظة حدود معالجة الذكاء الاصطناعي. أدخل ما يصل إلى %1$s حروف وحاول مرة أخرى.</item>
+        <item quantity="few">يتجاوز محتوى هذه الملاحظة حدود معالجة الذكاء الاصطناعي. أدخل ما يصل إلى %1$s حروف وحاول مرة أخرى.</item>
+        <item quantity="many">يتجاوز محتوى هذه الملاحظة حدود معالجة الذكاء الاصطناعي. أدخل ما يصل إلى %1$s حروف وحاول مرة أخرى.</item>
+        <item quantity="other">يتجاوز محتوى هذه الملاحظة حدود معالجة الذكاء الاصطناعي. أدخل ما يصل إلى %1$s حروف وحاول مرة أخرى.</item>
+    </plurals>
+    <plurals name="ai_correct_mistakes">
+        <item quantity="zero">تم تصحيح %1$s أخطاء</item>
+        <item quantity="one">تم تصحيح %1$s خطأ</item>
+        <item quantity="two">تم تصحيح %1$s أخطاء</item>
+        <item quantity="few">تم تصحيح %1$s أخطاء</item>
+        <item quantity="many">تم تصحيح %1$s أخطاء</item>
+        <item quantity="other">تم تصحيح %1$s أخطاء</item>
+    </plurals>
+    <plurals name="ai_tag_words_more_than">
+        <item quantity="zero">%1$s+ حرف</item>
+        <item quantity="one">%1$s+ حرف</item>
+        <item quantity="two">%1$s+ حروف</item>
+        <item quantity="few">%1$s+ حروف</item>
+        <item quantity="many">%1$s+ حرف</item>
+        <item quantity="other">%1$s+ حرف</item>
+    </plurals>
+    <plurals name="ai_word_count_exceed_title">
+        <item quantity="zero">لا يمكن إنشاء محتوى يزيد عن %1$s أحرف</item>
+        <item quantity="one">لا يمكن إنشاء محتوى يزيد عن %1$s حرف</item>
+        <item quantity="two">لا يمكن إنشاء محتوى يزيد عن %1$s أحرف</item>
+        <item quantity="few">لا يمكن إنشاء محتوى يزيد عن %1$s أحرف</item>
+        <item quantity="many">لا يمكن إنشاء محتوى يزيد عن %1$s أحرف</item>
+        <item quantity="other">لا يمكن إنشاء محتوى يزيد عن %1$s أحرف</item>
+    </plurals>
+    <plurals name="alert_message_delete">
+        <item quantity="zero">حذف %1$s عنصر؟</item>
+        <item quantity="one">حذف %1$s عنصر؟</item>
+        <item quantity="two">حذف %1$s عناصر؟</item>
+        <item quantity="few">حذف %1$s عناصر؟</item>
+        <item quantity="many">حذف %1$s عنصر؟</item>
+        <item quantity="other">حذف %1$s عنصر؟</item>
+    </plurals>
+    <plurals name="cloud_state_unsynced_count">
+        <item quantity="zero">لم تتم مزامنة %1$s عنصر</item>
+        <item quantity="one">لم تتم مزامنة %1$s عنصر</item>
+        <item quantity="two">لم تتم مزامنة %1$s عناصر</item>
+        <item quantity="few">لم تتم مزامنة %1$s عناصر</item>
+        <item quantity="many">لم تتم مزامنة %1$s عنصر</item>
+        <item quantity="other">لم تتم مزامنة %1$s عنصر</item>
+    </plurals>
+    <plurals name="corrected_title">
+        <item quantity="zero">%1$s تصحيحات</item>
+        <item quantity="one">%1$s تصحيح</item>
+        <item quantity="two">%1$s تصحيحات</item>
+        <item quantity="few">%1$s تصحيحات</item>
+        <item quantity="many">%1$s تصحيحات</item>
+        <item quantity="other">%1$s تصحيحات</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_limit_mm">
+        <item quantity="zero">لا يمكن أن يتجاوز الارتفاع %1$d مليمتر. أعد الإدخال.</item>
+        <item quantity="one">لا يمكن أن يتجاوز الارتفاع %1$d مليمتر. أعد الإدخال.</item>
+        <item quantity="two">لا يمكن أن يتجاوز الارتفاع %1$d مليمترات. أعد الإدخال.</item>
+        <item quantity="few">لا يمكن أن يتجاوز الارتفاع %1$d مليمترات. أعد الإدخال.</item>
+        <item quantity="many">لا يمكن أن يتجاوز الارتفاع %1$d مليمتر. أعد الإدخال.</item>
+        <item quantity="other">لا يمكن أن يتجاوز الارتفاع %1$d مليمتر. أعد الإدخال.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_limit_px">
+        <item quantity="zero">لا يمكن أن يتجاوز الارتفاع %1$d بكسل. أعد الإدخال.</item>
+        <item quantity="one">لا يمكن أن يتجاوز الارتفاع %1$d بكسل. أعد الإدخال.</item>
+        <item quantity="two">لا يمكن أن يتجاوز الارتفاع %1$d بكسلات. أعد الإدخال.</item>
+        <item quantity="few">لا يمكن أن يتجاوز الارتفاع %1$d بكسلات. أعد الإدخال.</item>
+        <item quantity="many">لا يمكن أن يتجاوز الارتفاع %1$d بكسل. أعد الإدخال.</item>
+        <item quantity="other">لا يمكن أن يتجاوز الارتفاع %1$d بكسل. أعد الإدخال.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_lower_limit_mm">
+        <item quantity="zero">يجب أن يكون الارتفاع %1$d مليمتر على الأقل. أدخل القيمة مرة أخرى.</item>
+        <item quantity="one">يجب أن يكون الارتفاع %1$d مليمتر على الأقل. أدخل القيمة مرة أخرى.</item>
+        <item quantity="two">يجب أن يكون الارتفاع %1$d مليمترات على الأقل. أدخل القيمة مرة أخرى.</item>
+        <item quantity="few">يجب أن يكون الارتفاع %1$d مليمترات على الأقل. أدخل القيمة مرة أخرى.</item>
+        <item quantity="many">يجب أن يكون الارتفاع %1$d مليمتر على الأقل. أدخل القيمة مرة أخرى.</item>
+        <item quantity="other">يجب أن يكون الارتفاع %1$d مليمتر على الأقل. أدخل القيمة مرة أخرى.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_lower_limit_px">
+        <item quantity="zero">يجب أن يكون الارتفاع %1$d بكسل على الأقل. أعد الإدخال.</item>
+        <item quantity="one">يجب أن يكون الارتفاع %1$d بكسل على الأقل. أعد الإدخال.</item>
+        <item quantity="two">يجب أن يكون الارتفاع %1$d بكسلات على الأقل. أعد الإدخال.</item>
+        <item quantity="few">يجب أن يكون الارتفاع %1$d بكسلات على الأقل. أعد الإدخال.</item>
+        <item quantity="many">يجب أن يكون الارتفاع %1$d بكسل على الأقل. أعد الإدخال.</item>
+        <item quantity="other">يجب أن يكون الارتفاع %1$d بكسل على الأقل. أعد الإدخال.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_limit_mm">
+        <item quantity="zero">لا يمكن أن يتجاوز العرض %1$d مليمتر. أعد الإدخال.</item>
+        <item quantity="one">لا يمكن أن يتجاوز العرض %1$d مليمتر. أعد الإدخال.</item>
+        <item quantity="two">لا يمكن أن يتجاوز العرض %1$d مليمترات. أعد الإدخال.</item>
+        <item quantity="few">لا يمكن أن يتجاوز العرض %1$d مليمترات. أعد الإدخال.</item>
+        <item quantity="many">لا يمكن أن يتجاوز العرض %1$d مليمتر. أعد الإدخال.</item>
+        <item quantity="other">لا يمكن أن يتجاوز العرض %1$d مليمتر. أعد الإدخال.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_limit_px">
+        <item quantity="zero">لا يمكن أن يتجاوز العرض %1$d بكسل. أعد الإدخال.</item>
+        <item quantity="one">لا يمكن أن يتجاوز العرض %1$d بكسل. أعد الإدخال.</item>
+        <item quantity="two">لا يمكن أن يتجاوز العرض %1$d بكسلات. أعد الإدخال.</item>
+        <item quantity="few">لا يمكن أن يتجاوز العرض %1$d بكسلات. أعد الإدخال.</item>
+        <item quantity="many">لا يمكن أن يتجاوز العرض %1$d بكسل. أعد الإدخال.</item>
+        <item quantity="other">لا يمكن أن يتجاوز العرض %1$d بكسل. أعد الإدخال.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_lower_limit_mm">
+        <item quantity="zero">يجب أن يكون العرض %1$d مليمتر على الأقل. أعد الإدخال.</item>
+        <item quantity="one">يجب أن يكون العرض %1$d مليمتر على الأقل. أعد الإدخال.</item>
+        <item quantity="two">يجب أن يكون العرض %1$d مليمترات على الأقل. أعد الإدخال.</item>
+        <item quantity="few">يجب أن يكون العرض %1$d مليمترات على الأقل. أعد الإدخال.</item>
+        <item quantity="many">يجب أن يكون العرض %1$d مليمتر على الأقل. أعد الإدخال.</item>
+        <item quantity="other">يجب أن يكون العرض %1$d مليمتر على الأقل. أعد الإدخال.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_lower_limit_px">
+        <item quantity="zero">يجب أن يكون العرض %1$d بكسل على الأقل. أعد الإدخال.</item>
+        <item quantity="one">يجب أن يكون العرض %1$d بكسل على الأقل. أعد الإدخال.</item>
+        <item quantity="two">يجب أن يكون العرض %1$d بكسلات على الأقل. أعد الإدخال.</item>
+        <item quantity="few">يجب أن يكون العرض %1$d بكسلات على الأقل. أعد الإدخال.</item>
+        <item quantity="many">يجب أن يكون العرض %1$d بكسل على الأقل. أعد الإدخال.</item>
+        <item quantity="other">يجب أن يكون العرض %1$d بكسل على الأقل. أعد الإدخال.</item>
+    </plurals>
+    <plurals name="date_calculate_days_after">
+        <item quantity="zero">بعد %1$d يوم</item>
+        <item quantity="one">بعد %1$d يوم</item>
+        <item quantity="two">بعد %1$d أيام</item>
+        <item quantity="few">بعد %1$d أيام</item>
+        <item quantity="many">بعد %1$d يوم</item>
+        <item quantity="other">بعد %1$d يوم</item>
+    </plurals>
+    <plurals name="date_calculate_days_ago">
+        <item quantity="zero">قبل %1$d يوم</item>
+        <item quantity="one">قبل %1$d يوم</item>
+        <item quantity="two">قبل %1$d أيام</item>
+        <item quantity="few">قبل %1$d أيام</item>
+        <item quantity="many">قبل %1$d يوم</item>
+        <item quantity="other">قبل %1$d يوم</item>
+    </plurals>
+    <plurals name="format_move_notes_out_folder">
+        <item quantity="zero">تم حذف %1$s ملاحظة من المجلد</item>
+        <item quantity="one">تم حذف %1$s ملاحظة من المجلد</item>
+        <item quantity="two">تم حذف %1$s ملاحظات من المجلد</item>
+        <item quantity="few">تم حذف %1$s ملاحظات من المجلد</item>
+        <item quantity="many">تم حذف %1$s ملاحظة من المجلد</item>
+        <item quantity="other">تم حذف %1$s ملاحظة من المجلد</item>
+    </plurals>
+    <plurals name="format_move_notes_to_folder">
+        <item quantity="zero">تم نقل %1$s ملاحظة الى %2$s</item>
+        <item quantity="one">تم نقل %1$s ملاحظة الى %2$s</item>
+        <item quantity="two">تم نقل %1$s ملاحظات الى %2$s</item>
+        <item quantity="few">تم نقل %1$s ملاحظات الى %2$s</item>
+        <item quantity="many">تم نقل %1$s ملاحظة الى %2$s</item>
+        <item quantity="other">تم نقل %1$s ملاحظة الى %2$s</item>
+    </plurals>
+    <plurals name="half_hour_ago">
+        <item quantity="zero">منذ نصف ساعة</item>
+        <item quantity="one">منذ نصف ساعة</item>
+        <item quantity="two">منذ نصف ساعة</item>
+        <item quantity="few">منذ نصف ساعة</item>
+        <item quantity="many">منذ نصف ساعة</item>
+        <item quantity="other">منذ نصف ساعة</item>
+    </plurals>
+    <plurals name="in_a_hour">
+        <item quantity="zero">خلال ١ ساعة</item>
+        <item quantity="one">خلال ١ ساعة</item>
+        <item quantity="two">خلال ١ ساعة</item>
+        <item quantity="few">خلال ١ ساعة</item>
+        <item quantity="many">خلال ١ ساعة</item>
+        <item quantity="other">خلال ١ ساعة</item>
+    </plurals>
+    <plurals name="in_half_hour">
+        <item quantity="zero">في نصف ساعة</item>
+        <item quantity="one">في نصف ساعة</item>
+        <item quantity="two">في نصف ساعة</item>
+        <item quantity="few">في نصف ساعة</item>
+        <item quantity="many">في نصف ساعة</item>
+        <item quantity="other">في نصف ساعة</item>
+    </plurals>
+    <plurals name="in_less_than_one_minute">
+        <item quantity="zero">فوراً</item>
+        <item quantity="one">فوراً</item>
+        <item quantity="two">فوراً</item>
+        <item quantity="few">فوراً</item>
+        <item quantity="many">فوراً</item>
+        <item quantity="other">فوراً</item>
+    </plurals>
+    <plurals name="in_num_minutes">
+        <item quantity="zero">في %d دقيقة</item>
+        <item quantity="one">في دقيقة</item>
+        <item quantity="two">في %d دقائق</item>
+        <item quantity="few">في %d دقائق</item>
+        <item quantity="many">في %d دقيقة</item>
+        <item quantity="other">في %d دقيقة</item>
+    </plurals>
+    <plurals name="less_than_one_minute_ago">
+        <item quantity="zero">الآن</item>
+        <item quantity="one">الآن</item>
+        <item quantity="two">الآن</item>
+        <item quantity="few">الآن</item>
+        <item quantity="many">الآن</item>
+        <item quantity="other">الآن</item>
+    </plurals>
+    <plurals name="miuix_appcompat_items_selected">
+        <item quantity="zero">%d عنصر محدد</item>
+        <item quantity="one">%d عنصر محدد</item>
+        <item quantity="two">%d عناصر محددة</item>
+        <item quantity="few">%d عناصر محددة</item>
+        <item quantity="many">%d عنصر محدد</item>
+        <item quantity="other">%d عنصر محدد</item>
+    </plurals>
+    <plurals name="mtrl_badge_content_description">
+        <item quantity="zero">%d إشعار جديد</item>
+        <item quantity="one">إشعار جديد واحد (%d)</item>
+        <item quantity="two">إشعاران جديدان (%d)</item>
+        <item quantity="few">%d إشعارات جديدة</item>
+        <item quantity="many">%d إشعارًا جديدًا</item>
+        <item quantity="other">%d إشعار جديد</item>
+    </plurals>
+    <plurals name="num_minutes_ago">
+        <item quantity="zero">منذ %d دق</item>
+        <item quantity="one">منذ دقيقة</item>
+        <item quantity="two">منذ %d دق</item>
+        <item quantity="few">منذ %d دق</item>
+        <item quantity="many">منذ %d دق</item>
+        <item quantity="other">منذ %d دق</item>
+    </plurals>
+    <plurals name="pc_notes_search_result">
+        <item quantity="zero">تم العثور على %1$s ملاحظة</item>
+        <item quantity="one">تم العثور على %1$s ملاحظة</item>
+        <item quantity="two">تم العثور على %1$s ملاحظات</item>
+        <item quantity="few">تم العثور على %1$s ملاحظات</item>
+        <item quantity="many">تم العثور على %1$s ملاحظة</item>
+        <item quantity="other">تم العثور على %1$s ملاحظة</item>
+    </plurals>
+    <plurals name="pc_todo_search_result">
+        <item quantity="zero">تم العثور على %1$s مهمة</item>
+        <item quantity="one">تم العثور على %1$s مهمة</item>
+        <item quantity="two">تم العثور على %1$s مهام</item>
+        <item quantity="few">تم العثور على %1$s مهام</item>
+        <item quantity="many">تم العثور على %1$s مهمة</item>
+        <item quantity="other">تم العثور على %1$s مهمة</item>
+    </plurals>
+    <plurals name="record_last_ten_seconds_reminder">
+        <item quantity="zero">%d ثواني متبقية</item>
+        <item quantity="one">%d ثانية متبقية</item>
+        <item quantity="two">%d ثواني متبقية</item>
+        <item quantity="few">%d ثواني متبقية</item>
+        <item quantity="many">%d ثانية متبقية</item>
+        <item quantity="other">%d ثانية متبقية</item>
+    </plurals>
+    <plurals name="toast_notes_unhidden_count">
+        <item quantity="zero">تم إلغاء إخفاء %1$s ملاحظة بنجاح</item>
+        <item quantity="one">تم إلغاء إخفاء %1$s ملاحظة بنجاح</item>
+        <item quantity="two">تم إلغاء إخفاء %1$s ملاحظات بنجاح</item>
+        <item quantity="few">تم إلغاء إخفاء %1$s ملاحظات بنجاح</item>
+        <item quantity="many">تم إلغاء إخفاء %1$s ملاحظة بنجاح</item>
+        <item quantity="other">تم إلغاء إخفاء %1$s ملاحظة بنجاح</item>
+    </plurals>
+    <plurals name="todo_N_days_after">
+        <item quantity="zero">في %1$d يوم</item>
+        <item quantity="one">في %1$d يوم</item>
+        <item quantity="two">في %1$d أيام</item>
+        <item quantity="few">في %1$d أيام</item>
+        <item quantity="many">في %1$d يوم</item>
+        <item quantity="other">في %1$d يوم</item>
+    </plurals>
+    <plurals name="todo_N_days_ago">
+        <item quantity="zero">قبل %1$d يوم</item>
+        <item quantity="one">قبل %1$d يوم</item>
+        <item quantity="two">قبل %1$d أيام</item>
+        <item quantity="few">قبل %1$d أيام</item>
+        <item quantity="many">قبل %1$d يوم</item>
+        <item quantity="other">قبل %1$d يوم</item>
+    </plurals>
+    <plurals name="todo_alert_message_delete">
+        <item quantity="zero">حذف %1$s مهمة؟</item>
+        <item quantity="one">حذف %1$s مهمة؟</item>
+        <item quantity="two">حذف %1$s مهام؟</item>
+        <item quantity="few">حذف %1$s مهام؟</item>
+        <item quantity="many">حذف %1$s مهمة؟</item>
+        <item quantity="other">حذف %1$s مهمة؟</item>
+    </plurals>
+    <plurals name="todo_event_description_days_ago">
+        <item quantity="zero">قبل %1$d يوم</item>
+        <item quantity="one">قبل %1$d يوم</item>
+        <item quantity="two">قبل %1$d أيام</item>
+        <item quantity="few">قبل %1$d أيام</item>
+        <item quantity="many">قبل %1$d يوم</item>
+        <item quantity="other">قبل %1$d يوم</item>
+    </plurals>
+    <plurals name="todo_event_description_days_later">
+        <item quantity="zero">في %1$d يوم</item>
+        <item quantity="one">في %1$d يوم</item>
+        <item quantity="two">في %1$d أيام</item>
+        <item quantity="few">في %1$d أيام</item>
+        <item quantity="many">في %1$d يوم</item>
+        <item quantity="other">في %1$d يوم</item>
+    </plurals>
+    <plurals name="todo_terms">
+        <item quantity="zero">%1$s مهمة</item>
+        <item quantity="one">%1$s مهمة</item>
+        <item quantity="two">%1$s مهام</item>
+        <item quantity="few">%1$s مهام</item>
+        <item quantity="many">%1$s مهمة</item>
+        <item quantity="other">%1$s مهمة</item>
+    </plurals>
+    <plurals name="word_count">
+        <item quantity="zero">%d حرف</item>
+        <item quantity="one">%d حرف</item>
+        <item quantity="two">%d أحرف</item>
+        <item quantity="few">%d أحرف</item>
+        <item quantity="many">%d حرف</item>
+        <item quantity="other">%d حرف</item>
+    </plurals>
+</resources>

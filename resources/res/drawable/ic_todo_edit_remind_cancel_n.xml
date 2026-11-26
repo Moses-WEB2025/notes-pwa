@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="20dp"
+    android:width="20dp"
+    android:viewportWidth="20"
+    android:viewportHeight="20">
+    <path
+        android:fillColor="@color/todo_edit_cancel_icon_color_normal"
+        android:pathData="M5.05,5.05L14.95,14.95"
+        android:strokeColor="@color/todo_edit_cancel_icon_color_normal"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:strokeAlpha="0.8"
+        android:fillAlpha="0.8"/>
+    <path
+        android:fillColor="@color/todo_edit_cancel_icon_color_normal"
+        android:pathData="M14.95,5.05L5.05,14.95"
+        android:strokeColor="@color/todo_edit_cancel_icon_color_normal"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:strokeAlpha="0.8"
+        android:fillAlpha="0.8"/>
+</vector>

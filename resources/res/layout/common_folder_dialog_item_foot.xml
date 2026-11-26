@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layerType="hardware">
+    <LinearLayout
+        android:gravity="center"
+        android:orientation="vertical"
+        android:id="@+id/folder_dialog_list_create_folder"
+        android:background="@drawable/common_folder_dialog_list_bg_shape"
+        android:paddingTop="@dimen/folder_list_item_title_margin_start"
+        android:paddingBottom="@dimen/folder_list_item_title_margin_start"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/miuix_icon_new_yellow"/>
+        <TextView
+            android:textSize="@dimen/folder_list_create_folder_textsize"
+            android:textColor="@color/common_folder_dialog_item_text_color"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/folder_list_create_folder_add_icon_margin_top"
+            android:text="@string/menu_create_folder"/>
+    </LinearLayout>
+    <View
+        android:id="@+id/folder_dialog_create_folder_mask"
+        android:background="@drawable/common_folder_dialog_list_create_folder_mask_bg"
+        android:visibility="gone"
+        android:clickable="true"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/folder_list_create_folder_btn_height"/>
+</FrameLayout>

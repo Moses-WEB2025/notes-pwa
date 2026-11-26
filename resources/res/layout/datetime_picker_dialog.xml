@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="@dimen/date_picker_layout_padding"
+    android:paddingEnd="@dimen/date_picker_layout_padding">
+    <miuix.pickerwidget.widget.DateTimePicker
+        android:orientation="vertical"
+        android:id="@+id/dateTimePicker"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginBottom="@dimen/date_picker_dialog_marginBottom"
+        android:layout_weight="1"/>
+    <LinearLayout
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:id="@+id/alarm_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/miuix_appcompat_date_picker_dialog_margin_horizontal"
+        android:paddingEnd="@dimen/miuix_appcompat_date_picker_dialog_margin_horizontal"
+        style="@style/Widget.ListView.Item.Immersion">
+        <TextView
+            android:textAppearance="@style/TextAppearance.Widget.List.Secondary"
+            android:id="@+id/alarm_at"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/date_time_picker_alarm_reminder"
+            android:layout_weight="1"/>
+        <miuix.slidingwidget.widget.SlidingButton
+            android:id="@+id/alarm_enabler"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+</LinearLayout>

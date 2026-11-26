@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/list_item_margin_bottom">
+    <include layout="@layout/widget_item_list_note_group"/>
+    <CheckBox
+        android:theme="@style/Note.MultiCheckBox"
+        android:layout_gravity="end|center_vertical"
+        android:id="@android:id/checkbox"
+        android:focusable="false"
+        android:visibility="gone"
+        android:clickable="false"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/list_item_content_margin_start"/>
+</FrameLayout>

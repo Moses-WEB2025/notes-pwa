@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.miui.pc.view.datepopupview.view.SquareLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:id="@+id/bg"
+    android:background="#ffffff"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:textSize="18px"
+        android:textColor="@android:color/background_dark"
+        android:gravity="center"
+        android:id="@+id/data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""/>
+</com.miui.pc.view.datepopupview.view.SquareLayout>

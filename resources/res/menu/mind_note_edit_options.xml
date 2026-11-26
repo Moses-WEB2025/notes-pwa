@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/save_as_pic"
+        android:title="@string/option_menu_save_as_pic"/>
+    <item
+        android:id="@+id/send_to_desktop"
+        android:title="@string/menu_send_to_desktop"/>
+    <item
+        android:id="@+id/move_to"
+        android:title="@string/menu_move_to"/>
+    <item
+        android:id="@+id/share"
+        android:title="@string/option_menu_share"/>
+    <item
+        android:id="@+id/delete"
+        android:title="@string/menu_delete"/>
+</menu>

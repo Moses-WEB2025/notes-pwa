@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <size android:height="@dimen/miuix_search_flexbox_height"/>
+    <corners android:radius="@dimen/miuix_search_flexbox_radius"/>
+    <solid android:color="@color/miuix_default_color_surface_container_medium_light"/>
+    <padding
+        android:left="@dimen/miuix_search_flexbox_padding_horizontal"
+        android:right="@dimen/miuix_search_flexbox_padding_horizontal"/>
+</shape>

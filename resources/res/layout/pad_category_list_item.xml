@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center_vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/miuix_theme_margin_horizontal_common"
+    android:minHeight="@dimen/pad_todo_category_list_item_height"
+    android:layerType="hardware"
+    android:layout_marginStart="@dimen/miuix_theme_margin_horizontal_common"
+    android:layout_marginEnd="@dimen/miuix_theme_margin_horizontal_common">
+    <ImageView
+        android:id="@+id/folder_img"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/pad_todo_category_list_item_img_start"/>
+    <View
+        android:layout_width="@dimen/pad_todo_category_list_item_text_margin"
+        android:layout_height="wrap_content"/>
+    <TextView
+        android:textSize="@dimen/pad_todo_category_list_item_text_size"
+        android:textColor="@color/pad_todo_category_list_item_text_color"
+        android:id="@+id/folder_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"/>
+    <TextView
+        android:textSize="12sp"
+        android:textColor="@color/pad_todo_category_list_item_secondary_text_color"
+        android:id="@+id/folder_num"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/pad_todo_category_list_item_text_margin"
+        android:layout_marginEnd="@dimen/pad_todo_category_list_item_num_margin_end"/>
+</LinearLayout>

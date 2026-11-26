@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <array name="attachment_chooser">
+        <item>Kyamara</item>
+        <item>Galari</item>
+    </array>
+    <array name="big_screen_layouts">
+        <item>@string/setting_big_screen_layout_columns</item>
+        <item>@string/setting_big_screen_layout_flat</item>
+    </array>
+    <array name="contact_entries">
+        <item>Sunan</item>
+        <item>Laƙabi</item>
+        <item>Waya</item>
+        <item>Imel</item>
+        <item>Kamfani</item>
+        <item>IM</item>
+        <item>Waya na SIP</item>
+        <item>Ranar haihuwa</item>
+        <item>Shafin yanar</item>
+        <item>Adireshi</item>
+        <item>Rubuta</item>
+    </array>
+    <array name="font_size_names">
+        <item>Kananan</item>
+        <item>Matsakaici</item>
+        <item>Babba</item>
+        <item>Ƙato</item>
+    </array>
+    <array name="note_sort_way">
+        <item>Ta ranar ƙirƙirar</item>
+        <item>Ta canjin rana</item>
+    </array>
+    <array name="passport_account_user_gender_name">
+        <item>Namiji</item>
+        <item>Mace</item>
+    </array>
+    <array name="setting_phone_note_layout_way">
+        <item>@string/action_mode_switcher_list_description</item>
+        <item>@string/action_mode_switcher_grid_description</item>
+    </array>
+</resources>

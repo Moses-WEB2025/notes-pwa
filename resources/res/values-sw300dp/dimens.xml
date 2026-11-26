@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="creation_actionmode_dp_16">8dp</dimen>
+    <dimen name="creation_color_pick_popup_window_width">290dp</dimen>
+    <dimen name="creation_color_picker_popup_width">294dp</dimen>
+    <dimen name="creation_color_picker_tab_button_width">120dp</dimen>
+    <dimen name="creation_color_picker_view_page_grid_panel_width">254dp</dimen>
+    <dimen name="creation_color_picker_view_page_slider_width">245dp</dimen>
+    <dimen name="creation_common_edit_popup_window_width">290dp</dimen>
+    <dimen name="creation_draw_paper_parent_item_margin">6dp</dimen>
+    <dimen name="creation_pen_set_popup_window_width">290dp</dimen>
+</resources>

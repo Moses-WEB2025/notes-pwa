@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <androidx.appcompat.widget.AppCompatTextView
+        android:textSize="17.4dp"
+        android:id="@+id/tv_guide_des"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="34.5dp"
+        android:layout_marginStart="@dimen/miuix_appcompat_dialog_panel_horizontal_padding"
+        android:layout_marginEnd="@dimen/miuix_appcompat_dialog_panel_horizontal_padding"/>
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/guide_content"
+        android:layout_width="wrap_content"
+        android:layout_height="210dp"
+        android:layout_marginStart="@dimen/lottie_animation_view_margin_start_end"
+        android:layout_marginEnd="@dimen/lottie_animation_view_margin_start_end"
+        app:lottie_autoPlay="true"
+        app:lottie_fileName="page1.json"/>
+</LinearLayout>

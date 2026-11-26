@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<nine-patch xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/text_cursor"
+    android:tint="@color/theme_main_color"
+    android:tintMode="src_in"/>

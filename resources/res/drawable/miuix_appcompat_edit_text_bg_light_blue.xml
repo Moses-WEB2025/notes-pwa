@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/miuix_appcompat_edit_text_radius_size"/>
+            <solid android:color="@color/miuix_appcompat_edit_text_bg_color_light"/>
+        </shape>
+    </item>
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/miuix_appcompat_edit_text_border_radius_size"/>
+            <stroke
+                android:width="@dimen/miuix_appcompat_edit_text_border_stroke_width"
+                android:color="@color/page_size_summary_focus_text_color"/>
+            <solid android:color="@color/miuix_appcompat_transparent"/>
+        </shape>
+    </item>
+</layer-list>

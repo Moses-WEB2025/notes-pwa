@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="@dimen/miuix_navigator_item_min_height"
+    android:paddingStart="@dimen/miuix_navigator_item_padding_start"
+    android:paddingEnd="@dimen/miuix_navigator_item_padding_end"
+    android:layout_marginVertical="@dimen/miuix_navigator_item_margin_vertical">
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/miuix_icon_new_yellow"/>
+    <TextView
+        android:textSize="16sp"
+        android:textColor="@color/theme_main_color"
+        android:ellipsize="end"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/menu_create_folder"
+        android:maxLines="2"
+        android:fontFamily="sans-serif-medium"
+        android:textAlignment="viewStart"
+        android:layout_marginStart="@dimen/miuix_navigator_item_widget_margin_start"
+        android:paddingVertical="@dimen/miuix_navigator_item_title_padding_vertical"/>
+</LinearLayout>

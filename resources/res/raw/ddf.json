@@ -1,0 +1,250 @@
+{
+  "type" : "urn:aiot-spec-v3:com.mi.phones:device:phones:0:1.0",
+  "description": "",
+  "protocol-version":"3.0",
+  "class": "MiPhone",
+  "dynamic": 0,
+  "ddfid": 6946818,
+  "modules":{
+    "iid":1,
+    "type":"urn:aiot-spec-v3:com.mi.phones:module:[com.miui.notes]:0:1.0",
+    "description":"",
+    "name" : "com.miui.notes",
+    "services":{
+      "iid": 1,
+      "type": "urn:aiot-spec-v3:com.mi.phones:service:[com.miui.notes/notes]:0:1.0",
+      "description": "",
+      "name": "notes",
+      "actions":[
+        {
+          "type": "urn:aiot-spec-v3:com.mi.phones:action:[com.miui.notes/notes/insert_note]:0:1.0",
+          "description": "插入笔记",
+          "in": [
+            {
+              "name": "extra_insert_note",
+              "description": "插入内容",
+              "format": "string"
+            }
+          ],
+          "out": [
+            {
+              "description": "执行状态",
+              "name":"status",
+              "format": "int32",
+              "value-list": [
+                {"value": 0, "description": "插入成功"},
+                {"value": -1, "description": "插入失败"}
+              ]
+            }
+          ]
+        },
+        {
+          "type": "urn:aiot-spec-v3:com.mi.phones:action:[com.miui.notes/notes/insert_todo]:0:1.0",
+          "description": "插入待办",
+          "in": [
+            {
+              "name": "extra_insert_todo_content",
+              "description": "插入内容",
+              "format": "string"
+            },
+            {
+              "name": "extra_insert_todo_type",
+              "description": "待办重复类型",
+              "format": "int32",
+              "value-list": [
+                {"value": 0, "description": "不弹提醒"},
+                {"value": 1, "description": "每天弹提醒"},
+                {"value": 2, "description": "每周弹提醒"},
+                {"value": 3, "description": "周一到周五弹提醒"},
+                {"value": 7, "description": "每月弹提醒"},
+                {"value": 8, "description": "每年弹提醒"}
+                ]
+            },
+            {
+              "name": "extra_insert_todo_time",
+              "description": "提醒时间(yyyy-mm-dd HH:mm:ss)",
+              "format": "date_string"
+            }
+          ],
+          "out": [
+            {
+              "description": "执行状态",
+              "name":"status",
+              "format": "int32",
+              "value-list": [
+                {"value": 0, "description": "插入成功"},
+                {"value": -1, "description": "插入失败"}
+              ]
+            }
+          ]
+        },
+        {
+          "type": "urn:aiot-spec-v3:com.mi.phones:action:[com.miui.notes/notes/search_note]:0:1.0",
+          "description": "搜索笔记",
+          "in": [
+            {
+              "name": "extra_search_note",
+              "description": "搜索内容",
+              "format": "string"
+            }
+          ],
+          "out": [
+            {
+              "description": "执行状态",
+              "name":"status",
+              "format": "int32",
+              "value-list": [
+                {"value": 0, "description": "成功"},
+                {"value": -1, "description": "失败"}
+              ]
+            }
+          ]
+        },
+        {
+          "type": "urn:aiot-spec-v3:com.mi.phones:action:[com.miui.notes/notes/search_todo]:0:1.0",
+          "description": "搜索待办",
+          "in": [
+            {
+              "name": "extra_todo_search",
+              "description": "搜索内容",
+              "format": "string"
+            }
+          ],
+          "out": [
+            {
+              "description": "执行状态",
+              "name":"status",
+              "format": "int32",
+              "value-list": [
+                {"value": 0, "description": "成功"},
+                {"value": -1, "description": "失败"}
+              ]
+            }
+          ]
+        },
+        {
+          "type": "urn:aiot-spec-v3:com.mi.phones:action:[com.miui.notes/notes/share_text]:0:1.0",
+          "description": "分享文本",
+          "in": [
+
+          ],
+          "out": [
+            {
+              "description": "执行状态",
+              "name":"status",
+              "format": "int32",
+              "value-list": [
+                {"value": 0, "description": "成功"},
+                {"value": -1, "description": "失败"}
+              ]
+            }
+          ]
+        },
+        {
+          "type": "urn:aiot-spec-v3:com.mi.phones:action:[com.miui.notes/notes/share_image]:0:1.0",
+          "description": "分享图片",
+          "in": [
+
+          ],
+          "out": [
+            {
+              "description": "执行状态",
+              "name":"status",
+              "format": "int32",
+              "value-list": [
+                {"value": 0, "description": "成功"},
+                {"value": -1, "description": "失败"}
+              ]
+            }
+          ]
+        },
+        {
+          "type": "urn:aiot-spec-v3:com.mi.phones:action:[com.miui.notes/notes/done_todo]:0:1.0",
+          "description": "完成待办",
+          "in": [
+            {
+              "name": "extra_done_position",
+              "description": "位置",
+              "format": "int32"
+            }
+          ],
+          "out": [
+            {
+              "description": "执行状态",
+              "name":"status",
+              "format": "int32",
+              "value-list": [
+                {"value": 0, "description": "成功"},
+                {"value": -1, "description": "失败"}
+              ]
+            }
+          ]
+        },
+        {
+          "type": "urn:aiot-spec-v3:com.mi.phones:action:[com.miui.notes/notes/insert_info]:0:1.0",
+          "description": "插入",
+          "in": [
+            {
+              "name": "extra_insert_title",
+              "description": "标题",
+              "format": "string"
+            },
+            {
+              "name": "extra_insert_content",
+              "description": "正文",
+              "format": "string"
+            },
+            {
+              "name": "extra_insert_image",
+              "description": "图片uri",
+              "format": "string"
+            }
+          ],
+          "out": [
+            {
+              "description": "执行状态",
+              "name":"status",
+              "format": "int32",
+              "value-list": [
+                {"value": 0, "description": "插入成功"},
+                {"value": -1, "description": "插入失败"}
+              ]
+            }
+          ]
+        },
+        {
+          "type": "urn:aiot-spec-v3:com.mi.phones:action:[com.miui.notes/notes/create_new_note]:0:1.0",
+          "description": "新建笔记",
+          "in": [
+            {
+              "name": "extra_insert_title",
+              "description": "标题",
+              "format": "string"
+            },
+            {
+              "name": "extra_insert_content",
+              "description": "正文",
+              "format": "string"
+            },
+            {
+              "name": "extra_insert_image",
+              "description": "图片uri",
+              "format": "string"
+            }
+          ],
+          "out": [
+            {
+              "description": "执行状态",
+              "name":"status",
+              "format": "int32",
+              "value-list": [
+                {"value": 0, "description": "插入成功"},
+                {"value": -1, "description": "插入失败"}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

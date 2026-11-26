@@ -1,0 +1,39 @@
+{
+  "files": {
+    "main.css": "./static/css/main.3fa0df90.css",
+    "main.js": "./static/js/main.1bc1d2be.js",
+    "static/media/delete_miui15.svg": "./static/media/delete_miui15.7420b0250a96a39b371eecfed89b27da.svg",
+    "static/media/mind.svg": "./static/media/mind.7de021c346d29307e83e283e2a53b3ad.svg",
+    "static/media/newOverview.svg": "./static/media/newOverview.51919a5e3943441a9c382989f9a6c753.svg",
+    "static/media/redo_miui15.svg": "./static/media/redo_miui15.74c65961edfd337089e69a21e8947bce.svg",
+    "static/media/undo_miui15.svg": "./static/media/undo_miui15.b348c4d57dca37d0e33d4f44f56fd08b.svg",
+    "static/media/add-sibling.svg": "./static/media/add-sibling.0e3d3cf3f02bc6e56da2d45291a92adb.svg",
+    "static/media/overview.svg": "./static/media/overview.ce18abeae7dfd2cddd42994e7ff6ef1b.svg",
+    "static/media/back_2023.svg": "./static/media/back_2023.d33bbced0f98716da2145b8d9cab5fde.svg",
+    "static/media/add-child.svg": "./static/media/add-child.7cf180a71bb3647546d7850e298c1279.svg",
+    "static/media/shortcut.svg": "./static/media/shortcut.a2138e3c68c7141ebdefc1fc9b4e8d11.svg",
+    "index.html": "./index.html",
+    "static/media/delete.svg": "./static/media/delete.f4e67187818faa6d4850fcf7b5f52674.svg",
+    "static/media/add.svg": "./static/media/add.04c92682dc0857f3c245d4ee2990a4ba.svg",
+    "static/media/redo.svg": "./static/media/redo.e70ac79ef020bf6eed73e282940d6f72.svg",
+    "static/media/undo.svg": "./static/media/undo.6c305dc9f48bdedbf8d0276f7fd6d795.svg",
+    "static/media/tablet-zoom.svg": "./static/media/tablet-zoom.b3369b36934ac57226f4adee10cb3320.svg",
+    "static/media/download.svg": "./static/media/download.f759c804c1ba39541b7da538baf9d35d.svg",
+    "static/media/collapse.svg": "./static/media/collapse.f5d166271962c2641b8d1fc8e8343fd5.svg",
+    "static/media/zoom.svg": "./static/media/zoom.a60e42440749f3f756103f93f8defb8b.svg",
+    "static/media/pop-arrow.svg": "./static/media/pop-arrow.d5c9dd126dd8b42fdcc0c702d3e18754.svg",
+    "static/media/forward.svg": "./static/media/forward.88ad52c074fb80697d14db21a7b110c1.svg",
+    "static/media/backward.svg": "./static/media/backward.a6203c9e312149e8103537d4edcbe3f8.svg",
+    "static/media/check.svg": "./static/media/check.cead69a96b0c7106911d269d919f48a1.svg",
+    "static/media/zoom-in.svg": "./static/media/zoom-in.51cf595c93e3fe5381a17dfb2ed4aef9.svg",
+    "static/media/menu_2023.svg": "./static/media/menu_2023.eb8cd6b9b919c52c8b7fb4ccc134f67c.svg",
+    "static/media/triangle-right.svg": "./static/media/triangle-right.05e2a83495dcc2b287342fc33fa519be.svg",
+    "static/media/triangle-down.svg": "./static/media/triangle-down.84b7725bf2afa8335c2bc836af314f9c.svg",
+    "static/media/zoom-out.svg": "./static/media/zoom-out.afcb729545c8db52099c7f16404d2351.svg",
+    "static/media/dot.svg": "./static/media/dot.8372720bc5009fcaa073a45c4ae2fd7d.svg"
+  },
+  "entrypoints": [
+    "static/css/main.3fa0df90.css",
+    "static/js/main.1bc1d2be.js"
+  ]
+}

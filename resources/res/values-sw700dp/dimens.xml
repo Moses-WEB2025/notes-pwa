@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="v13_widget2x_text_size">12dp</dimen>
+    <dimen name="v13_widget4x_text_size">13dp</dimen>
+    <dimen name="v13_widget_title_text_size">14dp</dimen>
+    <dimen name="widget_mind_list_margin_top">4dp</dimen>
+    <dimen name="widget_mind_note_item_height">21dp</dimen>
+    <dimen name="widget_mind_note_item_height_4x4">25dp</dimen>
+    <dimen name="widget_note_title_height">20dp</dimen>
+</resources>

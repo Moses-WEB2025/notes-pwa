@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="@dimen/ic_15px_size"
+    android:width="@dimen/ic_22px_size"
+    android:viewportWidth="22"
+    android:viewportHeight="15">
+    <path
+        android:fillColor="@color/audio_bubble_indicator_color"
+        android:pathData="M11,0L20.8787,9.8787C22.7686,11.7686 21.4301,15 18.7574,15H3.2426C0.5699,15 -0.7686,11.7686 1.1213,9.8787L11,0Z"/>
+</vector>

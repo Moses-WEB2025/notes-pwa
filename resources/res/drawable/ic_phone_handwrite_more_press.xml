@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="@dimen/ic_action_size"
+    android:width="@dimen/ic_action_size"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <group>
+        <clip-path android:pathData="M0,0h100v100h-100z M 0,0"/>
+        <path
+            android:fillColor="@color/phone_hand_write_actionbar_icon_color_p"
+            android:pathData="M50 38C52.7614 38 55 35.7614 55 33C55 30.2386 52.7614 28 50 28C47.2386 28 45 30.2386 45 33C45 35.7614 47.2386 38 50 38Z"
+            android:fillType="evenOdd"/>
+        <path
+            android:fillColor="@color/phone_hand_write_actionbar_icon_color_p"
+            android:pathData="M50 55C52.7614 55 55 52.7614 55 50C55 47.2386 52.7614 45 50 45C47.2386 45 45 47.2386 45 50C45 52.7614 47.2386 55 50 55Z"
+            android:fillType="evenOdd"/>
+        <path
+            android:fillColor="@color/phone_hand_write_actionbar_icon_color_p"
+            android:pathData="M50 72C52.7614 72 55 69.7614 55 67C55 64.2386 52.7614 62 50 62C47.2386 62 45 64.2386 45 67C45 69.7614 47.2386 72 50 72Z"
+            android:fillType="evenOdd"/>
+    </group>
+</vector>

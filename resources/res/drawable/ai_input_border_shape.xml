@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="34dp"/>
+            <gradient
+                android:startColor="#b3ffffff"
+                android:endColor="#24ffffff"
+                android:angle="270"
+                android:type="linear"/>
+        </shape>
+    </item>
+    <item
+        android:left="4dp"
+        android:top="4dp"
+        android:right="4dp"
+        android:bottom="4dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="34dp"/>
+            <solid android:color="@color/miuix_appcompat_white"/>
+        </shape>
+    </item>
+</layer-list>

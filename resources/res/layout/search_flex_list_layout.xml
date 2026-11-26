@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <TextView
+        android:gravity="center_vertical"
+        android:id="@+id/label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
+        android:paddingStart="@dimen/miuix_search_list_padding_horizontal"
+        android:paddingEnd="@dimen/miuix_search_list_padding_horizontal"
+        style="@style/MiuixSearch.Widget.Recommendation.Title"/>
+    <miuix.recyclerview.widget.RecyclerView
+        android:id="@android:id/list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:overScrollMode="never"
+        android:paddingStart="@dimen/miuix_search_list_padding_horizontal"
+        android:paddingEnd="@dimen/miuix_search_list_padding_horizontal"/>
+</LinearLayout>

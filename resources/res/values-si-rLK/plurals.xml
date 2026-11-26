@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="ai_cannot_add_content_toast_text">
+        <item quantity="one">සෑම සටහනක්ම අනුලකුණු %1$s ක් ඉක්මවා යා නොහැකිය. තවත් අන්තර්ගතය එකතු කළ නොහැකිය.</item>
+        <item quantity="other">සෑම සටහනක්ම අනුලකුණු %1$s ක් ඉක්මවා යා නොහැකිය. තවත් අන්තර්ගතය එකතු කළ නොහැකිය.</item>
+    </plurals>
+    <plurals name="ai_cannot_useAI_toast_text">
+        <item quantity="one">අනුලකුණු %1$s කට වැඩි ගණනකට AI ලේඛනය භාවිත කළ නොහැකිය</item>
+        <item quantity="other">අනුලකුණු %1$s කට වැඩි ගණනකට AI ලේඛනය භාවිත කළ නොහැකිය</item>
+    </plurals>
+    <plurals name="ai_content_exceeded_warn">
+        <item quantity="one">මෙම සටහනේ අන්තර්ගතය AI සැකසුම් සීමා ඉක්මවා යයි. අවම වශයෙන් අනුලකුණු %1$s ක් වත් ඇතුල් කර නැවත උත්සාහ කරන්න.</item>
+        <item quantity="other">මෙම සටහනේ අන්තර්ගතය AI සැකසුම් සීමා ඉක්මවා යයි. අවම වශයෙන් අනුලකුණු %1$s ක් වත් ඇතුල් කර නැවත උත්සාහ කරන්න.</item>
+    </plurals>
+    <plurals name="ai_correct_mistakes">
+        <item quantity="one">%1$s දෝෂය නිවැරදි කරන ලදී</item>
+        <item quantity="other">%1$s දෝෂ නිවැරදි කරන ලදී</item>
+    </plurals>
+    <plurals name="ai_tag_words_more_than">
+        <item quantity="one">%1$s+ අනුලකුණ</item>
+        <item quantity="other">%1$s+ අනුලකුණ</item>
+    </plurals>
+    <plurals name="ai_word_count_exceed_title">
+        <item quantity="one">අනුලකුණු %1$s කට වැඩි ගණනකට වඩා අන්තර්ගතය ජනනය කළ නොහැකිය</item>
+        <item quantity="other">අනුලකුණු %1$s කට වැඩි ගණනකට වඩා අන්තර්ගතය ජනනය කළ නොහැකිය</item>
+    </plurals>
+    <plurals name="alert_message_delete">
+        <item quantity="one">අයිතම %1$s ක් මකා දමන්න ද?</item>
+        <item quantity="other">අයිතම %1$s ක් මකා දමන්න ද?</item>
+    </plurals>
+    <plurals name="cloud_state_unsynced_count">
+        <item quantity="one">%1$s අයිතමය සමමුහුර්ත කර නොමැත</item>
+        <item quantity="other">%1$s අයිතම සමමු කර නොමැත</item>
+    </plurals>
+    <plurals name="corrected_title">
+        <item quantity="one">%1$s නිවැරදි කිරීම</item>
+        <item quantity="other">%1$s නිවැරදි කිරීම්</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_limit_mm">
+        <item quantity="one">උස මිලිමීටර %1$d ට වඩා වැඩි නොවේ. නැවත ඇතුළු වන්න.</item>
+        <item quantity="other">උස මිලිමීටර් %1$d නොඉක්මවිය යුතුය. නැවත ඇතුළු වන්න.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_limit_px">
+        <item quantity="one">උස පික්සල් %1$d ඉක්මවිය නොහැක. නැවත ඇතුළු වන්න.</item>
+        <item quantity="other">උස පික්සල %1$d ඉක්මවිය නොහැක. නැවත ඇතුළු වන්න.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_lower_limit_mm">
+        <item quantity="one">උස අවම වශයෙන් මිලිමීටර් %1$d ක් විය යුතුය. නැවත ඇතුළු වන්න.</item>
+        <item quantity="other">උස අවම වශයෙන් මිලිමීටර් %1$d ක් විය යුතුය. නැවත ඇතුළු වන්න.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_height_lower_limit_px">
+        <item quantity="one">උස අවම වශයෙන් පික්සල් %1$d ක් විය යුතුය. නැවත ඇතුළු වන්න.</item>
+        <item quantity="other">උස අවම වශයෙන් පික්සල %1$d ක් විය යුතුය. නැවත ඇතුළු වන්න.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_limit_mm">
+        <item quantity="one">පළල මිලිමීටර් %1$d ඉක්මවිය නොහැක. නැවත ඇතුළු වන්න.</item>
+        <item quantity="other">පළල මිලිමීටර් %1$d ඉක්මවිය නොහැක. නැවත ඇතුළු වන්න.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_limit_px">
+        <item quantity="one">පළල පික්සල් %1$d ඉක්මවිය නොහැක. නැවත ඇතුළු වන්න.</item>
+        <item quantity="other">පළල පික්සල %1$d ඉක්මවිය නොහැක. නැවත ඇතුළු වන්න.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_lower_limit_mm">
+        <item quantity="one">පළල අවම වශයෙන් මිලිමීටර් %1$d ක් විය යුතුය. නැවත ඇතුළු වන්න.</item>
+        <item quantity="other">පළල අවම වශයෙන් මිලිමීටර් %1$d ක් විය යුතුය. නැවත ඇතුළු වන්න.</item>
+    </plurals>
+    <plurals name="creation_page_size_custom_width_lower_limit_px">
+        <item quantity="one">පළල අවම වශයෙන් පික්සල් %1$d ක් විය යුතුය. නැවත ඇතුළු වන්න.</item>
+        <item quantity="other">පළල අවම වශයෙන් පික්සල %1$d ක් විය යුතුය. නැවත ඇතුළු වන්න.</item>
+    </plurals>
+    <plurals name="date_calculate_days_after">
+        <item quantity="one">%1$d දිනකට පසු</item>
+        <item quantity="other">දින %1$d කට පසු</item>
+    </plurals>
+    <plurals name="date_calculate_days_ago">
+        <item quantity="one">%1$d දිනකට පෙර</item>
+        <item quantity="other">දින %1$d කට පෙර</item>
+    </plurals>
+    <plurals name="format_move_notes_out_folder">
+        <item quantity="one">ෆෝල්ඩරයෙන් %1$s සටහන ඉවත් කරන ලදී</item>
+        <item quantity="other">ෆෝල්ඩරයෙන් %1$s සටහන් ඉවත් කරන ලදී</item>
+    </plurals>
+    <plurals name="format_move_notes_to_folder">
+        <item quantity="one">%1$s සටහන %2$s වෙත ගෙන යන ලදී</item>
+        <item quantity="other">%1$s සටහන් %2$s වෙත ගෙන යන ලදී</item>
+    </plurals>
+    <plurals name="pc_notes_search_result">
+        <item quantity="one">%1$s සටහන හමු විය</item>
+        <item quantity="other">%1$s සටහන් හමු විය</item>
+    </plurals>
+    <plurals name="pc_todo_search_result">
+        <item quantity="one">%1$s කාර්යය හමු විය</item>
+        <item quantity="other">%1$s කාර්ය හමු විය</item>
+    </plurals>
+    <plurals name="record_last_ten_seconds_reminder">
+        <item quantity="one">තවත් තත්පර %d ක් ඉතිරිව ඇත</item>
+        <item quantity="other">තවත් තත්පර %d ක් ඉතිරිව ඇත</item>
+    </plurals>
+    <plurals name="toast_notes_unhidden_count">
+        <item quantity="one">%1$s සටහන සාර්ථකව අනාවරණය කරන ලදී</item>
+        <item quantity="other">%1$s සටහන් සාර්ථකව අනාවරණය කරන ලදි</item>
+    </plurals>
+    <plurals name="todo_N_days_after">
+        <item quantity="one">දින %1$d කින්</item>
+        <item quantity="other">දින %1$d කින්</item>
+    </plurals>
+    <plurals name="todo_N_days_ago">
+        <item quantity="one">%1$d දිනකට පෙර</item>
+        <item quantity="other">දින %1$d කට පෙර</item>
+    </plurals>
+    <plurals name="todo_alert_message_delete">
+        <item quantity="one">කාර්ය %1$sක් මකා දමන්නද?</item>
+        <item quantity="other">කාර්ය %1$sක් මකා දමන්නද?</item>
+    </plurals>
+    <plurals name="todo_event_description_days_ago">
+        <item quantity="one">%1$d දිනකට පෙර</item>
+        <item quantity="other">දින %1$d කට පෙර</item>
+    </plurals>
+    <plurals name="todo_event_description_days_later">
+        <item quantity="one">දින %1$d කින්</item>
+        <item quantity="other">දින %1$d කින්</item>
+    </plurals>
+    <plurals name="todo_terms">
+        <item quantity="one">%1$s කාර්යය</item>
+        <item quantity="other">%1$s කාර්ය</item>
+    </plurals>
+    <plurals name="word_count">
+        <item quantity="one">අනුලකුණු %d ක්</item>
+        <item quantity="other">අනුලකුණු %d ක්</item>
+    </plurals>
+</resources>

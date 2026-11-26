@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config xmlns:android="http://schemas.android.com/apk/res/android">
+    <intent
+        android:icon="@drawable/lock_note_icon_starts"
+        android:name="@string/app_name"
+        android:targetPackage="com.miui.notes"
+        android:action="android.intent.action.INSERT_OR_EDIT"
+        android:targetClass="com.miui.notes.ui.NotesListActivity"
+        android:tag="NOTES_CREATE_NOTE"/>
+</config>

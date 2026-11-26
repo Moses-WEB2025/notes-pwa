@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt">
+    <objectAnimator
+        android:interpolator="@android:interpolator/fast_out_slow_in"
+        android:duration="197"
+        android:valueFrom="?attr/actionBottomButtonColor"
+        android:valueTo="?attr/actionButtonColorSelected"
+        android:valueType="colorType"
+        android:propertyName="fillColor"/>
+    <objectAnimator
+        android:interpolator="@android:interpolator/fast_out_slow_in"
+        android:duration="164"
+        android:startOffset="536"
+        android:valueFrom="?attr/actionButtonColorSelected"
+        android:valueTo="?attr/actionBottomButtonColor"
+        android:valueType="colorType"
+        android:propertyName="fillColor"/>
+</set>

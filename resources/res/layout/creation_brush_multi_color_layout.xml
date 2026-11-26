@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.miui.support.cardview.CardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/creation_item_group"
+    android:layout_width="@dimen/creation_color_pick_popup_window_width"
+    android:layout_height="@dimen/creation_color_pick_popup_window_height"
+    app:cardCornerRadius="@dimen/creation_color_pick_popup_window_corner_radius">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:id="@+id/creation_color_default"
+            android:layout_width="@dimen/creation_color_pick_width"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/creation_color_pick_margin"
+            android:layout_marginStart="@dimen/creation_color_pick_margin"
+            android:layout_marginEnd="@dimen/creation_color_pick_margin">
+            <com.miui.handwriting.common.view.colorpicker.ColorSelectView
+                android:id="@+id/creation_brush_multi_color_default_left"
+                android:layout_width="@dimen/creation_tool_color_item_size"
+                android:layout_height="@dimen/creation_tool_color_item_size"/>
+            <com.miui.handwriting.common.view.colorpicker.ColorSelectView
+                android:id="@+id/creation_brush_multi_color_default_center"
+                android:layout_width="@dimen/creation_tool_color_item_size"
+                android:layout_height="@dimen/creation_tool_color_item_size"
+                android:layout_marginStart="@dimen/creation_brush_multi_color_margin_start"/>
+            <com.miui.handwriting.common.view.colorpicker.ColorSelectView
+                android:id="@+id/creation_brush_multi_color_default_right"
+                android:layout_width="@dimen/creation_tool_color_item_size"
+                android:layout_height="@dimen/creation_tool_color_item_size"
+                android:layout_marginStart="@dimen/creation_brush_multi_color_margin_start"/>
+        </LinearLayout>
+        <FrameLayout
+            android:id="@+id/creation_color_pick_bg"
+            android:background="@drawable/creation_color_pick_bg"
+            android:layout_width="@dimen/creation_color_pick_bg_width"
+            android:layout_height="@dimen/creation_color_pick_bg_height"
+            android:layout_margin="@dimen/creation_color_pick_margin"/>
+    </LinearLayout>
+</com.miui.support.cardview.CardView>

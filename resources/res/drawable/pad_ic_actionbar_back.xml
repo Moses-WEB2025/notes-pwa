@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:height="@dimen/pad_ic_76px_size"
+    android:width="@dimen/pad_ic_76px_size"
+    android:viewportWidth="76"
+    android:viewportHeight="76">
+    <group>
+        <clip-path android:pathData="M0,0h76v76h-76z"/>
+        <path
+            android:fillColor="@color/action_bottom_button_color"
+            android:pathData="M16.4694,36.9458C16.1202,37.295 15.946,37.7529 15.9466,38.2105C15.9408,38.6748 16.115,39.141 16.4693,39.4952L29.3523,52.3783C30.0493,53.0753 31.1794,53.0753 31.8764,52.3783C32.5735,51.6812 32.5735,50.5512 31.8764,49.8541L22.2875,40.2652H57.3515C58.4,40.2652 59.2499,39.4152 59.2499,38.3668C59.2499,37.3183 58.4,36.4684 57.3515,36.4684H21.9951L31.8766,26.5869C32.5736,25.8899 32.5736,24.7598 31.8766,24.0628C31.1796,23.3658 30.0495,23.3658 29.3524,24.0628L16.4694,36.9458Z"
+            android:fillType="evenOdd"/>
+    </group>
+</vector>

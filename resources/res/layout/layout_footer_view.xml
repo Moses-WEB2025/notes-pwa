@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/creation_footer_view_height">
+    <com.miui.handwriting.common.view.page.CustomProgressView
+        android:layout_gravity="center_horizontal"
+        android:id="@+id/foot_progress_view"
+        android:layout_width="@dimen/creation_footer_view_icon_width"
+        android:layout_height="@dimen/creation_footer_view_icon_height"
+        android:layout_marginTop="@dimen/creation_actionmode_dp_24"/>
+    <ImageView
+        android:layout_gravity="top|center_horizontal"
+        android:id="@+id/foot_progress_arrow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/creation_actionmode_dp_24"
+        android:src="@drawable/creation_action_pull_gary"/>
+    <TextView
+        android:textSize="12sp"
+        android:textColor="@color/creation_footer_view_text"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal"
+        android:id="@+id/foot_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/creation_footer_view_text_margin_top"
+        android:text="@string/creation_foot_view_text"
+        android:fontFamily="mipro-regular"/>
+</FrameLayout>

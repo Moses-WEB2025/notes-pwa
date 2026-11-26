@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center"
+    android:id="@+id/theme_default"
+    android:background="@drawable/v12_theme_thumb_default_shadow"
+    android:layout_width="@dimen/v12_theme_chooser_item_shadow_width"
+    android:layout_height="@dimen/v12_theme_chooser_item_shadow_height">
+    <FrameLayout
+        android:layout_gravity="center"
+        android:id="@+id/theme_group"
+        android:layout_width="@dimen/v12_theme_chooser_item_width"
+        android:layout_height="@dimen/v12_theme_chooser_item_height"
+        android:importantForAccessibility="no">
+        <ImageView
+            android:id="@+id/theme_icon"
+            android:background="@drawable/v12_theme_thumb_blue"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="8dp"
+            android:importantForAccessibility="no"/>
+        <View
+            android:layout_gravity="center"
+            android:id="@+id/theme_icon_frame"
+            android:background="@drawable/v12_ic_theme_cover_frame"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0"
+            android:layerType="hardware"
+            android:importantForAccessibility="no"/>
+    </FrameLayout>
+</FrameLayout>
